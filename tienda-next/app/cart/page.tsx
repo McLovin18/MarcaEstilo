@@ -818,7 +818,7 @@ export default function CartPage() {
                     </p>
                     <button
                       onClick={handleGenerarOrden}
-                      className="w-full flex items-center text-center justify-center gap-2 py-3.5 px-6 bg-#E0A11A hover:bg-[#20BA5C] text-white font-bold text-sm rounded-xl transition-colors shadow-md"
+                      className="w-full flex items-center text-center justify-center gap-2 py-3.5 px-6 bg-[#cfac5f] hover:bg-[#c88c0a] text-white font-bold text-sm rounded-xl transition-colors shadow-md"
                       title="Enviar pedido por WhatsApp"
                     >
                       Generar orden

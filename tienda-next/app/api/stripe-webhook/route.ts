@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import admin from "../../lib/firebase-admin";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-02-24.acacia" as any,
-});
+function getStripeClient() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error("Missing STRIPE_SECRET_KEY environment variable");
+  }
+  return new Stripe(secretKey, {
+    apiVersion: "2025-02-24.acacia" as any,
+  });
+}
 
 export const runtime = "nodejs";
 
@@ -175,6 +181,7 @@ async function handlePaymentFailed(
 }
 
 export async function POST(req: NextRequest) {
+  const stripe = getStripeClient();
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
 

@@ -9,9 +9,15 @@ import {
   existeIdempotencyKey,
 } from "../../lib/stock-reserves-db";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-02-24.acacia" as any,
-});
+function getStripeClient() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error("Missing STRIPE_SECRET_KEY environment variable");
+  }
+  return new Stripe(secretKey, {
+    apiVersion: "2025-02-24.acacia" as any,
+  });
+}
 
 export const runtime = "nodejs";
 
@@ -32,6 +38,7 @@ const MAX_PRICE = 10000;            // Precio máximo permitido (protección)
 
 export async function POST(req: NextRequest) {
   try {
+    const stripe = getStripeClient();
     const { carrito, email, visitDate, visitTime, userId } = await req.json();
 
     // ─────── VALIDACIÓN 1: Estructura básica ───────
