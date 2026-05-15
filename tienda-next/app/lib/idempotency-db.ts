@@ -7,7 +7,7 @@
  * - Con idempotency: Solo 1 orden, req duplicado devuelve ID de la primera
  * 
  * SIN esto: Email spam, stock reservado 2x
- * CON esto: Sistema idempotent como Stripe
+ * CON esto: Sistema idempotent como pasarelas de pago
  */
 
 import admin from "./firebase-admin";

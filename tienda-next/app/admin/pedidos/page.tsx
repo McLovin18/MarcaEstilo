@@ -74,38 +74,8 @@ export default function PedidosAdminPage() {
 		try {
 			setLoading(true);
 
-			// 💳 STRIPE: Usar endpoint específico para órdenes pagadas
-			if (orden.metodoPago === "stripe") {
-				const res = await fetch("/api/admin/approve-stripe-order", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						"x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN || "",
-					},
-					body: JSON.stringify({ orderId: orden.id }),
-				});
-
-				if (!res.ok) {
-					const error = await res.json();
-					throw new Error(error.error || `Error ${res.status}`);
-				}
-
-				const data = await res.json();
-				setOrdenes((prev) =>
-					prev.map((o) =>
-						o.id === orden.id
-							? { ...o, estado: "aprobada", aprobadasAt: new Date() }
-							: o
-					)
-				);
-				alert(`✅ ${data.message || "Pago verificado, orden aprobada exitosamente"}`);
-				return;
-			}
-
-			// 📋 PROFORMA: Deducir stock cuando se aprueba
+			// Deducir stock cuando se aprueba y actualizar estado
 			await deducirStockOrden(orden.id);
-			
-			// Actualizar estado a "aprobada"
 			await actualizarOrden(orden.id, { estado: "aprobada" });
 			setOrdenes((prev) => prev.map((o) => o.id === orden.id ? { ...o, estado: "aprobada" } : o));
 			alert("✅ Orden aprobada exitosamente");
@@ -124,10 +94,8 @@ export default function PedidosAdminPage() {
 		try {
 			setLoading(true);
 			
-			// � STRIPE: Usar endpoint específico para órdenes pagadas
-			const endpoint = orden.metodoPago === "stripe" 
-				? "/api/admin/reject-stripe-order"
-				: "/api/admin/reject-order";
+			// Usar endpoint genérico de rechazo
+			const endpoint = "/api/admin/reject-order";
 			
 			const res = await fetch(endpoint, {
 				method: "POST",
@@ -204,8 +172,7 @@ export default function PedidosAdminPage() {
 		matchesBusqueda(o)
 	);
 
-	// 🔵 Filtro para pedidos con PAGO VIRTUAL (Stripe/Tarjeta)
-	const ordenesConTarjeta = ordenes.filter((o) => o.metodoPago === "stripe");
+	// (Stripe removed) - no filter for card payments
 
 	const ordenesMostradas = tab === "pendientes" ? ordenesPendientes : ordenesAprobadas;
 
@@ -260,11 +227,7 @@ export default function PedidosAdminPage() {
 					<span className="font-bold text-lg text-slate-800 dark:text-slate-100">
 						{orden.orderId || `#${orden.id.slice(-6)}`}
 					</span>
-					{orden.metodoPago === "stripe" && (
-						<span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700">
-							💳 Stripe
-						</span>
-					)}
+					{/* payment method badge removed (Stripe not used) */}
 				</div>
 				{estadoBadge(orden.estado)}
 			</div>
@@ -326,22 +289,12 @@ export default function PedidosAdminPage() {
 							🚫 Rechazar
 						</button>
 
-						{/* Para órdenes Stripe: verificar si está pagada */}
-						{orden.metodoPago === "stripe" && orden.status !== "paid" && orden.paymentStatus !== "paid" ? (
-							<button disabled className="px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 text-sm font-medium cursor-not-allowed">
-								⏳ {orden.status || "Esperando pago"}
-							</button>
-						) : (
-							<button
-								onClick={() => aprobarOrden(orden)}
-								className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors flex items-center gap-2"
-							>
-								<span>✅ Aprobar</span>
-								{orden.metodoPago === "stripe" && (
-									<span className="text-xs bg-green-700 px-2 py-0.5 rounded">${calcularTotalOrden(orden).toFixed(2)}</span>
-								)}
-							</button>
-						)}
+						<button
+							onClick={() => aprobarOrden(orden)}
+							className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors flex items-center gap-2"
+						>
+							<span>✅ Aprobar</span>
+						</button>
 					</div>
 				)}
 			</div>
@@ -440,73 +393,7 @@ export default function PedidosAdminPage() {
 				})}
 			</div>
 
-			{/* 🔵 Sección: Pedidos con Tarjetas (Pago Virtual) */}
-			{ordenesConTarjeta.length > 0 && (
-				<div className="mb-6">
-					<button
-						onClick={() => setExpandedTarjetas(!expandedTarjetas)}
-						className="w-full bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border-2 border-indigo-200 dark:border-indigo-800 rounded-xl p-4 transition-all duration-200 cursor-pointer"
-					>
-						<div className="flex items-center justify-between">
-							<div className="flex items-center gap-3">
-								<span className="text-2xl">💳</span>
-								<div className="text-left">
-									<h3 className="font-bold text-slate-800 dark:text-slate-100">Pedidos con Tarjета</h3>
-									<p className="text-xs text-slate-600 dark:text-slate-400">Pago virtual (Stripe)</p>
-								</div>
-							</div>
-							<div className="flex items-center gap-3">
-								<span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-600 dark:bg-indigo-500 text-white font-bold text-sm">
-									{ordenesConTarjeta.length}
-								</span>
-								<span className={`text-2xl transition-transform duration-300 ${expandedTarjetas ? "rotate-180" : ""}`}>
-									▼
-								</span>
-							</div>
-						</div>
 
-						{/* Preview: Máximo 3 pedidos */}
-						{!expandedTarjetas && ordenesConTarjeta.length > 0 && (
-							<div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
-								{ordenesConTarjeta.slice(0, 3).map((orden) => (
-									<div
-										key={orden.id}
-										className="text-left bg-white dark:bg-slate-800 rounded-lg p-2 border border-indigo-100 dark:border-indigo-900/40 text-xs"
-									>
-										<div className="flex items-center justify-between mb-1">
-											<span className="font-bold text-slate-800 dark:text-slate-100">{orden.orderId || `#${orden.id.slice(-6)}`}</span>
-											{estadoBadge(orden.estado)}
-										</div>
-										<p className="text-slate-600 dark:text-slate-400 text-[11px]">
-											Total: <span className="font-semibold">${calcularTotalOrden(orden).toFixed(2)}</span>
-										</p>
-									</div>
-								))}
-								{ordenesConTarjeta.length > 3 && (
-									<div className="text-center py-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
-										+{ordenesConTarjeta.length - 3} más
-									</div>
-								)}
-							</div>
-						)}
-					</button>
-
-					{/* Vista Expandida: Todos los pedidos con tarjeta */}
-					{expandedTarjetas && (
-						<div className="mt-3 space-y-3">
-							{ordenesConTarjeta.length === 0 ? (
-								<div className="text-center py-8 text-slate-400 dark:text-slate-500">
-									<p className="text-sm">No hay pedidos con tarjeta</p>
-								</div>
-							) : (
-								ordenesConTarjeta.map((orden) => (
-									<OrdenCard key={orden.id} orden={orden} />
-								))
-							)}
-						</div>
-					)}
-				</div>
-			)}
 
 			{/* Contenido */}
 			{loading ? (

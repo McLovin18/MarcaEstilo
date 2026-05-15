@@ -246,11 +246,7 @@ export default function AdminPage() {
 															<span className="font-bold text-slate-800 dark:text-slate-100 text-sm">
 																{orden.orderId || `#${orden.id.slice(-6)}`}
 															</span>
-															{orden.metodoPago === "stripe" && (
-																<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300">
-																	💳 Stripe
-																</span>
-															)}
+															{/* payment method badge removed (Stripe not used) */}
 														</div>
 														<p className="text-sm text-slate-600 dark:text-slate-300 truncate">
 															{getNombreCliente(orden)}

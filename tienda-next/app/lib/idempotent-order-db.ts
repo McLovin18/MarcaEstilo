@@ -21,7 +21,7 @@ interface IdempotentOrderRequest {
   email: string;
   totalAmount: number;
   itemCount: number;
-  source: "stripe" | "proforma";
+  source: "online" | "proforma";
   metadata?: Record<string, any>;
 }
 

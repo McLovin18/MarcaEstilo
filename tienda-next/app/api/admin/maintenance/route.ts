@@ -53,17 +53,12 @@ export async function POST(req: NextRequest) {
       }
 
       case "recovery": {
-        // Recuperar órdenes pendientes
-        const { runWebhookRecovery } = await import("../../../lib/webhook-recovery-db");
-        const result = await runWebhookRecovery();
-
-        console.log(`🔄 [ADMIN] Webhook recovery executed:`, result);
-
+        // Recovery removed: webhook-based recovery module is not present in this deployment.
         return NextResponse.json({
-          success: true,
+          success: false,
           action: "recovery",
-          result,
-        });
+          error: "Webhook recovery module removed. This action is not available.",
+        }, { status: 501 });
       }
 
       case "stats": {
@@ -71,15 +66,17 @@ export async function POST(req: NextRequest) {
         const { getCleanupStats } = await import("../../../lib/stock-cleanup-db");
         const { getIdempotencyStats } = await import("../../../lib/idempotency-db");
         const { getEmailRateLimitStats } = await import("../../../lib/email-rate-limit-db");
-        const { getWebhookRecoveryStats } = await import("../../../lib/webhook-recovery-db");
+        // Webhook recovery module removed — provide fallback empty stats
+        const webhookStats = {
+          pendingOrdersOlderThan30min: 0,
+          pendingOrders: 0,
+        };
 
-        const [cleanupStats, idempotencyStats, emailStats, webhookStats] =
-          await Promise.all([
-            getCleanupStats(),
-            getIdempotencyStats(),
-            getEmailRateLimitStats(),
-            getWebhookRecoveryStats(),
-          ]);
+        const [cleanupStats, idempotencyStats, emailStats] = await Promise.all([
+          getCleanupStats(),
+          getIdempotencyStats(),
+          getEmailRateLimitStats(),
+        ]);
 
         console.log(`📊 [ADMIN] Health stats retrieved`);
 
@@ -100,7 +97,7 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        if (webhookStats.pendingOrdersOlderThan30min > 0) {
+        if (webhookStats && webhookStats.pendingOrdersOlderThan30min > 0) {
           alerts.push(
             `⚠️ ${webhookStats.pendingOrdersOlderThan30min} orders pending payment > 30 min (possible webhook failures)`
           );
@@ -195,8 +192,8 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const { getWebhookRecoveryStats } = await import("../../../lib/webhook-recovery-db");
-    const stats = await getWebhookRecoveryStats();
+    // Webhook recovery module removed — return empty stats
+    const stats = { pendingOrders: 0, pendingOrdersOlderThan30min: 0 };
 
     // Si es public_only, solo devolver info no sensible
     if (publicOnly) {

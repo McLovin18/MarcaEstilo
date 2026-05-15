@@ -101,13 +101,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ SECURITY: Verificar que Stripe NO pagó aún
+    // ✅ SECURITY: Verificar que el pago no esté ya confirmado
     // Si la orden ya está confirmada (pagada), NO se puede liberar stock
     if (orderDoc.estado === "confirmed" || orderDoc.estado === "completada") {
       return NextResponse.json(
         { 
-          error: `❌ NO se puede rechazar. Stripe ya procesó el pago. Estado: "${orderDoc.estado}"`,
-          reason: "Pago confirmado - Contactar a Stripe para reembolso"
+          error: `❌ NO se puede rechazar. El pago ya fue procesado. Estado: "${orderDoc.estado}"`,
+          reason: "Pago confirmado - Contactar al procesador de pagos para reembolso"
         },
         { status: 403 }
       );

@@ -23,11 +23,11 @@ export default function OrderConfirmationPage() {
   const safeSearchParams = searchParams ?? new URLSearchParams();
   const orderId = safeSearchParams.get("orderId");
   const paid = safeSearchParams.get("paid") === "true";
-  const redirectStatus = safeSearchParams.get("redirect_status"); // Stripe redirect
+  const redirectStatus = safeSearchParams.get("redirect_status"); // payment gateway redirect status
   const [copied, setCopied] = useState(false);
   const { carrito, removeCarrito, isLogged } = useUser();
 
-  // Limpiar carrito cuando llega desde redirect de Stripe (3DS/billeteras)
+  // Limpiar carrito cuando llega desde redirect exitoso del pasarela de pago
   useEffect(() => {
     if (redirectStatus === "succeeded" && carrito.length > 0) {
       carrito.forEach((p) => removeCarrito(getCartItemKey(p)));
