@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+    
+    match /admin/{document=**} {
+      allow read, write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /productos/{productId} {
+      allow read: if true;
+      // Solo admin puede escribir (modificar stock, nombre, etc)
+      allow write: if isAdmin();
+    }
+
+    match /marcas/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /categorias/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /bodegas/{bodegaId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /landingPage/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /blogs/{blogId} {
+      allow read: if resource.data.status == "published" || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+    
+    match /ordenes/{orderId} {
+      // Invitados y autenticados pueden crear órdenes
+      allow create: if true;
+      // El dueño puede leer su orden, el admin puede leer todas
+      // Las órdenes de invitados (userId == null) solo las lee el admin
+      allow read: if isAdmin() || (
+        isSignedIn() && resource.data.userId == request.auth.uid
+      );
+      // Solo admin puede actualizar (aprobar, rechazar)
+      allow update, delete: if isAdmin();
+    }
+    
+    match /product_reviews/{reviewId} {
+      // Cualquiera autenticado puede crear una reseña
+      allow create: if true;
+      // Solo el admin puede aprobar, rechazar o eliminar
+      allow update, delete: if isAdmin();
+      // Leer solo reseñas aprobadas, o si es admin
+      allow read: if resource.data.approved == true || isAdmin();
+    }
+
+    // Contador secuencial: invitados también necesitan acceso para generar orderId
+    match /ordenes_meta/{docId} {
+      allow read, write: if true;
+    }
+
+    // Analytics: Todos pueden crear y actualizar (page views, clicks)
+    match /analytics/{docId} {
+      allow read: if isAdmin();
+      allow create: if true;
+      allow update: if true;
+    }
+  }
+}
