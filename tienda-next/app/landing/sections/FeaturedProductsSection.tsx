@@ -131,7 +131,7 @@ export default function FeaturedProductsSection({
       {/* Título */}
       {title && (
         <h2
-          className="text-3xl text-center sm:text-2xl lg:text-4xl py-2 font-extrabold tracking-tight"
+          className="section-title text-center py-2"
           style={fieldStyles?.title || { color: "var(--text)" }}
         >
           {title}
@@ -172,11 +172,7 @@ export default function FeaturedProductsSection({
 
           {/* Grid de productos - Full width en móvil */}
           <div
-            className={
-              isSingleVisible
-                ? "flex justify-center w-full max-w-full mx-auto"
-                : `grid w-full ${itemsPerView === 1 ? "place-items-center gap-2 md:gap-0" : "place-items-center gap-2 md:gap-6"} ${gridCols} md:auto-rows-[360px]`
-            }
+            className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
             style={{
               minWidth: 0,
               animation: isAnimating
@@ -189,10 +185,8 @@ export default function FeaturedProductsSection({
               .map((prod: any, idx: number) => (
               <div
                 key={`${prod.id}-${currentIndex}-${idx}`}
-                className={`transition-all duration-300 flex flex-col items-stretch justify-stretch h-full ${
-                  isSingleVisible ? "w-full px-2 md:px-0" : "w-full max-w-[320px]"
-                }`}
-                style={{ width: "100%", minWidth: 0 }}
+                className="transition-all duration-300 flex flex-col items-stretch justify-stretch h-full w-full"
+                style={{ minWidth: 0 }}
               >
                 <ProductoCard producto={prod} />
               </div>

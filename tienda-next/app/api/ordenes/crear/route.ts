@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import admin from "../../../lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 import { Resend } from "resend";
+import { getCatalogPricing } from "../../../lib/pricing";
 
 /**
  * 🛒 ENDPOINT: Crear Orden con Stock Deduction
@@ -85,7 +86,7 @@ function buildOrderEmailHTML(orden: any): string {
           ${
             orden.productos && Array.isArray(orden.productos)
               ? orden.productos.map((p: any) => {
-                  const precioUnit = Number(p.precioBase || p.precio || 0);
+                  const precioUnit = Number(p.precioUnitario || p.precioBase || p.precio || 0);
                   const cantidad = Number(p.cantidad || 1);
                   const subtotal = precioUnit * cantidad;
                   const descuento = Number(p.descuento || 0);
@@ -223,9 +224,8 @@ export async function POST(req: NextRequest) {
         }
 
         // Calcular precio
-        const basePrice = Number(data.precio || 0);
-        const discount = Number(data.descuento || 0);
-        const lineTotal = basePrice * cantidad;
+        const { basePrice, discount, hasDiscount, finalPrice } = getCatalogPricing(data);
+        const lineTotal = finalPrice * cantidad;
 
         total += lineTotal;
 
@@ -235,15 +235,16 @@ export async function POST(req: NextRequest) {
           nombre: data.nombre,
           cantidad,
           precioBase: basePrice,
-          descuento: discount,
-          precioUnitario: basePrice,
+          descuento: hasDiscount ? discount : 0,
+          precioUnitario: finalPrice,
+          precioFinal: finalPrice,
           subtotal: lineTotal,
           stockSnapshot: stock,
           bodegaId: data.bodegaId || "technothings",
           precioSnapshot: {
             base: basePrice,
             descuento: discount,
-            final: basePrice,
+            final: finalPrice,
             timestamp: Date.now(),
           },
         });

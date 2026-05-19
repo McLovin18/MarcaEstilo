@@ -105,7 +105,7 @@ export default function FeaturedCategoriesSection({
       <div className="max-w-6xl mx-auto text-slate-900 dark:text-white relative ">
         {title && (
           <h2
-            className="text-3xl py-2 sm:text-2xl lg:text-4xl font-extrabold tracking-tight text-center"
+            className="section-title py-2 text-center"
             style={fieldStyles?.title || { color: "var(--text)" }}
           >
             {title}
@@ -157,7 +157,7 @@ export default function FeaturedCategoriesSection({
               )}
               {cat.title && (
                 <h3
-                  className="text-base md:text-lg font-semibold text-center md:text-left"
+                  className="section-subtitle page-lead text-center md:text-left"
                   style={fieldStyles?.itemTitle || { color: "var(--text, #1e293b)" }}
                 >
                   {cat.title}

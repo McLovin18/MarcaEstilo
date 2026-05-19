@@ -50,7 +50,7 @@ export default function GoogleCommentsSection({
   // Show loading icon if comments is undefined (loading state)
   if (typeof window !== "undefined" && !comments) {
     return (
-      <section className="flex justify-center items-center min-h-[200px]">
+      <section className="flex justify-center items-center min-h-50">
         <Loading3DIcon type="box" />
       </section>
     );
@@ -68,7 +68,9 @@ export default function GoogleCommentsSection({
     >
       <div className="max-w-4xl mx-auto" style={{ borderRadius }}>
         {title && (
-          <h2 className="text-3xl font-bold mb-6 text-center" style={ {fontSize: "40px"}} >{title}</h2>
+          <h2 className="section-title mb-6 text-center" style={{ fontSize: "40px" }}>
+            {title}
+          </h2>
         )}
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
           {Array.isArray(comments) && comments.length > 0 ? (

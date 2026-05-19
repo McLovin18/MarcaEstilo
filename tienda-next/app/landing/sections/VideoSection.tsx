@@ -24,13 +24,13 @@ export default function VideoSection({
       {(title || subtitle) && (
         <div className="text-center py-4 px-4">
           {title && (
-            <h2 className="text-2xl md:text-4xl font-bold mb-2 text-slate-900 dark:text-white">
+            <h2 className="section-title text-slate-900 dark:text-white mb-2">
               {title}
             </h2>
           )}
 
           {subtitle && (
-            <p className="text-base md:text-lg text-slate-600 dark:text-slate-300">
+            <p className="section-subtitle page-lead text-slate-600 dark:text-slate-300">
               {subtitle}
             </p>
           )}

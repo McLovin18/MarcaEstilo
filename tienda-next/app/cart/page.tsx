@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { obtenerBodegas } from "../lib/bodegas-db";
 import { useRouter } from "next/navigation";
+import { getSnapshotPricing } from "../lib/pricing";
 import { useUser } from "../context/UserContext";
 import BottomBarPublic from "../components/BottomBarPublic";
+import { obtenerAtributos } from "../lib/atributos-db";
 
 function resolveCartItemKey(item: any) {
   if (!item) return "";
@@ -14,6 +16,22 @@ function resolveCartItemKey(item: any) {
 function resolveAvailableStock(item: any) {
   if (!item) return 0;
 
+  // Soportar variaciones dinámicas (nuevo sistema)
+  if (item.selectedVariations && item.variationAttributeIds && Array.isArray(item.stockVariants)) {
+    const allSelected = item.variationAttributeIds.every((attrId: string) => item.selectedVariations[attrId]);
+    if (allSelected) {
+      const variant = item.stockVariants.find((v: any) => {
+        return item.variationAttributeIds.every(
+          (attrId: string) => v.attributes?.[attrId] === item.selectedVariations[attrId]
+        );
+      });
+      if (variant) {
+        return Number(variant.cantidad ?? 0);
+      }
+    }
+  }
+
+  // Soportar variaciones legacy (talla/color)
   if (item.selectedTalla && item.selectedColor && Array.isArray(item.stockVariants)) {
     const variant = item.stockVariants.find(
       (v: any) => v.talla === item.selectedTalla && v.color === item.selectedColor
@@ -45,7 +63,7 @@ function ProformaView({
     <div className="min-h-screen bg-white dark:bg-[#3a1859] text-slate-900 dark:text-white transition-colors">
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="rounded-2xl overflow-hidden shadow-xl mb-6">
-          <div className="bg-gradient-to-r from-[#3a1859] to-[#6d28d9] px-8 py-6 flex items-center justify-between">
+          <div className="bg-linear-to-r from-[#3a1859] to-[#6d28d9] px-8 py-6 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-extrabold text-white tracking-wide">Marca Estilo</h1>
               <p className="text-purple-200 text-sm mt-1">Proforma de Orden</p>
@@ -71,7 +89,7 @@ function ProformaView({
           </div>
           <div className="bg-white dark:bg-slate-900 px-8 py-4">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[600px]">
+              <table className="w-full text-sm min-w-150">
                 <thead>
                   <tr className="border-b-2 border-slate-200 dark:border-slate-700">
                     <th className="text-left py-2 text-slate-500 dark:text-slate-400 font-semibold">Producto</th>
@@ -85,10 +103,8 @@ function ProformaView({
                     const basePrice = Number(p.precioBase || p.precio || 0);
                     const discount = Number(p.descuento || 0);
                     const hasDiscount = !isNaN(discount) && discount > 0 && discount < 100;
-                    const fakeOldPrice = hasDiscount
-                      ? Math.round((basePrice / (1 - discount / 100)) * 100) / 100
-                      : null;
-                    const finalPrice = basePrice;
+                    const fakeOldPrice = hasDiscount ? basePrice : null;
+                    const finalPrice = hasDiscount ? Math.round(basePrice * (1 - discount / 100) * 100) / 100 : basePrice;
                     return (
                       <tr key={i} className="border-b border-slate-100 dark:border-slate-800">
                         <td className="py-3 pr-4 font-medium">{p.nombre}</td>
@@ -167,17 +183,22 @@ export default function CartPage() {
   const [ordenCreada, setOrdenCreada] = useState<any>(null);
   const router = useRouter();
   const { isLogged } = useUser();
+  const [atributos, setAtributos] = useState([]);
 
   const calcularPrecioData = (p: any) => {
-    const basePrice = Number(p.precioBase || p.precio || 0);
-    const discount = Number(p.descuento || 0);
-    const hasDiscount = !isNaN(discount) && discount > 0 && discount < 100;
-    const fakeOldPrice = hasDiscount
-      ? Math.round((basePrice / (1 - discount / 100)) * 100) / 100
-      : basePrice;
-    const finalPrice = basePrice;
+    const { basePrice, discount, hasDiscount, fakeOldPrice, finalPrice } = getSnapshotPricing(p);
     return { basePrice, discount, hasDiscount, fakeOldPrice, finalPrice };
   };
+
+  useEffect(() => {
+  async function loadAtributos() {
+    const data = await obtenerAtributos();
+    setAtributos(data);
+  }
+
+  loadAtributos();
+}, []);
+
 
   const handleVerProforma = async () => {
     setError("");
@@ -204,7 +225,15 @@ export default function CartPage() {
         body: JSON.stringify({
           userId: null,
           email: email.trim(),
-          productos: carrito.map((p) => ({ id: p.id, cantidad: p.cantidad, cartKey: p.cartKey || p.id, selectedTalla: p.selectedTalla, selectedColor: p.selectedColor })),
+          productos: carrito.map((p) => ({
+            id: p.id,
+            cantidad: p.cantidad,
+            cartKey: p.cartKey || p.id,
+            selectedTalla: p.selectedTalla,
+            selectedColor: p.selectedColor,
+            selectedVariations: p.selectedVariations,
+            variationAttributeIds: p.variationAttributeIds,
+          })),
           visitDate,
           visitTime,
         }),
@@ -329,7 +358,7 @@ export default function CartPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white transition-colors">
+      <div className="min-h-screen bg-white dark:bg-black text-slate-900 dark:text-white transition-colors">
         <main className="max-w-6xl mx-auto px-3 sm:px-6 py-6 sm:py-10">
           <div className="flex items-center gap-3 mb-6">
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white">
@@ -344,7 +373,7 @@ export default function CartPage() {
 
           {error && (
             <div className="flex items-start gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm mb-6">
-              <span className="material-icons-round text-base mt-0.5 flex-shrink-0">error_outline</span>
+              <span className="material-icons-round text-base mt-0.5 shrink-0">error_outline</span>
               {error}
             </div>
           )}
@@ -365,7 +394,7 @@ export default function CartPage() {
                       key={itemKey}
                       className="bg-white dark:bg-slate-800/70 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-4 flex gap-3 sm:gap-4 items-start"
                     >
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 flex items-center justify-center">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 flex items-center justify-center">
                         <img
                           src={p.imagenes?.[0] || "/no-image.png"}
                           alt={p.nombre}
@@ -382,11 +411,23 @@ export default function CartPage() {
                             Talla {p.selectedTalla} · Color {p.selectedColor}
                           </p>
                         )}
+                        {p.selectedVariations && p.variationAttributeIds && p.variationAttributeIds.length > 0 && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            {p.variationAttributeIds.map((attrId: string) => {
+                              const atributo = atributos.find((a: any) => a.id === attrId);
+                              const attrName = atributo?.nombre || "Opción";
+                              const value = p.selectedVariations?.[attrId];
+                              return value
+                                ? `${attrName}: ${value}`
+                                : null;
+                            }).filter(Boolean).join(" · ")}
+                          </p>
+                        )}
 
                         <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                           {hasDiscount && (
                             <span className="text-xs text-slate-400 line-through">
-                              ${fakeOldPrice.toFixed(2)}
+                              ${fakeOldPrice?.toFixed(2)}
                             </span>
                           )}
                           <span className="text-sm font-bold text-[#E0A11A] dark:text-[#f5d890]">
@@ -423,7 +464,7 @@ export default function CartPage() {
                         </div>
                       </div>
 
-                      <div className="flex flex-col items-end justify-between h-full gap-3 flex-shrink-0">
+                      <div className="flex flex-col items-end justify-between h-full gap-3 shrink-0">
                         <span className="font-bold text-sm sm:text-base">
                           ${lineTotal.toFixed(2)}
                         </span>

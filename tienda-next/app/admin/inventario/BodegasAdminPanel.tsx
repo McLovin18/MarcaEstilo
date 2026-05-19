@@ -7,6 +7,7 @@ import {
   actualizarBodega,
   eliminarBodega,
   escucharBodegas,
+  setNuevaColeccion,
   type Bodega
 } from "../../lib/bodegas-db";
 
@@ -17,6 +18,7 @@ export default function BodegasAdminPanel() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ nombre: "", tiempoEntrega: 72 });
   const [error, setError] = useState("");
+  const [settingNuevaColeccion, setSettingNuevaColeccion] = useState(false);
 
   // Cargar bodegas con listener en tiempo real
   useEffect(() => {
@@ -76,6 +78,18 @@ export default function BodegasAdminPanel() {
     setError("");
   };
 
+  const handleSetNuevaColeccion = async (bodegaId: string) => {
+    try {
+      setSettingNuevaColeccion(true);
+      await setNuevaColeccion(bodegaId);
+    } catch (err) {
+      setError("Error al actualizar Nueva Colección");
+      console.error(err);
+    } finally {
+      setSettingNuevaColeccion(false);
+    }
+  };
+
   return (
     <div className="w-full">
       {/* Encabezado */}
@@ -91,6 +105,42 @@ export default function BodegasAdminPanel() {
             + Nueva Bodega
           </button>
         )}
+      </div>
+
+      {/* Selector de Nueva Colección */}
+      <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg mb-6 border border-blue-200 dark:border-blue-800">
+        <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">
+          Bodega para "Nueva Colección"
+        </h3>
+        <div className="grid gap-2">
+          {loading ? (
+            <p className="text-slate-500">Cargando bodegas...</p>
+          ) : bodegas.length === 0 ? (
+            <p className="text-slate-500">No hay bodegas disponibles</p>
+          ) : (
+            bodegas.map((bodega) => (
+              <button
+                key={bodega.id}
+                onClick={() => handleSetNuevaColeccion(bodega.id)}
+                disabled={settingNuevaColeccion}
+                className={`p-3 rounded-lg text-left font-medium transition-all ${
+                  bodega.esNuevaColeccion
+                    ? "bg-blue-600 text-white border-2 border-blue-700"
+                    : "bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-2 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-400"
+                } ${settingNuevaColeccion ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span>{bodega.nombre}</span>
+                  {bodega.esNuevaColeccion && (
+                    <span className="text-xs bg-white text-blue-600 px-2 py-1 rounded font-bold">
+                      ✓ Seleccionada
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))
+          )}
+        </div>
       </div>
 
       {/* Formulario */}
@@ -132,9 +182,9 @@ export default function BodegasAdminPanel() {
                 <option value={12}>12 horas (Rápida)</option>
                 <option value={72}>72 horas (Estándar)</option>
               </select>
-              {editingId === "technothings" && (
+              {editingId === "MarcaEstilo" && (
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  La bodega Technothings siempre tiene entrega de 12 horas
+                  La bodega MarcaEstilo siempre tiene entrega de 12 horas
                 </p>
               )}
             </div>
@@ -173,7 +223,7 @@ export default function BodegasAdminPanel() {
               <div className="flex-1">
                 <h3 className="font-bold text-slate-900 dark:text-white">
                   {bodega.nombre}
-                  {bodega.id === "technothings" && (
+                  {bodega.id === "MarcaEstilo" && (
                     <span className="ml-2 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
                       Default
                     </span>
@@ -184,7 +234,7 @@ export default function BodegasAdminPanel() {
                 </p>
               </div>
               <div className="flex gap-2">
-                {bodega.id !== "technothings" && (
+                {bodega.id !== "MarcaEstilo" && (
                   <>
                     <button
                       onClick={() => handleEdit(bodega)}
@@ -200,7 +250,7 @@ export default function BodegasAdminPanel() {
                     </button>
                   </>
                 )}
-                {bodega.id === "technothings" && (
+                {bodega.id === "MarcaEstilo" && (
                   <span className="text-xs text-slate-400 dark:text-slate-500">
                     No se puede eliminar
                   </span>

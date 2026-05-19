@@ -130,8 +130,8 @@ export default function Home() {
     <>
       {/* Botón flotante de WhatsApp aún más arriba */}
       <WhatsAppFloatingButton />
-      <div className="bg-white dark:bg-black text-slate-900 dark:text-white min-h-screen flex flex-col w-full">
-        <main className="flex-1 w-full flex flex-col gap-0">
+      <div className="bg-black text-slate-900 dark:text-white min-h-screen flex flex-col w-full">
+        <main className="flex-1 bg-black w-full flex flex-col gap-0">
           {/* Todas las secciones incluyendo Hero360 renderizadas por orden */}
           {allSections
             .slice()

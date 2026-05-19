@@ -14,6 +14,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import admin from "./firebase-admin";
+import { getCatalogPricing } from "./pricing";
 
 const COLLECTION = "ordenes";
 
@@ -75,11 +76,9 @@ export async function crearOrden(orden: any) {
     const data = productDataMap.get(item.id);
     if (!data) continue;
 
-    const basePrice = Number(data.precio || 0);
-    const discount = Number(data.descuento || 0);
-    const hasDiscount = !isNaN(discount) && discount > 0 && discount < 100;
+    const { basePrice, discount, hasDiscount, finalPrice } = getCatalogPricing(data);
     const cantidad = Number(item.cantidad || 1);
-    const unitPrice = basePrice; // SIEMPRE el precio base, nunca aplicar descuento real
+    const unitPrice = finalPrice;
     const lineTotal = unitPrice * cantidad;
 
     // ⚠️ VALIDACIÓN: Stock disponible (anti-overselling)
@@ -114,6 +113,7 @@ export async function crearOrden(orden: any) {
       precioBase: basePrice,
       descuento: hasDiscount ? discount : 0,
       precioUnitario: unitPrice,
+      precioFinal: unitPrice,
       subtotal: lineTotal,
       bodegaId: data.bodegaId || "technothings",
       tiempoEntrega, // Tiempo de entrega en horas

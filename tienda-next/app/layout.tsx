@@ -9,6 +9,7 @@ import { ToastProvider } from "./context/ToastContext";
 import LayoutContentClient from "./components/LayoutContentClient";
 import { StructuredData } from "./components/StructuredData";
 import type { Metadata, Viewport } from "next";
+import { Source_Serif_4 } from "next/font/google";
 
 // ISR Global: Revalidar sitio cada 30 minutos
 // Optimiza regeneración de página principal y otros contenidos estáticos
@@ -16,6 +17,12 @@ export const revalidate = 1800;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://marcaestilo.com";
 const SITE_NAME = "Marca Estilo";
+const sourceSerif4 = Source_Serif_4({
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["normal", "italic"],
+  variable: "--font-source-serif-4",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -115,7 +122,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
+    <html lang="es" className={sourceSerif4.variable}>
       <head>
                 {/* Google Analytics gtag.js - insertado justo después de <head> */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-K1Q0MYDSKF"></script>

@@ -104,7 +104,7 @@ export default function GallerySection({
       {title && (
         <div className="mb-6 text-center">
           <h2
-            className="text-4xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight"
+            className="section-title"
             style={fieldStyles?.title || { color: "var(--text)" }}
           >
             {title}

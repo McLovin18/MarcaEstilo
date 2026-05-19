@@ -9,13 +9,23 @@
   --text: #0f172a;
   --textSecondary: #64748b;
   --border: #e2e8f0;
+  --font-body-family: Helvetica, Arial, sans-serif;
+  --font-body-style: normal;
+  --font-body-weight: 700;
+  --font-body-weight-bold: 1000;
+  --font-heading-family: var(--font-source-serif-4), "Source Serif 4", serif;
+  --font-heading-style: italic;
+  --font-heading-weight: 400;
+  --font-body-scale: 1.0;
+  --font-heading-scale: 1.35;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body-family);
+  --font-serif: var(--font-heading-family);
+  --font-mono: var(--font-body-family);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -45,7 +55,36 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body-family);
+  font-style: var(--font-body-style);
+  font-weight: var(--font-body-weight);
+  font-size: calc(1rem * var(--font-body-scale));
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-heading,
+.font-heading-xl {
+  font-family: var(--font-heading-family);
+  font-style: var(--font-heading-style);
+  font-weight: var(--font-heading-weight);
+}
+
+strong,
+b,
+.font-body-bold {
+  font-weight: var(--font-body-weight-bold);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 /* Animación 3D de rotación para skeletons */
@@ -70,3 +109,24 @@ body {
 }
 
 
+@keyframes loadingSteps {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  33% {
+    clip-path: inset(0 66% 0 0);
+  }
+
+  66% {
+    clip-path: inset(0 33% 0 0);
+  }
+
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.animate-loadingSteps {
+  animation: loadingSteps 0.9s steps(4) infinite;
+}

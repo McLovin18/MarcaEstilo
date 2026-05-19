@@ -147,7 +147,7 @@ export default function RelatedProductsCarousel({
             style={{
               gridTemplateColumns: `repeat(${effectiveItemsPerView}, ${effectiveItemsPerView === 1 ? "340px" : "280px"})`,
               width: effectiveItemsPerView === 1 ? "100%" : "fit-content",
-              gap: hasCarousel ? "0.75rem" : "0.75rem",
+              gap: hasCarousel ? "0.25rem" : "0.25rem",
               animation: isAnimating
                 ? `slideIn${animDir === "right" ? "Right" : "Left"} 0.28s ease`
                 : undefined,

@@ -104,11 +104,19 @@ export default function CartPage() {
 										<img src={p.imagenes?.[0] || "/no-image.png"} alt={p.nombre} className="w-20 h-20 object-contain rounded-lg border" />
 										<div className="flex-1">
 											<div className="font-bold text-lg">{p.nombre}</div>
-												{p.selectedTalla && p.selectedColor && (
-													<div className="text-xs text-slate-500 dark:text-slate-300 mt-1">
-														Talla {p.selectedTalla} · Color {p.selectedColor}
-													</div>
-												)}
+											{p.selectedTalla && p.selectedColor && (
+												<div className="text-xs text-slate-500 dark:text-slate-300 mt-1">
+													Talla {p.selectedTalla} · Color {p.selectedColor}
+												</div>
+											)}
+											{p.selectedVariations && p.variationAttributeIds && p.variationAttributeIds.length > 0 && (
+												<div className="text-xs text-slate-500 dark:text-slate-300 mt-1">
+													{p.variationAttributeIds.map((attrId: string) => {
+														const value = p.selectedVariations[attrId];
+														return value ? `${attrId}: ${value}` : null;
+													}).filter(Boolean).join(" · ")}
+												</div>
+											)}
 											<div className="text-slate-500 dark:text-slate-300">${p.precio}</div>
 											<div className="flex items-center gap-2 mt-2">
 												<label className="text-sm">Cantidad:</label>

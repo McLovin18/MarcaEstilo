@@ -1,98 +1,193 @@
 "use client";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import ProductoCard from "../components/ProductoCard";
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import type { Producto } from "../lib/productos-db";
-import { obtenerProductos, obtenerProductosPorCategoria, obtenerProductosPorSubcategoria, obtenerProductosPorSubsubcategoria } from "../lib/productos-db";
+import { obtenerProductos } from "../lib/productos-db";
+import {
+  mapCategorySnapshot,
+  sortCategoriasByOrder,
+  sameCategoryId,
+  productMatchesCategoria,
+  productMatchesSubcategoria,
+  productMatchesSubsubcategoria,
+} from "../lib/categorias-db";
 import { collection, query, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
-export default function ProductsByCategoryPage() {
+export default function ProductosPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const categoria = searchParams?.get("cat") || searchParams?.get("category") || "";
-  const subcategoria = searchParams?.get("subcat") || searchParams?.get("subcategory") || "";
-  const subsubcategoria = searchParams?.get("subsubcat") || searchParams?.get("subsubcategory") || "";
 
-   const [currentPage, setCurrentPage] = useState(1);
+  const categoriaFromUrl = (
+    searchParams?.get("cat") ||
+    searchParams?.get("category") ||
+    ""
+  ).trim();
+  const subcategoriaFromUrl = (
+    searchParams?.get("subcat") ||
+    searchParams?.get("subcategory") ||
+    searchParams?.get("sub") ||
+    ""
+  ).trim();
+  const subsubcategoriaFromUrl = (
+    searchParams?.get("subsubcat") ||
+    searchParams?.get("subsubcategory") ||
+    searchParams?.get("subsub") ||
+    ""
+  ).trim();
 
+  const [filterCat, setFilterCat] = useState(categoriaFromUrl);
+  const [filterSub, setFilterSub] = useState(subcategoriaFromUrl);
+  const [filterSubsub, setFilterSubsub] = useState(subsubcategoriaFromUrl);
+
+  useEffect(() => {
+    setFilterCat(categoriaFromUrl);
+    setFilterSub(subcategoriaFromUrl);
+    setFilterSubsub(subsubcategoriaFromUrl);
+  }, [categoriaFromUrl, subcategoriaFromUrl, subsubcategoriaFromUrl]);
+
+  const categoria = filterCat;
+  const subcategoria = filterSub;
+  const subsubcategoria = filterSubsub;
+
+  const [currentPage, setCurrentPage] = useState(1);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [precioMin, setPrecioMin] = useState("");
   const [precioMax, setPrecioMax] = useState("");
   const [orden, setOrden] = useState("price-high");
-  const [showPrecio, setShowPrecio] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [categorias, setCategorias] = useState<any[]>([]);
   const categoriesScrollRef = useRef<HTMLDivElement>(null);
 
-  // ── Fetch productos ───────────────────────────────
-  useEffect(() => {
-    async function fetchProductos() {
-      setLoading(true);
-      let prods = [];
-      if (subsubcategoria && subcategoria && categoria) {
-        prods = await obtenerProductosPorSubsubcategoria(subsubcategoria, subcategoria, categoria);
-      } else if (subcategoria && categoria) {
-        prods = await obtenerProductosPorSubcategoria(subcategoria, categoria);
-      } else if (categoria) {
-        prods = await obtenerProductosPorCategoria(categoria);
-      } else {
-        prods = await obtenerProductos();
-      }
-      setProductos(prods);
-      setLoading(false);
-    }
-    fetchProductos();
-  }, [categoria, subcategoria, subsubcategoria]);
-
-  // ── Cargar categorías ───────────────────────────
   useEffect(() => {
     const categoriasRef = collection(db, "categorias");
-    const q = query(categoriasRef);
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const cats = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setCategorias(cats.sort((a, b) => (a.orden || 0) - (b.orden || 0)));
+    const unsubscribe = onSnapshot(query(categoriasRef), (snapshot) => {
+      setCategorias(sortCategoriasByOrder(mapCategorySnapshot(snapshot.docs)));
     });
-
     return () => unsubscribe();
   }, []);
 
-  // ── Chequear autenticación ───────────────────────
+  const selectCategoria = useCallback(
+    (catId: string) => {
+      setFilterCat(catId);
+      setFilterSub("");
+      setFilterSubsub("");
+      const url = catId
+        ? `/productos?cat=${encodeURIComponent(catId)}`
+        : "/productos";
+      router.replace(url, { scroll: false });
+    },
+    [router]
+  );
+
+  const selectTodas = useCallback(() => {
+    setFilterCat("");
+    setFilterSub("");
+    setFilterSubsub("");
+    router.replace("/productos", { scroll: false });
+  }, [router]);
+
   useEffect(() => {
-    // Reemplaza con tu lógica real de autenticación
+    async function fetchProductos() {
+      setLoading(true);
+      try {
+        const all = await obtenerProductos();
+        let prods = all;
+
+        if (categoria && categorias.length > 0) {
+          prods = prods.filter((p) =>
+            productMatchesCategoria(p, categoria, categorias)
+          );
+          if (subcategoria) {
+            prods = prods.filter((p) =>
+              productMatchesSubcategoria(
+                p,
+                categoria,
+                subcategoria,
+                categorias
+              )
+            );
+          }
+          if (subsubcategoria) {
+            prods = prods.filter((p) =>
+              productMatchesSubsubcategoria(
+                p,
+                categoria,
+                subcategoria,
+                subsubcategoria,
+                categorias
+              )
+            );
+          }
+        } else if (categoria) {
+          const needle = categoria.trim().toLowerCase();
+          prods = all.filter(
+            (p) =>
+              String(p.categoria || "").trim().toLowerCase() === needle
+          );
+        }
+
+        setProductos(prods);
+      } catch (error) {
+        console.error("Error cargando productos:", error);
+        setProductos([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProductos();
+  }, [categoria, subcategoria, subsubcategoria, categorias]);
+
+  useEffect(() => {
     const loggedIn = Boolean(localStorage.getItem("token"));
     setIsAuthenticated(loggedIn);
   }, []);
 
-  // ── Filtrado y orden ─────────────────────────────
   const productosFiltrados = useMemo(() => {
     return productos
       .filter((p: any) => {
-        // Validación estricta de jerarquía
-        if (subsubcategoria && subcategoria && categoria) {
+        if (categoria && categorias.length > 0) {
+          if (!productMatchesCategoria(p, categoria, categorias)) return false;
+        } else if (categoria && !sameCategoryId(p.categoria, categoria)) {
+          return false;
+        }
+
+        if (subcategoria && categorias.length > 0) {
           if (
-            p.categoria !== categoria ||
-            p.subcategoria !== subcategoria ||
-            p.subsubcategoria !== subsubcategoria
+            !productMatchesSubcategoria(
+              p,
+              categoria,
+              subcategoria,
+              categorias
+            )
           ) {
             return false;
           }
-        } else if (subcategoria && categoria) {
+        } else if (subcategoria && !sameCategoryId(p.subcategoria, subcategoria)) {
+          return false;
+        }
+
+        if (subsubcategoria && categorias.length > 0) {
           if (
-            p.categoria !== categoria ||
-            p.subcategoria !== subcategoria
+            !productMatchesSubsubcategoria(
+              p,
+              categoria,
+              subcategoria,
+              subsubcategoria,
+              categorias
+            )
           ) {
             return false;
           }
-        } else if (categoria) {
-          if (p.categoria !== categoria) {
-            return false;
-          }
+        } else if (
+          subsubcategoria &&
+          !sameCategoryId(p.subsubcategoria, subsubcategoria)
+        ) {
+          return false;
         }
 
         const texto = search.toLowerCase().trim();
@@ -103,7 +198,9 @@ export default function ProductsByCategoryPage() {
 
         const base = Number(p.precio || 0);
         const disc = Number(p.descuento || 0);
-        const finalPrice = disc > 0 && disc < 100 ? base * (1 - disc / 100) : base;
+        const finalPrice =
+          disc > 0 && disc < 100 ? base * (1 - disc / 100) : base;
+
         const min = precioMin ? parseFloat(precioMin) : null;
         const max = precioMax ? parseFloat(precioMax) : null;
         const matchMin = min === null || finalPrice >= min;
@@ -117,40 +214,53 @@ export default function ProductsByCategoryPage() {
           const d = Number(p.descuento || 0);
           return d > 0 && d < 100 ? base * (1 - d / 100) : base;
         };
+
         if (orden === "price-low") return fp(a) - fp(b);
         if (orden === "price-high") return fp(b) - fp(a);
         if (a.createdAt && b.createdAt) return b.createdAt - a.createdAt;
         return 0;
       });
-  }, [productos, categoria, subcategoria, subsubcategoria, search, precioMin, precioMax, orden]);
+  }, [
+    productos,
+    categoria,
+    subcategoria,
+    subsubcategoria,
+    categorias,
+    search,
+    precioMin,
+    precioMax,
+    orden,
+  ]);
 
-
-
-    // --- Paginación ---
-  // Paginación responsive: 10 productos en móvil, cols*3 en desktop
   const getProductsPerPage = () => {
-    if (typeof window !== 'undefined') {
-      if (window.innerWidth < 640) return 10; // móvil
-      if (window.innerWidth >= 1024) return 4 * 3; // lg: 4 cols x 3 filas
-      if (window.innerWidth >= 768) return 3 * 3; // md: 3 cols x 3 filas
-      if (window.innerWidth >= 640) return 2 * 3; // sm: 2 cols x 3 filas
+    if (typeof window !== "undefined") {
+      if (window.innerWidth < 640) return 10;
+      if (window.innerWidth >= 1024) return 12;
+      if (window.innerWidth >= 768) return 9;
+      if (window.innerWidth >= 640) return 6;
     }
     return 10;
   };
   const [productsPerPage, setProductsPerPage] = useState(getProductsPerPage());
+
   useEffect(() => {
     function handleResize() {
       setProductsPerPage(getProductsPerPage());
     }
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
     handleResize();
-    return () => window.removeEventListener('resize', handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
+
   const totalPages = Math.ceil(productosFiltrados.length / productsPerPage);
-  const paginatedProducts = productosFiltrados.slice((currentPage - 1) * productsPerPage, currentPage * productsPerPage);
+  const paginatedProducts = productosFiltrados.slice(
+    (currentPage - 1) * productsPerPage,
+    currentPage * productsPerPage
+  );
 
-
-
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [productosFiltrados.length, categoria, subcategoria, subsubcategoria, search, precioMin, precioMax]);
 
   const hasFilters = !!(search || precioMin || precioMax || orden !== "newest");
 
@@ -161,46 +271,15 @@ export default function ProductsByCategoryPage() {
     setOrden("newest");
   }, []);
 
-  const ordenOpciones = [
-    { value: "newest",     label: "Más nuevos"    },
-    { value: "price-low",  label: "Menor precio"  },
-    { value: "price-high", label: "Mayor precio"  },
-  ];
-
-  const chip = (active: boolean) =>
-    `flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all cursor-pointer select-none whitespace-nowrap ${
-      active
-        ? "bg-#E0A11A border-#E0A11A text-white shadow-sm"
-        : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/60 hover:border-#e8c862 dark:hover:border-purple-500 hover:text-#E0A11A dark:hover:text-#f5d890"
-    }`;
-
   const inputCls =
     "px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-#e8c862 transition-all";
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-black text-slate-900 dark:text-white transition-colors">
-
+    <div className="min-h-screen flex flex-col bg-black dark:bg-black text-slate-900 dark:text-white transition-colors">
       <main className="max-w-7xl mx-auto w-full px-3 sm:px-5 py-6 sm:py-15 flex-1">
-
-        {/* ── Cabecera ─────────────────────────────────────────── */}
-        {(categoria || subcategoria) && (
-          <div className="mb-4">
-            <h1 className="text-xl sm:text-2xl font-bold leading-tight"></h1>
-            {subcategoria && categoria && (
-              <p className="text-xs text-slate-400 dark:text-white/30 mt-0.5">
-                {categoria}{subsubcategoria ? ` › ${subsubcategoria}` : ""}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* ── Filtros horizontales ─────────────────────────────── */}
-        <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3.5 mb-5 space-y-3">
-
-          {/* Fila 1: buscador + precio + limpiar */}
+        <div className="bg-white dark:bg-white/3 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3.5 mb-5 space-y-3">
           <div className="flex flex-wrap gap-2 items-center">
-            {/* Search */}
-            <div className="relative flex-1 min-w-[160px] max-w-sm">
+            <div className="relative flex-1 min-w-40 max-w-sm">
               <span className="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/30 text-[17px] pointer-events-none">
                 search
               </span>
@@ -220,89 +299,19 @@ export default function ProductsByCategoryPage() {
                 </button>
               )}
             </div>
-
-            {/* Toggle precio */}
-            <button
-              onClick={() => setShowPrecio((v) => !v)}
-              className={chip(showPrecio || !!(precioMin || precioMax))}
-            >
-              <span className="material-icons-round text-[15px]">attach_money</span>
-              Precio
-              {(precioMin || precioMax) && !showPrecio && (
-                <span className="w-1.5 h-1.5 rounded-full bg-#f5d890" />
-              )}
-            </button>
-
-            {/* Limpiar */}
-            {hasFilters && (
-              <button
-                onClick={clearFilters}
-                  className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              
-                <span className="material-icons-round text-[14px]">close</span>
-                Limpiar
-              </button>
-            )}
-          </div>
-
-          {/* Precio expandible */}
-          {showPrecio && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-slate-500 dark:text-white/40 font-medium">Rango:</span>
-              <input
-                type="number"
-                placeholder="Mín"
-                value={precioMin}
-                onChange={(e) => setPrecioMin(e.target.value)}
-                min={0}
-                className={`${inputCls} w-24`}
-              />
-              <span className="text-slate-300 dark:text-white/20">—</span>
-              <input
-                type="number"
-                placeholder="Máx"
-                value={precioMax}
-                onChange={(e) => setPrecioMax(e.target.value)}
-                min={0}
-                className={`${inputCls} w-24`}
-              />
-            </div>
-          )}
-
-          {/* Fila 2: orden + conteo */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-slate-400 dark:text-white/30 font-medium">Ordenar:</span>
-            {ordenOpciones.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setOrden(opt.value)}
-                className={chip(orden === opt.value)}
-              >
-                {opt.label}
-              </button>
-            ))}
-            {!loading && (
-              <span className="ml-auto text-xs text-slate-400 dark:text-white/75 tabular-nums">
-                {productosFiltrados.length}{" "}
-                {productosFiltrados.length === 1 ? "resultado" : "resultados"}
-              </span>
-            )}
           </div>
         </div>
 
-        {/* ── Categorías Filter - Scroll Horizontal ────────────── */}
         {categorias.length > 0 && (
           <div className="mb-6 overflow-x-auto pb-2" ref={categoriesScrollRef}>
             <div className="flex gap-2 min-w-max">
               <button
-                onClick={() => {
-                  // Al hacer click, navegar sin filtro de categoría
-                  window.location.href = `/productos`;
-                }}
+                type="button"
+                onClick={selectTodas}
                 className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
                   !categoria
                     ? "shadow-md scale-105 bg-[#E0A11A] text-white"
-                    : "bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
+                    : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
                 }`}
               >
                 Todas
@@ -310,13 +319,12 @@ export default function ProductsByCategoryPage() {
               {categorias.map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => {
-                    window.location.href = `/productos?cat=${cat.id}`;
-                  }}
+                  type="button"
+                  onClick={() => selectCategoria(cat.id)}
                   className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
-                    categoria === cat.id
+                    sameCategoryId(categoria, cat.id)
                       ? "shadow-md scale-105 bg-[#E0A11A] text-white"
-                      : "bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
+                      : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
                   }`}
                 >
                   {cat.icono && <span className="mr-1">🏷️</span>}
@@ -327,13 +335,12 @@ export default function ProductsByCategoryPage() {
           </div>
         )}
 
-        {/* ── Grid de productos ─────────────────────────────────── */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
             {Array.from({ length: 10 }).map((_, i) => (
               <ProductoCard
-                key={i} // skeleton, solo necesita key única
-                producto={{} as Producto} // placeholder vacío
+                key={i}
+                producto={{} as Producto}
                 showCart
                 showEye
                 showFav={false}
@@ -353,8 +360,10 @@ export default function ProductsByCategoryPage() {
             </div>
             <div>
               <p className="font-semibold text-slate-700 dark:text-white/80">Sin resultados</p>
-              <p className="text-sm text-slate-400 dark:text-white/30 mt-1 max-w-[240px]">
-                Prueba otros términos o ajusta los filtros de precio
+              <p className="text-sm text-slate-400 dark:text-white/30 mt-1 max-w-60">
+                {categoria
+                  ? `No hay productos en "${categorias.find((c) => sameCategoryId(c.id, categoria))?.nombre || "esta categoría"}".`
+                  : "Prueba otros términos o ajusta los filtros de precio"}
               </p>
             </div>
             {hasFilters && (
@@ -368,7 +377,7 @@ export default function ProductsByCategoryPage() {
           </div>
         ) : (
           <>
-            <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4`}>
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-5 animate-in fade-in duration-700">
               {paginatedProducts.map((p: any) => (
                 <ProductoCard
                   key={p.id}
@@ -383,11 +392,10 @@ export default function ProductsByCategoryPage() {
                 />
               ))}
             </div>
-            {/* Paginación */}
             {totalPages > 1 && (
               <div className="flex flex-wrap justify-center items-center gap-2 mt-8 select-none w-full">
                 <button
-                  className="px-3 py-1.5 rounded border text-xs font-medium bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/60 hover:border-#e8c862 dark:hover:border-purple-500 hover:text-#E0A11A dark:hover:text-#f5d890 transition-all disabled:opacity-40"
+                  className="px-3 py-1.5 rounded border text-xs font-medium bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/60 hover:border-#e8c862 transition-all disabled:opacity-40"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                 >
@@ -396,14 +404,14 @@ export default function ProductsByCategoryPage() {
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
                   <button
                     key={n}
-                    className={`px-3 py-1.5 rounded border text-xs font-medium transition-all ${currentPage === n ? 'bg-[#E0A11A] border-#E0A11A text-white shadow-sm' : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/60 hover:border-#e8c862 dark:hover:border-purple-500 hover:text-#E0A11A dark:hover:text-#f5d890'}`}
+                    className={`px-3 py-1.5 rounded border text-xs font-medium transition-all ${currentPage === n ? "bg-[#E0A11A] border-#E0A11A text-white shadow-sm" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/60 hover:border-#e8c862"}`}
                     onClick={() => setCurrentPage(n)}
                   >
                     {n}
                   </button>
                 ))}
                 <button
-                  className="px-3 py-1.5 rounded border text-xs font-medium bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/60 hover:border-#e8c862 dark:hover:border-purple-500 hover:text-#E0A11A dark:hover:text-#f5d890 transition-all disabled:opacity-40"
+                  className="px-3 py-1.5 rounded border text-xs font-medium bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/60 hover:border-#e8c862 transition-all disabled:opacity-40"
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
                 >
@@ -413,9 +421,7 @@ export default function ProductsByCategoryPage() {
             )}
           </>
         )}
-
       </main>
     </div>
   );
 }
-

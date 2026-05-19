@@ -7,12 +7,18 @@ import ProductoCard from "../components/ProductoCard";
 import { Loading3DIcon } from "../components/Loading3DIcon";
 import { obtenerProductos } from "../lib/productos-db";
 import { productMatches } from "../lib/search-utils";
+import {
+  mapCategorySnapshot,
+  sortCategoriasByOrder,
+  sameCategoryId,
+} from "../lib/categorias-db";
 import { collection, query, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
 export default function SearchResultsPage() {
   const searchParams = useSearchParams();
   const queryParam = searchParams?.get("query") || "";
+  const categoriaId = (searchParams?.get("cat") || searchParams?.get("category") || "").trim();
   const isLogger = useUser();
 
   const [productos, setProductos] = useState([]);
@@ -46,11 +52,7 @@ export default function SearchResultsPage() {
     const q = query(categoriasRef);
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const cats = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setCategorias(cats.sort((a, b) => (a.orden || 0) - (b.orden || 0)));
+      setCategorias(sortCategoriasByOrder(mapCategorySnapshot(snapshot.docs)));
     });
 
     return () => unsubscribe();
@@ -62,6 +64,8 @@ export default function SearchResultsPage() {
       .filter(p => {
         const coincideTexto = productMatches(p, search);
         const coincideMarca = !marca || p.marca === marca;
+        const coincideCategoria =
+          !categoriaId || sameCategoryId(p.categoria, categoriaId);
 
         const basePrice = Number(p.precio || 0);
         const discount = Number(p.descuento || 0);
@@ -72,7 +76,7 @@ export default function SearchResultsPage() {
         const matchMin = min === null || finalPrice >= min;
         const matchMax = max === null || finalPrice <= max;
 
-        return coincideTexto && coincideMarca && matchMin && matchMax;
+        return coincideTexto && coincideMarca && coincideCategoria && matchMin && matchMax;
       })
       .sort((a, b) => {
         const getFinalPrice = (p: any) => {
@@ -85,7 +89,7 @@ export default function SearchResultsPage() {
         if (a.createdAt && b.createdAt) return b.createdAt - a.createdAt;
         return 0;
       });
-  }, [productos, search, precioMin, precioMax, orden, marca]);
+  }, [productos, search, precioMin, precioMax, orden, marca, categoriaId]);
 
 
 
@@ -124,7 +128,7 @@ export default function SearchResultsPage() {
   }, []);
 
   const inputClass =
-    "w-full px-3 py-1.5 sm:py-2.5 rounded-xl border border-slate-200 dark:border-white/20 bg-white dark:bg-gray-900 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/50 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-#e8c862 transition-all";
+    "w-[400px] px-3 py-1.5 sm:py-2.5 rounded-xl border border-slate-200 dark:border-white/20 bg-white dark:bg-gray-900 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/50 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-#e8c862 transition-all";
 
   // 🔥 FilterPanel memoizado para no perder foco
   const FilterPanel = useMemo(() => (
@@ -140,90 +144,53 @@ export default function SearchResultsPage() {
         />
       </div>
 
-      <div className="hidden md:block">
-        <label className="text-xs font-semibold mb-1 sm:mb-2 block text-slate-700 dark:text-white">Rango de precio</label>
-        <div className="grid grid-cols-2 gap-2">
-          <input
-            type="number"
-            placeholder="Mín"
-            className={inputClass}
-            value={precioMin}
-            onChange={e => setPrecioMin(e.target.value)}
-          />
-          <input
-            type="number"
-            placeholder="Máx"
-            className={inputClass}
-            value={precioMax}
-            onChange={e => setPrecioMax(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="text-xs font-semibold mb-1 sm:mb-2 block text-slate-700 dark:text-white">Marca</label>
-        <select className={inputClass} value={marca} onChange={e => setMarca(e.target.value)}>
-          <option value="">Todas las marcas</option>
-          {marcas.map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
-      </div>
-
-      <div>
-        <label className="text-xs font-semibold mb-1 sm:mb-2 block text-slate-700 dark:text-white">Ordenar</label>
-        <select className={inputClass} value={orden} onChange={e => setOrden(e.target.value)}>
-          <option value="newest">Más nuevos</option>
-          <option value="price-low">Menor precio</option>
-          <option value="price-high">Mayor precio</option>
-        </select>
-      </div>
-
-      {hasFilters && (
-        <button
-          onClick={clearFilters}
-          className="w-full py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm text-red-500 border border-red-300 dark:border-red-500"
-        >
-          Limpiar filtros
-        </button>
-      )}
     </div>
-  ), [search, precioMin, precioMax, marca, orden, hasFilters, clearFilters]);
+  ), [search]);
 
   return (
-    <div className=" min-h-screen flex flex-col mt-2 bg-white dark:bg-black">
+    <div className=" min-h-screen flex flex-col bg-black dark:bg-black">
       <BottomBarPublic/>
 
-      <main className="max-w-7xl mx-auto w-full px-4 py-6 sm:py-15 flex-1">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <aside className="lg:col-span-1">{FilterPanel}</aside>
+      <main className="max-w-350 mx-auto px-3 sm:px-5 py-8 flex-1">
+        <div className="mb-6">
+          {FilterPanel}
+        </div>
 
-          <section className="lg:col-span-3">
-            {/* ── Categorías Filter - Scroll Horizontal ────────────── */}
-            {categorias.length > 0 && (
-              <div className="mb-6 overflow-x-auto pb-2" ref={categoriesScrollRef}>
-                <div className="flex gap-2 min-w-max">
-                  <button
-                    onClick={() => {
-                      window.location.href = `/search-results?query=${encodeURIComponent(queryParam)}`;
-                    }}
-                    className="px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
-                  >
-                    Todas
-                  </button>
-                  {categorias.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => {
-                        window.location.href = `/search-results?query=${encodeURIComponent(queryParam)}&cat=${cat.id}`;
-                      }}
-                      className="px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
-                    >
-                      {cat.icono && <span className="mr-1">🏷️</span>}
-                      {cat.nombre}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+        {/*Buscador de productos */}
+        {categorias.length > 0 && (
+          <div className="mb-6 overflow-x-auto pb-2" ref={categoriesScrollRef}>
+            <div className="flex gap-2 min-w-max">
+              <button
+                onClick={() => {
+                   window.location.href = `/search-results?query=${encodeURIComponent(queryParam)}`;
+                }}
+                className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
+                  !categoriaId
+                    ? "shadow-md scale-105 bg-[#E0A11A] text-white"
+                    : "bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
+                }`}
+              >
+                Todas
+              </button>
+              {categorias.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    window.location.href = `/search-results?query=${encodeURIComponent(queryParam)}&cat=${encodeURIComponent(cat.id)}`;
+                  }}
+                  className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
+                    categoriaId === cat.id
+                      ? "shadow-md scale-105 bg-[#E0A11A] text-white"
+                      : "bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
+                  }`}
+                >
+                  {cat.icono && <span className="mr-1">🏷️</span>}
+                  {cat.nombre}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
             {loading ? (
               <div className="flex flex-col items-center justify-center py-24">
@@ -233,8 +200,7 @@ export default function SearchResultsPage() {
               <p className="text-slate-700 dark:text-white/50">No hay resultados</p>
             ) : (
           <>
-            <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-in fade-in duration-700`}>
-              {paginatedProducts.map((p: any) => (
+              <div className="grid grid-cols-2 gap-2 lg:grid-cols-5 animate-in fade-in duration-700">              {paginatedProducts.map((p: any) => (
                 <ProductoCard
                   key={p.id}
                   producto={p}
@@ -274,8 +240,6 @@ export default function SearchResultsPage() {
             )}
           </>
             )}
-          </section>
-        </div>
       </main>
     </div>
   );

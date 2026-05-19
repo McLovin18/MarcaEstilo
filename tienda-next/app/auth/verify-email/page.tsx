@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { applyActionCode, getAuth } from "firebase/auth";
-import { useTheme } from "next-themes";
 import { Check, AlertCircle, Loader } from "lucide-react";
 
 type VerificationState = "loading" | "success" | "expired" | "error";
@@ -11,8 +10,6 @@ type VerificationState = "loading" | "success" | "expired" | "error";
 export default function VerifyEmailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { theme } = useTheme();
-  
   const [state, setState] = useState<VerificationState>("loading");
   const [message, setMessage] = useState("");
 
@@ -60,32 +57,23 @@ export default function VerifyEmailPage() {
     verifyEmail();
   }, [searchParams, router]);
 
-  // Detectar tema del sistema si no está configurado
-  const isDark =
-    theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-
-  const bgClass = isDark ? "bg-gray-900" : "bg-white";
-  const textClass = isDark ? "text-gray-100" : "text-gray-900";
-  const cardBgClass = isDark ? "bg-gray-800" : "bg-gray-50";
-  const borderClass = isDark ? "border-gray-700" : "border-gray-200";
-
   return (
     <div
-      className={`flex items-center justify-center min-h-screen ${bgClass}`}
+      className="flex items-center justify-center min-h-screen bg-white text-gray-900"
       style={{ transition: "background-color 0.3s ease" }}
     >
       <div
-        className={`w-full max-w-md p-6 rounded-lg border ${cardBgClass} ${borderClass}`}
+        className="w-full max-w-md p-6 rounded-lg border bg-gray-50 border-gray-200"
         style={{ transition: "all 0.3s ease" }}
       >
         {/* Loading State */}
         {state === "loading" && (
           <div className="flex flex-col items-center gap-4">
             <Loader className="w-12 h-12 text-purple-600 animate-spin" />
-            <h1 className={`text-xl font-bold text-center ${textClass}`}>
+            <h1 className="text-xl font-bold text-center text-gray-900">
               Verificando email...
             </h1>
-            <p className={isDark ? "text-gray-400" : "text-gray-600"}>
+            <p className="text-gray-600">
               Por favor, espera mientras procesamos tu verificación.
             </p>
           </div>
@@ -97,13 +85,13 @@ export default function VerifyEmailPage() {
             <div className="p-2 rounded-full bg-green-100">
               <Check className="w-8 h-8 text-green-600" />
             </div>
-            <h1 className={`text-2xl font-bold text-center ${textClass}`}>
+            <h1 className="text-2xl font-bold text-center text-gray-900">
               ¡Email Verificado!
             </h1>
-            <p className={isDark ? "text-gray-400" : "text-gray-600"}>
+            <p className="text-gray-600">
               {message}
             </p>
-            <p className={`text-sm text-center ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+            <p className="text-sm text-center text-gray-500">
               Redirigiendo a login en 2 segundos...
             </p>
           </div>
@@ -115,10 +103,10 @@ export default function VerifyEmailPage() {
             <div className="p-2 rounded-full bg-yellow-100">
               <AlertCircle className="w-8 h-8 text-yellow-600" />
             </div>
-            <h1 className={`text-xl font-bold text-center ${textClass}`}>
+            <h1 className="text-xl font-bold text-center text-gray-900">
               Link Expirado
             </h1>
-            <p className={isDark ? "text-gray-400" : "text-gray-600"}>
+            <p className="text-gray-600">
               {message}
             </p>
             <button
@@ -136,10 +124,10 @@ export default function VerifyEmailPage() {
             <div className="p-2 rounded-full bg-red-100">
               <AlertCircle className="w-8 h-8 text-red-600" />
             </div>
-            <h1 className={`text-xl font-bold text-center ${textClass}`}>
+            <h1 className="text-xl font-bold text-center text-gray-900">
               Error en Verificación
             </h1>
-            <p className={isDark ? "text-gray-400" : "text-gray-600"}>
+            <p className="text-gray-600">
               {message}
             </p>
             <button

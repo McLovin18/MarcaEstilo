@@ -1,9 +1,11 @@
 "use client";
 
 import { obtenerProductoPorId, obtenerProductosPorCategoria, obtenerProductosPorSubcategoria, obtenerProductosPorSubsubcategoria } from "../lib/productos-db";
+import { obtenerAtributos } from "../lib/atributos-db";
 import { Loading3DIcon } from "../components/Loading3DIcon";
 import ProductoCard from "../components/ProductoCard";
 import RelatedProductsCarousel from "../components/RelatedProductsCarousel";
+import VariationsManager from "../components/VariationsManager";
 import React, { useState, useEffect } from "react";
 import { ProductReview } from "../lib/reviews-types";
 import { useUser } from "../context/UserContext";
@@ -12,6 +14,7 @@ import { useSearchParams } from "next/navigation";
 import BottomBarPublic from "../components/BottomBarPublic";
 import dynamic from "next/dynamic";
 import { getCartItemKey } from "../context/userLocalStorage";
+import { getCatalogPricing } from "../lib/pricing";
 
 const Markdown = dynamic(() => import("../components/Markdown"), { ssr: false });
 
@@ -29,8 +32,10 @@ export default function ProductDetailPage({ params }) {
   const [cantidad, setCantidad] = useState(1);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"caracteristicas" | "resenas" | null>("caracteristicas");
-  const [selectedTalla, setSelectedTalla] = useState("");
-  const [selectedColor, setSelectedColor] = useState("");
+  const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
+  const variationStorageKey = `product_variations_${producto?.id}`;
+  const [currentStock, setCurrentStock] = useState(0);
+  const [atributos, setAtributos] = useState<Record<string, string>>({}); // Mapeo de ID -> nombre
 
   const {
     isLogged, user, isAdmin,
@@ -41,6 +46,54 @@ export default function ProductDetailPage({ params }) {
   const { showToast } = useToast();
 
   const searchParams = useSearchParams();
+
+  // Cargar atributos disponibles
+  useEffect(() => {
+    obtenerAtributos()
+      .then((attrs) => {
+        const mapping: Record<string, string> = {};
+        attrs.forEach((attr: any) => {
+          mapping[attr.id] = attr.nombre;
+        });
+        setAtributos(mapping);
+      })
+      .catch((err) => console.error("Error cargando atributos:", err));
+  }, []);
+
+
+
+  useEffect(() => {
+    if (!producto?.id) return;
+
+    try {
+      const saved = localStorage.getItem(variationStorageKey);
+
+      if (saved) {
+        const parsed = JSON.parse(saved);
+
+        setSelectedVariations(parsed);
+      }
+    } catch (err) {
+      console.error("Error cargando variaciones guardadas:", err);
+    }
+  }, [producto?.id]);
+
+
+
+  useEffect(() => {
+  if (!producto?.id) return;
+
+  try {
+    localStorage.setItem(
+      variationStorageKey,
+      JSON.stringify(selectedVariations)
+    );
+  } catch (err) {
+    console.error("Error guardando variaciones:", err);
+  }
+}, [selectedVariations, producto?.id]);
+
+
 
   useEffect(() => {
     async function fetchProducto() {
@@ -150,73 +203,88 @@ export default function ProductDetailPage({ params }) {
   }
 
   // ── Derivados ────────────────────────────────────────────────────────────
-  const isCamiseta = producto?.isCamiseta || false;
+  const hasVariations = producto?.hasVariations || producto?.isCamiseta || false;
+  const variationAttributeIds = producto?.variationAttributeIds || [];
   const stockVariants = producto?.stockVariants || [];
   
-  // Obtener tallas disponibles (todas)
-  const talasDisponibles = Array.from(new Set(stockVariants.map(v => v.talla)));
-  
-  // Obtener colores disponibles SOLO para la talla seleccionada
-  const coloresDisponibles = selectedTalla
-    ? Array.from(new Set(stockVariants.filter(v => v.talla === selectedTalla).map(v => v.color)))
-    : [];
-  
-  // Calcular stock según selección
-  let maxCantidad = 0;
-  if (isCamiseta && selectedTalla && selectedColor) {
-    const variant = stockVariants.find(v => v.talla === selectedTalla && v.color === selectedColor);
-    maxCantidad = variant?.cantidad || 0;
-  } else if (isCamiseta && !selectedTalla && !selectedColor) {
-    // Si no ha seleccionado, total de todos los variants
-    maxCantidad = stockVariants.reduce((sum, v) => sum + v.cantidad, 0);
-  } else if (!isCamiseta) {
-    maxCantidad = producto?.stock || 0;
-  }
+  // Calcular maxCantidad basado en currentStock (que es actualizado por VariationsManager)
+  const maxCantidad = hasVariations ? currentStock : (producto?.stock || 0);
   
   const isFav = favoritos?.some((p) => p.id === producto?.id);
-  const currentCartKey = isCamiseta && selectedTalla && selectedColor
-    ? `${producto.id}:${selectedTalla}:${selectedColor}`
-    : producto.id;
-  const inCart = carrito?.some((p) => getCartItemKey(p) === currentCartKey);
+  
+  // Generar cartKey basado en variaciones seleccionadas
+  const generateCartKey = () => {
+    if (!hasVariations) return producto.id;
+    if (variationAttributeIds.length === 0) return producto.id;
+    
+    // Verificar que todas las variaciones estén seleccionadas
+    const allSelected = variationAttributeIds.every(attrId => selectedVariations[attrId]);
+    if (!allSelected) return null;
+    
+    // Generar key con valores de variaciones
+    const values = variationAttributeIds.map(attrId => selectedVariations[attrId]).join(":");
+    return `${producto.id}:${values}`;
+  };
+  
+  const currentCartKey = generateCartKey();
+  const inCart = currentCartKey ? carrito?.some((p) => getCartItemKey(p) === currentCartKey) : false;
   
   // Detectar si es un producto de ensambles (subcategoría 1775935523162)
   const isEnsamblesProduct = producto.subcategoria === "1775935523162";
   const imageContainerWidthClass = isEnsamblesProduct ? "md:w-[60%]" : "md:w-[44%]";
 
-  const basePrice = isCamiseta && selectedTalla && selectedColor
-    ? (stockVariants.find(v => v.talla === selectedTalla && v.color === selectedColor)?.precio ?? Number(producto.precio || 0))
-    : Number(producto.precio || 0);
-  const discount = Number(producto.descuento || 0);
-  const hasDiscount = !isNaN(discount) && discount > 0 && discount < 100;
-  const finalPrice = basePrice;
-  const fakeOldPrice = hasDiscount ? Math.round(basePrice / (1 - discount / 100)) : null;
+  // Obtener precio base - soportar variaciones dinámicas
+  const basePrice = (() => {
+    if (!hasVariations) return Number(producto.precio || 0);
+    
+    if (variationAttributeIds.length === 0) return Number(producto.precio || 0);
+    
+    // Verificar que todas las variaciones estén seleccionadas
+    const allSelected = variationAttributeIds.every(attrId => selectedVariations[attrId]);
+    if (!allSelected) return Number(producto.precio || 0);
+    
+    // Encontrar variante que coincida
+    const matchingVariant = stockVariants.find((variant) => {
+      const attrs = variant.attributes || {};
+      return variationAttributeIds.every(
+        (attrId) => attrs[attrId] === selectedVariations[attrId]
+      );
+    });
+    
+    return matchingVariant?.precio ?? Number(producto.precio || 0);
+  })();
+  
+  const { discount, hasDiscount, fakeOldPrice, finalPrice } = getCatalogPricing({
+    ...producto,
+    precio: basePrice,
+  });
 
   const avgRating = reviews.length > 0
     ? reviews.reduce((a, b) => a + b.rating, 0) / reviews.length
     : 0;
 
   const handleAddCart = () => {
-    // Validar que sea una camiseta y tenga talla/color seleccionados
-    if (isCamiseta && (!selectedTalla || !selectedColor)) {
-      showToast("Por favor selecciona talla y color", "error");
-      return;
+    // Validar variaciones si el producto las tiene
+    if (hasVariations && variationAttributeIds.length > 0) {
+      const allSelected = variationAttributeIds.every(attrId => selectedVariations[attrId]);
+      if (!allSelected) {
+        showToast("Por favor selecciona todas las opciones", "error");
+        return;
+      }
     }
 
-    const variant = isCamiseta
-      ? stockVariants.find(v => v.talla === selectedTalla && v.color === selectedColor)
-      : null;
-    
-    if (inCart) {
+    if (inCart && currentCartKey) {
       removeCarrito(currentCartKey);
       showToast("Eliminado del carrito", "info");
-    } else {
+    } else if (currentCartKey) {
       const cartItem = {
         ...producto,
         cantidad,
-        stock: isCamiseta ? (variant?.cantidad || 0) : (producto?.stock || 0),
-        ...(isCamiseta && variant ? { variantStock: variant.cantidad } : {}),
-        ...(isCamiseta && { selectedTalla, selectedColor }),
-        ...(isCamiseta ? { cartKey: currentCartKey } : { cartKey: producto.id }),
+        precioBase: basePrice,
+        precioUnitario: finalPrice,
+        stock: maxCantidad,
+        ...(hasVariations && { selectedVariations, variationAttributeIds }),
+        cartKey: currentCartKey,
       };
       addCarrito(cartItem);
       showToast(`${producto.nombre} añadido al carrito`, "success");
@@ -447,66 +515,41 @@ export default function ProductDetailPage({ params }) {
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400 dark:text-white/30 font-medium">Disponibilidad:</span>
               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                isCamiseta && selectedTalla && !selectedColor
+                hasVariations && variationAttributeIds.length > 0 && !variationAttributeIds.every(attrId => selectedVariations[attrId])
                   ? "bg-blue-50 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400"
                   : maxCantidad > 0
                   ? "bg-green-50 dark:bg-green-400/10 text-green-700 dark:text-green-400"
                   : "bg-red-50 dark:bg-red-400/10 text-red-600 dark:text-red-400"
               }`}>
-                {isCamiseta && selectedTalla && !selectedColor
-                  ? "Seleccione color para ver stock"
+                {hasVariations && variationAttributeIds.length > 0 && !variationAttributeIds.every(attrId => selectedVariations[attrId])
+                  ? "Selecciona opciones para ver stock"
                   : maxCantidad > 0
                   ? `${maxCantidad} en stock`
                   : "Sin stock"}
               </span>
             </div>
 
-            {/* Selectors de talla y color para camisetas */}
-            {isCamiseta && (
-              <div className="space-y-3 border-t border-slate-100 dark:border-white/[0.06] pt-4">
-                {/* Talla */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs text-slate-400 dark:text-white/30 font-medium">Talla:</label>
-                  <select
-                    value={selectedTalla}
-                    onChange={(e) => {
-                      setSelectedTalla(e.target.value);
-                      setSelectedColor(""); // Reset color cuando cambia talla
-                      setCantidad(1); // Reset cantidad cuando cambia talla
-                    }}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-slate-400 dark:focus:border-white/30"
-                  >
-                    <option value="">Selecciona talla</option>
-                    {talasDisponibles.map((talla) => (
-                      <option key={talla} value={talla}>
-                        {talla}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            {/* Selectors de variaciones */}
+            {hasVariations && variationAttributeIds.length > 0 && (
+              <VariationsManager
+                stockVariants={stockVariants}
+                variationAttributeIds={variationAttributeIds}
+                attributeNames={atributos}
+                selectedVariations={selectedVariations}
+                onVariationChange={(attrId, value) => {
+                  setSelectedVariations(prev => {
+                    const updated = {
+                      ...prev,
+                      [attrId]: value
+                    };
 
-                {/* Color - Solo mostrar si hay talla seleccionada */}
-                {selectedTalla && (
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs text-slate-400 dark:text-white/30 font-medium">Color:</label>
-                    <select
-                      value={selectedColor}
-                      onChange={(e) => {
-                        setSelectedColor(e.target.value);
-                        setCantidad(1); // Reset cantidad cuando cambia color
-                      }}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-800 dark:text-white text-sm focus:outline-none focus:border-slate-400 dark:focus:border-white/30"
-                    >
-                      <option value="">Selecciona color</option>
-                      {coloresDisponibles.map((color) => (
-                        <option key={color} value={color}>
-                          {color}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
+                    return updated;
+                  });
+
+                  setCantidad(1);
+                }}
+                onStockChange={setCurrentStock}
+              />
             )}
 
             {/* Cantidad */}
@@ -533,9 +576,9 @@ export default function ProductDetailPage({ params }) {
             <div className="flex gap-2">
               <button
                 onClick={handleAddCart}
-                disabled={maxCantidad === 0 || (isCamiseta && (!selectedTalla || !selectedColor))}
+                disabled={maxCantidad === 0 || (hasVariations && variationAttributeIds.length > 0 && !variationAttributeIds.every(attrId => selectedVariations[attrId]))}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all ${
-                  maxCantidad === 0 || (isCamiseta && (!selectedTalla || !selectedColor))
+                  maxCantidad === 0 || (hasVariations && variationAttributeIds.length > 0 && !variationAttributeIds.every(attrId => selectedVariations[attrId]))
                     ? "bg-[#E0A11A] dark:bg-[#E0A11A] text-slate-300 dark:text-white/20 cursor-not-allowed opacity-50"
                     : inCart
                       ? "bg-[#E0A11A] dark:bg-[#E0A11A] text-slate-700 dark:text-white hover:bg-slate-200 dark:hover:bg-white/[0.12]"

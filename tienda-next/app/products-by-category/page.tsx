@@ -1,18 +1,21 @@
 "use client";
 import BottomBarPublic from "../components/BottomBarPublic";
-import { useSearchParams } from "next/navigation";
 import ProductoCard from "../components/ProductoCard";
 import { Loading3DIcon } from "../components/Loading3DIcon";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 
-import { 
-  obtenerProductos,
-  obtenerProductosPorCategoria,
-  obtenerProductosPorSubcategoria,
-  obtenerProductosPorSubsubcategoria
-} from "../lib/productos-db";
-import { obtenerCategorias } from "../lib/categorias-db";
+import { obtenerProductos } from "../lib/productos-db";
+import {
+  obtenerCategorias,
+  mapCategorySnapshot,
+  sortCategoriasByOrder,
+  sameCategoryId,
+  productMatchesCategoria,
+  productMatchesSubcategoria,
+  productMatchesSubsubcategoria,
+} from "../lib/categorias-db";
 import { useUser } from "../context/UserContext";
 import { collection, query, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
@@ -22,6 +25,7 @@ export default function ProductsByCategoryPage() {
   const [catMap, setCatMap] = useState<any>({});
   const [subcatMap, setSubcatMap] = useState<any>({});
   const [subsubcatMap, setSubsubcatMap] = useState<any>({});
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchCategorias() {
@@ -63,9 +67,25 @@ export default function ProductsByCategoryPage() {
 
   const isLogged = useUser();
   const searchParams = useSearchParams();
-  const categoriaId = (searchParams?.get("cat") || searchParams?.get("category") || "").trim();
-  const subcategoriaId = (searchParams?.get("subcat") || searchParams?.get("subcategory") || searchParams?.get("sub") || "").trim();
-  const subsubcategoriaId = (searchParams?.get("subsubcat") || searchParams?.get("subsubcategory") || searchParams?.get("subsub") || "").trim();
+
+  const categoriaFromUrl = (searchParams?.get("cat") || searchParams?.get("category") || "").trim();
+  const subcategoriaFromUrl = (searchParams?.get("subcat") || searchParams?.get("subcategory") || searchParams?.get("sub") || "").trim();
+  const subsubcategoriaFromUrl = (searchParams?.get("subsubcat") || searchParams?.get("subsubcategory") || searchParams?.get("subsub") || "").trim();
+
+  // Estado local: responde al click al instante (router.push a veces no actualiza searchParams en la misma ruta)
+  const [filterCat, setFilterCat] = useState(categoriaFromUrl);
+  const [filterSub, setFilterSub] = useState(subcategoriaFromUrl);
+  const [filterSubsub, setFilterSubsub] = useState(subsubcategoriaFromUrl);
+
+  useEffect(() => {
+    setFilterCat(categoriaFromUrl);
+    setFilterSub(subcategoriaFromUrl);
+    setFilterSubsub(subsubcategoriaFromUrl);
+  }, [categoriaFromUrl, subcategoriaFromUrl, subsubcategoriaFromUrl]);
+
+  const categoriaId = filterCat;
+  const subcategoriaId = filterSub;
+  const subsubcategoriaId = filterSubsub;
   
   // Leer parámetros de precio DIRECTAMENTE desde URL
   const urlMinPrice = searchParams?.get("minPrice") || "";
@@ -104,31 +124,76 @@ export default function ProductsByCategoryPage() {
     }
   }, [searchParams]);
 
-  // 2. Fetch productos
-useEffect(() => {
-  async function fetchProductos() {
-    setLoading(true);
-    try {
-      let prods = [];
-      if (subsubcategoriaId) {
-        // Nivel más específico
-        prods = await obtenerProductosPorSubsubcategoria(subsubcategoriaId, subcategoriaId, categoriaId);
-      } else if (subcategoriaId) {
-        prods = await obtenerProductosPorSubcategoria(subcategoriaId, categoriaId);
-      } else if (categoriaId) {
-        prods = await obtenerProductosPorCategoria(categoriaId);
-      } else {
-        prods = await obtenerProductos();
+  const selectCategoria = useCallback(
+    (catId: string) => {
+      setFilterCat(catId);
+      setFilterSub("");
+      setFilterSubsub("");
+      const url = catId
+        ? `/products-by-category?cat=${encodeURIComponent(catId)}`
+        : "/products-by-category";
+      router.replace(url, { scroll: false });
+    },
+    [router]
+  );
+
+  const selectTodas = useCallback(() => {
+    setFilterCat("");
+    setFilterSub("");
+    setFilterSubsub("");
+    router.replace("/products-by-category", { scroll: false });
+  }, [router]);
+
+  // 2. Fetch productos (siempre catálogo completo + filtro por árbol de categorías)
+  useEffect(() => {
+    async function fetchProductos() {
+      setLoading(true);
+      try {
+        const all = await obtenerProductos();
+        let prods = all;
+
+        if (categoriaId && categorias.length > 0) {
+          prods = prods.filter((p) =>
+            productMatchesCategoria(p, categoriaId, categorias)
+          );
+          if (subcategoriaId) {
+            prods = prods.filter((p) =>
+              productMatchesSubcategoria(
+                p,
+                categoriaId,
+                subcategoriaId,
+                categorias
+              )
+            );
+          }
+          if (subsubcategoriaId) {
+            prods = prods.filter((p) =>
+              productMatchesSubsubcategoria(
+                p,
+                categoriaId,
+                subcategoriaId,
+                subsubcategoriaId,
+                categorias
+              )
+            );
+          }
+        } else if (categoriaId) {
+          const needle = categoriaId.trim().toLowerCase();
+          prods = all.filter(
+            (p) =>
+              String(p.categoria || "").trim().toLowerCase() === needle
+          );
+        }
+
+        setProductos(prods || []);
+      } catch {
+        setProductos([]);
+      } finally {
+        setLoading(false);
       }
-      setProductos(prods || []);
-    } catch (error) {
-      // Error fetching products
-    } finally {
-      setLoading(false);
     }
-  }
-  fetchProductos();
-}, [categoriaId, subcategoriaId, subsubcategoriaId]);
+    fetchProductos();
+  }, [categoriaId, subcategoriaId, subsubcategoriaId, categorias]);
 
   // 2.5. Cargar categorías
   useEffect(() => {
@@ -136,11 +201,7 @@ useEffect(() => {
     const q = query(categoriasRef);
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const cats = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setCategorias(cats.sort((a, b) => (a.orden || 0) - (b.orden || 0)));
+      setCategorias(sortCategoriasByOrder(mapCategorySnapshot(snapshot.docs)));
     });
 
     return () => unsubscribe();
@@ -158,26 +219,33 @@ useEffect(() => {
     const filtered = productos
       .filter((p: any) => {
         // Filtrado estricto por ID
-        if (subsubcategoriaId && subcategoriaId && categoriaId) {
+        if (categoriaId && categorias.length > 0) {
+          if (!productMatchesCategoria(p, categoriaId, categorias)) return false;
           if (
-            p.categoria !== categoriaId ||
-            p.subcategoria !== subcategoriaId ||
-            p.subsubcategoria !== subsubcategoriaId
+            subcategoriaId &&
+            !productMatchesSubcategoria(
+              p,
+              categoriaId,
+              subcategoriaId,
+              categorias
+            )
           ) {
             return false;
           }
-        } else if (subcategoriaId && categoriaId) {
           if (
-            p.categoria !== categoriaId ||
-            p.subcategoria !== subcategoriaId
+            subsubcategoriaId &&
+            !productMatchesSubsubcategoria(
+              p,
+              categoriaId,
+              subcategoriaId,
+              subsubcategoriaId,
+              categorias
+            )
           ) {
             return false;
           }
         } else if (categoriaId) {
-          // Mostrar todos los productos de la categoría, sin importar subcategoría o subsubcategoría
-          if (p.categoria !== categoriaId) {
-            return false;
-          }
+          if (!sameCategoryId(p.categoria, categoriaId)) return false;
         }
 
         const texto = search.toLowerCase().trim();
@@ -200,7 +268,7 @@ useEffect(() => {
         return (new Date(b.createdAt).getTime() || 0) - (new Date(a.createdAt).getTime() || 0);
       });
     return filtered;
-  }, [productos, categoriaId, subcategoriaId, subsubcategoriaId, search, precioMin, precioMax, orden, urlMinPrice, urlMaxPrice]);
+  }, [productos, categoriaId, subcategoriaId, subsubcategoriaId, categorias, search, precioMin, precioMax, orden, urlMinPrice, urlMaxPrice]);
 
   const hasFilters = !!(search || precioMin || precioMax || orden !== "newest");
 
@@ -234,7 +302,7 @@ useEffect(() => {
     // Resetear a página 1 cuando cambia el filtro
     useEffect(() => {
       setCurrentPage(1);
-    }, [productosFiltrados.length, urlMinPrice, urlMaxPrice, search]);
+    }, [productosFiltrados.length, categoriaId, subcategoriaId, subsubcategoriaId, urlMinPrice, urlMaxPrice, search]);
     
     const paginatedProducts = useMemo(() => {
       return productosFiltrados.slice((currentPage - 1) * productsPerPage, currentPage * productsPerPage);
@@ -260,11 +328,11 @@ useEffect(() => {
     "px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-#e8c862 transition-all";
 
   return (
-    <div className="min-h-screen flex flex-col mt-2 bg-white dark:bg-black text-slate-900 dark:text-white transition-colors">
+    <div className="min-h-screen flex flex-col bg-black dark:bg-black text-slate-900 dark:text-white transition-colors">
         <BottomBarPublic />
 
 
-      <main className="max-w-7xl mx-auto w-full px-3 sm:px-5 py-8 flex-1">
+      <main className="max-w-350 mx-auto w-full px-3 sm:px-5 py-8 flex-1">
         {/* Cabecera */}
         {(categoriaId || subcategoriaId || subsubcategoriaId) && (
           <div className="mb-4">
@@ -300,7 +368,7 @@ useEffect(() => {
         )}
 
         {/* Filtros horizontales */}
-        <div className="bg-white dark:bg-white/3 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3.5 mb-5 space-y-3 shadow-sm">
+        <div className=" dark:bg-white/3 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3.5 mb-5 space-y-3 shadow-sm">
           <div className="flex flex-wrap gap-2 items-center">
             <div className="relative flex-1 min-w-40 max-w-sm">
               <span className="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/30 text-[17px] pointer-events-none">
@@ -320,39 +388,6 @@ useEffect(() => {
               )}
             </div>
 
-            <button onClick={() => setShowPrecio((v) => !v)} className={chip(showPrecio || !!(precioMin || precioMax))}>
-              <span className="material-icons-round text-[15px]">attach_money</span>
-              Precio
-            </button>
-
-            {hasFilters && (
-              <button onClick={clearFilters} className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-red-200 dark:border-red-500/30 text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all">
-                <span className="material-icons-round text-[14px]">close</span>
-                Limpiar
-              </button>
-            )}
-          </div>
-
-          {showPrecio && (
-            <div className="flex items-center gap-2 flex-wrap pt-1 animate-in fade-in slide-in-from-top-1">
-              <span className="text-xs text-slate-500 dark:text-white/40 font-medium">Rango:</span>
-              <input type="number" placeholder="Mín" value={precioMin} onChange={(e) => setPrecioMin(e.target.value)} className={`${inputCls} w-24`} />
-              <span className="text-slate-300 dark:text-white/20">—</span>
-              <input type="number" placeholder="Máx" value={precioMax} onChange={(e) => setPrecioMax(e.target.value)} className={`${inputCls} w-24`} />
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 flex-wrap border-t border-slate-100 dark:border-white/5 pt-3">
-            <span className="text-xs text-slate-400 dark:text-white/30 font-medium">Ordenar:</span>
-            {[
-              { v: "newest", l: "Más nuevos" },
-              { v: "price-low", l: "Menor precio" },
-              { v: "price-high", l: "Mayor precio" }
-            ].map((opt) => (
-              <button key={opt.v} onClick={() => setOrden(opt.v)} className={chip(orden === opt.v)}>
-                {opt.l}
-              </button>
-            ))}
           </div>
         </div>
 
@@ -361,13 +396,12 @@ useEffect(() => {
           <div className="mb-6 overflow-x-auto pb-2" ref={categoriesScrollRef}>
             <div className="flex gap-2 min-w-max">
               <button
-                onClick={() => {
-                  window.location.href = `/products-by-category`;
-                }}
+                type="button"
+                onClick={selectTodas}
                 className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
                   !categoriaId
                     ? "shadow-md scale-105 bg-[#E0A11A] text-white"
-                    : "bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
+                    : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
                 }`}
               >
                 Todas
@@ -375,13 +409,12 @@ useEffect(() => {
               {categorias.map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => {
-                    window.location.href = `/products-by-category?cat=${cat.id}`;
-                  }}
+                  type="button"
+                  onClick={() => selectCategoria(cat.id)}
                   className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
-                    categoriaId === cat.id
+                    sameCategoryId(categoriaId, cat.id)
                       ? "shadow-md scale-105 bg-[#E0A11A] text-white"
-                      : "bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
+                      : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
                   }`}
                 >
                   {cat.icono && <span className="mr-1">🏷️</span>}
@@ -410,7 +443,7 @@ useEffect(() => {
           </div>
         ) : (
           <>
-            <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-in fade-in duration-700`}>
+            <div className={`grid grid-cols-2 gap-2 lg:grid-cols-5 animate-in fade-in duration-700`}>
               {paginatedProducts.map((p: any) => (
                 <ProductoCard
                   key={p.id}

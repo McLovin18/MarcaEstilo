@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import admin from "../../lib/firebase-admin";
+import { getCatalogPricing, getSnapshotPricing } from "../../lib/pricing";
 
 /**
  * ⚠️ VALIDACIONES DE SEGURIDAD EN ÓRDENES (PROFORMA)
@@ -77,7 +78,7 @@ async function validarYRecalcularTotal(productos: any[]): Promise<{
       }
 
       const cantidad = Number(item.cantidad || 1);
-      const basePrice = Number(data.precio || 0);
+      const { finalPrice } = getCatalogPricing(data);
       
       // ⚠️ VALIDACIÓN: Stock disponible (anti-overselling)
       const stock = Number(data.stock || 0);
@@ -89,8 +90,7 @@ async function validarYRecalcularTotal(productos: any[]): Promise<{
         };
       }
 
-      // SIEMPRE usar precio base, NUNCA descuento
-      const lineTotal = basePrice * cantidad;
+      const lineTotal = finalPrice * cantidad;
       calculatedTotal += lineTotal;
 
       // 💾 Guardar snapshot de validación
@@ -98,7 +98,8 @@ async function validarYRecalcularTotal(productos: any[]): Promise<{
         id: item.id,
         nombre: data.nombre,
         cantidad,
-        precio: basePrice,
+        precioBase: Number(data.precio || 0),
+        precioUnitario: finalPrice,
         stock: stock,
         timestamp: Date.now(),
       });
@@ -114,13 +115,7 @@ async function validarYRecalcularTotal(productos: any[]): Promise<{
 function buildProformaHTML(orden: any): string {
   const rows = orden.productos
     .map((p: any) => {
-      const basePrice = Number(p.precioBase || p.precio || 0);
-      const discount = Number(p.descuento || 0);
-      const hasDiscount = !isNaN(discount) && discount > 0 && discount < 100;
-      const fakeOldPrice = hasDiscount
-        ? (Math.round((basePrice / (1 - discount / 100)) * 100) / 100)
-        : null;
-      const finalPrice = basePrice;
+      const { basePrice, discount, hasDiscount, fakeOldPrice, finalPrice } = getSnapshotPricing(p);
       const subtotal = finalPrice * (p.cantidad || 1);
       return `
         <tr>

@@ -1,6 +1,5 @@
 "use client";
 
-import Product360Viewer from "./Product360Viewer";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { LandingSectionStyles, LandingFieldStyle } from "../../lib/landing-types";
@@ -179,7 +178,7 @@ export default function Hero360Section({
             {/* Heading */}
             <div>
               <p
-                className="text-lg md:text-3xl font-semibold tracking-widest"
+                className="section-eyebrow text-lg md:text-3xl tracking-widest"
                 style={{
                   color: "rgba(255, 255, 255, 0.7)",
                   marginBottom: "1px",
@@ -190,10 +189,9 @@ export default function Hero360Section({
                 {heading}
               </p>
               <h2
-                className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight"
+                className="section-title text-3xl md:text-4xl lg:text-5xl leading-tight"
                 style={{
                   color: "rgba(255, 255, 255, 0.95)",
-                  fontWeight: 900,
                   textShadow: "0 2px 12px rgba(0, 0, 0, 0.6)",
                 }}
               >
@@ -203,7 +201,7 @@ export default function Hero360Section({
 
             {/* Descripción */}
             <p
-              className="text-base md:text-lg leading-relaxed"
+              className="section-subtitle page-lead text-base md:text-lg leading-relaxed"
               style={{
                 color: "rgba(255, 255, 255, 0.8)",
                 maxWidth: "500px",
@@ -231,7 +229,7 @@ export default function Hero360Section({
                     window.location.href = primaryButtonLink || "/products-by-category?cat=1775935501638&sub=1775935523162";
                   }
                 }}
-                className="inline-flex items-center justify-center px-8 py-4 rounded-lg font-bold text-base md:text-lg transition-all duration-300 transform hover:scale-105 active:scale-95"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-lg text-base md:text-lg transition-all duration-300 transform hover:scale-105 active:scale-95 text-body-bold"
                 style={{
                   background: isDark
                     ? "linear-gradient(135deg, #E0A11A 0%, #6d5fdf 100%)"
@@ -254,7 +252,7 @@ export default function Hero360Section({
               {/* Botón Secundario - ASESORAMIENTO */}
               <a
                 href={secondaryButtonLink}
-                className="inline-flex items-center justify-center px-8 py-4 rounded-lg font-bold text-base md:text-lg transition-all duration-300 transform hover:scale-105 active:scale-95"
+                className="inline-flex items-center justify-center px-8 py-4 rounded-lg text-base md:text-lg transition-all duration-300 transform hover:scale-105 active:scale-95 text-body-bold"
                 style={{
                   background: isDark
                     ? "rgba(255, 255, 255, 0.08)"

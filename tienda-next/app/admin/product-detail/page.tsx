@@ -152,8 +152,8 @@ export default function ProductDetailPage({ params }) {
   const basePrice = Number(producto.precio || 0);
   const discount = Number(producto.descuento || 0);
   const hasDiscount = !isNaN(discount) && discount > 0 && discount < 100;
-  const finalPrice = basePrice;
-  const fakeOldPrice = hasDiscount ? Math.round(basePrice / (1 - discount / 100)) : null;
+  const finalPrice = hasDiscount ? Math.round(basePrice * (1 - discount / 100) * 100) / 100 : basePrice;
+  const fakeOldPrice = hasDiscount ? basePrice : null;
 
   const avgRating = reviews.length > 0
     ? reviews.reduce((a, b) => a + b.rating, 0) / reviews.length

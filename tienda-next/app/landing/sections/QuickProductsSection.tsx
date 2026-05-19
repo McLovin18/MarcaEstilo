@@ -1,11 +1,15 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import {
+  mapCategorySnapshot,
+  sortCategoriasByOrder,
+} from "../../lib/categorias-db";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import ProductoCard from "../../components/ProductoCard";
-import type { LandingSectionStyles, LandingFieldStyle } from "../../lib/landing-types";
+import type { LandingFieldStyle, LandingSectionStyles } from "../../lib/landing-types";
 
 export type QuickProductsSectionProps = {
   defaultCategoryId?: string;
@@ -17,37 +21,39 @@ export type QuickProductsSectionProps = {
 };
 
 export default function QuickProductsSection({
-  defaultCategoryId = "1776073836098", // Camisetas deportivas
-  defaultCategoryName = "Camisetas Deportivas",
+  defaultCategoryId = "",
+  defaultCategoryName = "",
   title = "Últimas actualizaciones",
   subtitle = "Descubre nuestros productos destacados",
-  styles,
-  fieldStyles,
 }: QuickProductsSectionProps) {
   const [categorias, setCategorias] = useState<any[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState(defaultCategoryId);
   const [productos, setProductos] = useState<any[]>([]);
-  const [searchValue, setSearchValue] = useState("");
   const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(2);
   const categoriesScrollRef = useRef<HTMLDivElement>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
-  // Cargar categorías
   useEffect(() => {
     const categoriasRef = collection(db, "categorias");
     const q = query(categoriasRef);
-    
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const cats = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setCategorias(cats.sort((a, b) => (a.orden || 0) - (b.orden || 0)));
+      const cats = sortCategoriasByOrder(mapCategorySnapshot(snapshot.docs));
+      setCategorias(cats);
+      setSelectedCategoryId((prev) => {
+        if (prev && cats.some((c) => c.id === prev)) return prev;
+        if (defaultCategoryId && cats.some((c) => c.id === defaultCategoryId)) {
+          return defaultCategoryId;
+        }
+        return cats[0]?.id || "";
+      });
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [defaultCategoryId]);
 
-  // Cargar productos de la categoría seleccionada
   useEffect(() => {
     if (!selectedCategoryId) {
       setProductos([]);
@@ -56,6 +62,8 @@ export default function QuickProductsSection({
     }
 
     setLoading(true);
+    setCurrentIndex(0);
+
     const productosRef = collection(db, "productos");
     const q = query(productosRef, where("categoria", "==", selectedCategoryId));
 
@@ -64,43 +72,71 @@ export default function QuickProductsSection({
         id: doc.id,
         ...doc.data(),
       }));
-      setProductos(prods.slice(0, 12)); // Limitar a 12 productos
+      setProductos(prods.slice(0, 5));
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, [selectedCategoryId]);
 
-  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && searchValue.trim()) {
-      const query = encodeURIComponent(searchValue.trim());
-      window.location.href = `/search-results?query=${query}`;
-    }
+  useEffect(() => {
+    const updateVisibleCount = () => {
+      setVisibleCount(window.innerWidth < 1024 ? 2 : 5);
+    };
+
+    updateVisibleCount();
+    window.addEventListener("resize", updateVisibleCount);
+    return () => window.removeEventListener("resize", updateVisibleCount);
+  }, []);
+
+  const maxIndex = Math.max(0, productos.length - visibleCount);
+
+  useEffect(() => {
+    setCurrentIndex((prev) => Math.min(prev, maxIndex));
+  }, [maxIndex]);
+
+  const scrollToIndex = (index: number) => {
+    const container = carouselRef.current;
+    if (!container) return;
+
+    const firstItem = container.querySelector<HTMLElement>("[data-quick-product]");
+    if (!firstItem) return;
+
+    const step = firstItem.getBoundingClientRect().width + 8;
+    container.scrollTo({ left: index * step, behavior: "smooth" });
   };
 
+  useEffect(() => {
+    scrollToIndex(currentIndex);
+  }, [currentIndex, visibleCount, productos.length]);
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => {
+      const next = Math.max(0, prev - 1);
+      scrollToIndex(next);
+      return next;
+    });
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => {
+      const next = Math.min(maxIndex, prev + 1);
+      scrollToIndex(next);
+      return next;
+    });
+  };
+
+  const cards = useMemo(
+    () => productos.filter((producto: any) => producto && producto.id),
+    [productos],
+  );
+
   return (
-    <section className="w-full m-0" style={{ background: "var(--background)" }}>
-      <div className="w-full px-5 md:px-10 py-3 md:py-4 lg:py-4">
+    <section className="w-full m-0" style={{ backgroundColor:"black" }}>
+      <div className="w-full px-3 sm:px-5 py-3 md:py-4 lg:py-4">
 
-        {/* Search Input */}
-        <div className="mb-4 relative">
-          <div className="flex items-center gap-2 border rounded-xl px-4 py-3 bg-white dark:bg-slate-800/50 border-slate-200 dark:border-white/10 focus-within:border-[#E0A11A] transition-colors">
-            <span className="material-icons-round text-xl text-slate-400 dark:text-slate-500">
-              manage_search
-            </span>
-            <input
-              type="text"
-              placeholder="Buscar productos..."
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              onKeyDown={handleSearch}
-              className="flex-1 outline-none bg-transparent text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
-            />
-          </div>
-        </div>
 
-        {/* Categorías Filter - Scroll Horizontal */}
-        <div className="mb-8 overflow-x-auto " ref={categoriesScrollRef}>
+        <div className="mb-8 overflow-x-auto" ref={categoriesScrollRef}>
           <div className="flex gap-2 min-w-max">
             {categorias.map((cat) => (
               <button
@@ -109,7 +145,7 @@ export default function QuickProductsSection({
                 className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
                   selectedCategoryId === cat.id
                     ? "shadow-md scale-105 bg-[#E0A11A] text-white"
-                    : "bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
+                    : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
                 }`}
               >
                 {cat.icono && <span className="mr-1">🏷️</span>}
@@ -119,20 +155,67 @@ export default function QuickProductsSection({
           </div>
         </div>
 
-        {/* Productos Grid */}
         {loading ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E0A11A]" />
           </div>
-        ) : productos.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
-            {productos
-              .filter((producto: any) => producto && producto.id)
-              .map((producto: any) => (
-              <div key={producto.id} className="h-full">
-                <ProductoCard producto={producto} />
+        ) : cards.length > 0 ? (
+          <div className="relative">
+            {maxIndex > 0 && (
+              <>
+                <button
+                  onClick={handlePrev}
+                  disabled={currentIndex === 0}
+                  className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-10 bg-[#E0A11A] hover:bg-[#d89213] disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-full p-2 transition-all shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+                >
+                  <span className="material-icons-round text-sm">chevron_left</span>
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={currentIndex >= maxIndex}
+                  className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-10 bg-[#E0A11A] hover:bg-[#d89213] disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-full p-2 transition-all shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+                >
+                  <span className="material-icons-round text-sm">chevron_right</span>
+                </button>
+              </>
+            )}
+
+            <div
+              ref={carouselRef}
+              className="flex gap-2 overflow-x-auto scroll-smooth snap-x snap-mandatory px-2 sm:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {cards.map((p: any) => (
+                <div
+                  key={p.id}
+                  data-quick-product
+                  className="flex-none snap-start w-[calc((100%-8px)/2)] lg:w-[calc((100%-32px)/5)]"
+                >
+                  <ProductoCard
+                  key={p.id}
+                  producto={p}
+                  showCart
+                  showEye
+                  isCompact={false}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {maxIndex > 0 && (
+              <div className="flex justify-center gap-2 mt-4">
+                {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentIndex(idx)}
+                    className={`h-2 rounded-full transition-all ${
+                      idx === currentIndex
+                        ? "bg-[#E0A11A] w-6"
+                        : "bg-slate-300 dark:bg-slate-600 w-2 hover:bg-slate-400 dark:hover:bg-slate-500"
+                    }`}
+                  />
+                ))}
               </div>
-            ))}
+            )}
           </div>
         ) : (
           <div className="text-center py-12">
@@ -140,8 +223,7 @@ export default function QuickProductsSection({
           </div>
         )}
 
-        {/* Ver más link */}
-        {productos.length > 0 && (
+        {cards.length > 0 && (
           <div className="text-center mt-10">
             <Link
               href={`/products-by-category?cat=${selectedCategoryId}`}

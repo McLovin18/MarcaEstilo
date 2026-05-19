@@ -1,9 +1,12 @@
 // Tipos
 export interface StockVariant {
-  talla: string;
-  color: string;
+  talla?: string;
+  color?: string;
   cantidad: number;
   precio?: number;
+  attributes?: Record<string, string>;
+  label?: string;
+  variantKey?: string;
 }
 
 export interface Producto {
@@ -14,7 +17,9 @@ export interface Producto {
   descuento?: number;
   stock?: number;
   isCamiseta?: boolean;
+  hasVariations?: boolean;
   stockVariants?: StockVariant[];
+  variationAttributeIds?: string[];
   tallas?: string[];
   colores?: string[];
   categoria?: string;
@@ -26,6 +31,37 @@ export interface Producto {
   createdAt?: number | Date;
   fechaCreacion?: any;
   [key: string]: any;
+}
+
+/** Stock total: suma variantes si el producto tiene variaciones */
+export function getStockTotal(producto: Producto): number {
+  const variants = Array.isArray(producto.stockVariants)
+    ? producto.stockVariants
+    : [];
+  if (producto.hasVariations || variants.length > 0) {
+    return variants.reduce(
+      (sum, v) => sum + Number(v?.cantidad || 0),
+      0
+    );
+  }
+  return Number(producto.stock ?? 0);
+}
+
+/** Visible en catálogo público (misma lógica que ProductoCard) */
+export function productoTieneStockDisponible(producto: Producto): boolean {
+  const variants = Array.isArray(producto.stockVariants)
+    ? producto.stockVariants
+    : [];
+  if (producto.hasVariations || variants.length > 0) {
+    return getStockTotal(producto) > 0;
+  }
+  if (typeof producto.stock !== "number") return true;
+  return producto.stock > 0;
+}
+
+function filtrarProductosConStock(productos: Producto[], opts: { incluirSinStock?: boolean } = {}) {
+  if (opts.incluirSinStock) return productos;
+  return productos.filter(productoTieneStockDisponible);
 }
 
 // Obtener productos por subcategoría (usando los campos reales de Firestore)
@@ -56,9 +92,7 @@ export async function obtenerProductosPorSubcategoria(subcategoria, categoria, e
     return producto;
   });
   
-  if (!opts.incluirSinStock) {
-    productos = productos.filter(p => typeof p.stock !== "number" || p.stock > 0);
-  }
+  productos = filtrarProductosConStock(productos, opts);
   if (excludeId) productos = productos.filter(p => p.id !== excludeId);
   return productos;
 }
@@ -91,9 +125,7 @@ export async function obtenerProductosPorSubsubcategoria(subsubcategoria, subcat
     return producto;
   });
   
-  if (!opts.incluirSinStock) {
-    productos = productos.filter(p => typeof p.stock !== "number" || p.stock > 0);
-  }
+  productos = filtrarProductosConStock(productos, opts);
   if (excludeId) productos = productos.filter(p => p.id !== excludeId);
   return productos;
 }
@@ -112,6 +144,34 @@ import {
 } from "firebase/firestore";
 
 const COLLECTION = "productos";
+
+// Obtener productos por bodega
+export async function obtenerProductosPorBodega(bodegaId: string, opts: any = {}) {
+  const q = query(
+    collection(db, COLLECTION),
+    where("bodegaId", "==", bodegaId)
+  );
+  const snapshot = await getDocs(q);
+  let productos = snapshot.docs.map(doc => {
+    const data = doc.data();
+    const producto = { id: doc.id, ...data };
+    
+    // Normalizar createdAt
+    if (!producto.createdAt) {
+      if (data.fechaCreacion && typeof data.fechaCreacion.toMillis === 'function') {
+        producto.createdAt = data.fechaCreacion.toMillis();
+      } else if (data.fechaCreacion && typeof data.fechaCreacion === 'number') {
+        producto.createdAt = data.fechaCreacion;
+      } else {
+        producto.createdAt = 0;
+      }
+    }
+    
+    return producto;
+  });
+  
+  return filtrarProductosConStock(productos, opts);
+}
 
 // Elimina recursivamente los campos undefined de un objeto
 function cleanUndefinedDeep(obj: any): any {
@@ -166,43 +226,43 @@ export async function obtenerProductos(opts = {}) {
     return producto;
   });
   
-  if (!opts.incluirSinStock) {
-    productos = productos.filter(p => typeof p.stock !== "number" || p.stock > 0);
-  }
-  return productos;
+  return filtrarProductosConStock(productos, opts);
 }
 
 // Obtener productos por categoría (usando el campo real de Firestore)
 // Si opts.incluirSinStock es true, no filtra por stock (solo para admin/inventario)
-export async function obtenerProductosPorCategoria(categoria, excludeId = null, opts = {}) {
-  const q = query(collection(db, COLLECTION), where("categoria", "==", categoria));
+export async function obtenerProductosPorCategoria(categoria, opts = {}) {
+  if (!categoria) return [];
+
+  const categoriaNorm = String(categoria).trim();
+  const q = query(
+    collection(db, COLLECTION),
+    where("categoria", "==", categoriaNorm)
+  );
   const snapshot = await getDocs(q);
-  let productos = snapshot.docs.map(doc => {
+
+  let productos = snapshot.docs.map((doc) => {
     const data = doc.data();
-    const producto = { id: doc.id, ...data };
-    
-    // Normalizar createdAt: si no existe, intentar usar fechaCreacion o asignar 0
-    if (!producto.createdAt) {
-      if (data.fechaCreacion && typeof data.fechaCreacion.toMillis === 'function') {
-        // Si fechaCreacion es un Timestamp de Firebase, convertir a ms
-        producto.createdAt = data.fechaCreacion.toMillis();
-      } else if (data.fechaCreacion && typeof data.fechaCreacion === 'number') {
-        producto.createdAt = data.fechaCreacion;
-      } else {
-        // Si no hay fecha, asignar 0 (aparecerá al final)
-        producto.createdAt = 0;
-      }
-    }
-    
-    return producto;
+    return { id: doc.id, ...data };
   });
-  
-  if (!opts.incluirSinStock) {
-    productos = productos.filter(p => typeof p.stock !== "number" || p.stock > 0);
+
+  // Si no hay resultados con el ID exacto, buscar en toda la colección
+  // (productos legacy pueden tener guardado el nombre en vez del id)
+  if (productos.length === 0) {
+    const allSnap = await getDocs(collection(db, COLLECTION));
+    const needle = categoriaNorm.toLowerCase();
+    productos = allSnap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .filter(
+        (p) =>
+          String(p.categoria || "").trim().toLowerCase() === needle
+      );
   }
-  if (excludeId) productos = productos.filter(p => p.id !== excludeId);
-  return productos;
+
+  return filtrarProductosConStock(productos, opts);
 }
+
+
 
 // Obtener producto por ID
 export async function obtenerProductoPorId(id: string): Promise<Producto | null> {
@@ -243,10 +303,7 @@ export async function obtenerProductosDestacados(opts = {}) {
     return producto;
   });
   
-  if (!opts.incluirSinStock) {
-    productos = productos.filter(p => typeof p.stock !== "number" || p.stock > 0);
-  }
-  return productos;
+  return filtrarProductosConStock(productos, opts);
 }
 
 // Escuchar cambios en tiempo real de productos destacados
@@ -275,10 +332,6 @@ export function onProductosDestacadosChange(
       return producto;
     });
     
-    if (!opts.incluirSinStock) {
-      productos = productos.filter(p => typeof p.stock !== "number" || p.stock > 0);
-    }
-    
-    callback(productos);
+    callback(filtrarProductosConStock(productos, opts));
   });
 }

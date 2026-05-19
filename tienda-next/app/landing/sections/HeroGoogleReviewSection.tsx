@@ -56,7 +56,7 @@ export default function HeroGoogleReviewSection({
         <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 flex flex-col items-center text-center">
           {badge && (
             <span
-              className="inline-block px-3 py-1 mb-4 text-[10px] font-bold tracking-widest uppercase bg-white text-black dark:bg-slate-900 dark:text-white rounded-full"
+              className="section-eyebrow inline-block px-3 py-1 mb-4 text-[10px] bg-white text-black dark:bg-slate-900 dark:text-white rounded-full"
               style={badgeStyle}
             >
               {badge}
@@ -64,7 +64,7 @@ export default function HeroGoogleReviewSection({
           )}
           {title && (
             <h2
-              className="text-4xl font-extrabold text-white mb-4 leading-tight max-w-3xl"
+              className="section-title text-white mb-4 leading-tight max-w-3xl"
               style={titleStyle}
             >
               {title}
@@ -72,7 +72,7 @@ export default function HeroGoogleReviewSection({
           )}
           {subtitle && (
             <p
-              className="text-slate-300 mb-6 text-sm max-w-xl"
+              className="section-subtitle page-lead text-slate-300 mb-6 max-w-xl"
               style={subtitleStyle}
             >
               {subtitle}

@@ -16,6 +16,7 @@ export interface Bodega {
   id: string;
   nombre: string;
   tiempoEntrega: number; // en horas laborales (12 o 72)
+  esNuevaColeccion?: boolean;
   createdAt?: Date;
 }
 
@@ -61,6 +62,22 @@ export async function crearBodegaDefault(): Promise<void> {
   } catch (error) {
     console.error("Error al crear bodega default:", error);
   }
+}
+
+// Función para establecer cuál bodega es la Nueva Colección
+export async function setNuevaColeccion(bodegaId: string): Promise<void> {
+  // Primero, remover la marca de Nueva Colección de todas las bodegas
+  const snapshot = await getDocs(collection(db, COLLECTION));
+  for (const docSnapshot of snapshot.docs) {
+    await setDoc(doc(db, COLLECTION, docSnapshot.id), {
+      esNuevaColeccion: false
+    }, { merge: true });
+  }
+  
+  // Luego, marcar la bodega seleccionada como Nueva Colección
+  await setDoc(doc(db, COLLECTION, bodegaId), {
+    esNuevaColeccion: true
+  }, { merge: true });
 }
 
 // Listener para cambios en tiempo real

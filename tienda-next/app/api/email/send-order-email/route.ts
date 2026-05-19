@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { getSnapshotPricing } from "../../../lib/pricing";
 
 /**
  * 📧 ENDPOINT: Enviar correo de orden con Resend
@@ -61,11 +62,9 @@ function buildOrderEmailHTML(orden: any): string {
                   ${
                     orden.productos && Array.isArray(orden.productos)
                       ? orden.productos.map((p: any) => {
-                          const precioUnit = Number(p.precioBase || p.precio || p.precioUnitario || 0);
+                          const { finalPrice: precioUnit, discount: descuento, hasDiscount: hasDescuento, fakeOldPrice } = getSnapshotPricing(p);
                           const cantidad = Number(p.cantidad || 1);
                           const subtotal = precioUnit * cantidad;
-                          const descuento = Number(p.descuento || 0);
-                          const hasDescuento = descuento > 0 && descuento < 100;
                           return `
                     <tr style="border-bottom:1px solid #e5e7eb;">
                       <td style="padding:12px 8px;font-size:13px;color:#374151;">

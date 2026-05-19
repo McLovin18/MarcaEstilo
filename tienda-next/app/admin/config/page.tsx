@@ -1,49 +1,24 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { themeManager, themes } from "../../components/themeManager";
 import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 
 export default function ConfigPage() {
-  const [theme, setTheme] = useState("light");
-
-  useEffect(() => {
-    setTheme(themeManager.getTheme());
-    const handler = (e) => setTheme(e.detail.theme);
-    window.addEventListener("theme-changed", handler);
-    return () => window.removeEventListener("theme-changed", handler);
-  }, []);
-
-  const handleThemeChange = (t) => {
-    themeManager.applyTheme(t);
-    setTheme(t);
+  const colors = {
+    bg: "#f8fafc",
+    cardBg: "#ffffff",
+    accent: "#E0A11A",
+    text: "#0f172a",
+    border: "#e2e8f0",
   };
-
-  const colors = themes[theme];
 
   return (
     <div className="px-6 py-6 sm:py-12 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Configuración</h1>
       <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-2">Tema</h2>
-        <div className="flex items-center mb-6">
-
-          <button
-            aria-label="Cambiar tema"
-            className={`relative w-16 h-8 flex items-center rounded-full transition-colors duration-300 focus:outline-none ${theme === "dark" ? "bg-[#3a1859]" : "bg-gray-300"}`}
-            onClick={() => handleThemeChange(theme === "light" ? "dark" : "light")}
-          >
-            <span
-              className={`absolute left-1 top-1 w-6 h-6 rounded-full shadow-md transform transition-transform duration-300 flex items-center justify-center ${theme === "dark" ? "translate-x-8 bg-[#1a0933] text-white" : "translate-x-0 bg-white text-yellow-500"}`}
-            >
-              {theme === "dark" ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" /></svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364-6.364l-1.414 1.414M6.343 17.657l-1.414 1.414M17.657 17.657l-1.414-1.414M6.343 6.343L4.929 7.757" /></svg>
-              )}
-            </span>
-          </button>
-
-        </div>
+        <h2 className="text-lg font-semibold mb-2">Tema fijo</h2>
+        <p className="text-sm text-slate-600 mb-4">
+          El sitio usa una sola paleta visual y no permite alternar entre claro y oscuro.
+        </p>
         <div className="flex gap-4">
           <div className="flex flex-col items-center">
             <div className="w-16 h-16 rounded shadow" style={{ background: colors.bg, border: `2px solid ${colors.border}` }} />

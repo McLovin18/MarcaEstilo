@@ -20,8 +20,16 @@ service cloud.firestore {
 
     match /productos/{productId} {
       allow read: if true;
-      // Solo admin puede escribir (modificar stock, nombre, etc)
+      // Solo admin puede escribir
       allow write: if isAdmin();
+    }
+
+    // Atributos / variaciones dinámicas
+    match /atributos/{atributoId} {
+      // Lectura pública para poblar selects en cliente admin
+      allow read: if true;
+      // Solo admin puede crear/editar/eliminar atributos
+      allow create, update, delete: if isAdmin();
     }
 
     match /marcas/{document=**} {

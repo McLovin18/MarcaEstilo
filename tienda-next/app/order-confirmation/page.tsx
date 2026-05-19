@@ -5,18 +5,7 @@ import { useState, useEffect } from "react";
 import { useUser } from "../context/UserContext";
 import BottomBarPublic from "../components/BottomBarPublic";
 import { getCartItemKey } from "../context/userLocalStorage";
-
-// Helper for price logic (unified)
-function calcularPrecioData(p: any) {
-  const basePrice = Number(p.precioBase || p.precio || 0);
-  const discount = Number(p.descuento || 0);
-  const hasDiscount = !isNaN(discount) && discount > 0 && discount < 100;
-  const fakeOldPrice = hasDiscount
-    ? Math.round((basePrice / (1 - discount / 100)) * 100) / 100
-    : basePrice;
-  const finalPrice = basePrice;
-  return { basePrice, discount, hasDiscount, fakeOldPrice, finalPrice };
-}
+import { getSnapshotPricing } from "../lib/pricing";
 
 export default function OrderConfirmationPage() {
   const searchParams = useSearchParams();
@@ -60,7 +49,7 @@ export default function OrderConfirmationPage() {
         <BottomBarPublic/>
         {/* Icono de éxito */}
         {isPaidOrder ? (
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-xl shadow-green-500/30 mb-4">
+          <div className="w-20 h-20 rounded-full bg-linear-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-xl shadow-green-500/30 mb-4">
             <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
@@ -113,7 +102,7 @@ export default function OrderConfirmationPage() {
             </thead>
             <tbody>
               {order.productos.map((p: any, i: number) => {
-                const { discount, hasDiscount, fakeOldPrice, finalPrice } = calcularPrecioData(p);
+                const { discount, hasDiscount, fakeOldPrice, finalPrice } = getSnapshotPricing(p);
                 const subtotal = finalPrice * (p.cantidad || 1);
                 return (
                   <tr key={i}>

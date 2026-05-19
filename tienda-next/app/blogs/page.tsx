@@ -30,7 +30,7 @@ export default function BlogsPage() {
   return (
     <div
       style={{
-        background: "var(--bg)",
+        backgroundColor:"white",
         color: "var(--text)",
       }}
       className="min-h-screen flex flex-col"

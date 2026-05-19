@@ -4,7 +4,7 @@ import ProductoCard from "../../components/ProductoCard";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import type { Producto } from "../../lib/productos-db";
 import { obtenerProductos, obtenerProductosPorCategoria, obtenerProductosPorSubcategoria, obtenerProductosPorSubsubcategoria } from "../../lib/productos-db";
-import { obtenerCategorias } from "../../lib/categorias-db";
+import { obtenerCategorias, sameCategoryId } from "../../lib/categorias-db";
 
 export default function ProductsByCategoryPage() {
   const searchParams = useSearchParams();
@@ -55,22 +55,21 @@ export default function ProductsByCategoryPage() {
         // Validación estricta de jerarquía
         if (subsubcategoria && subcategoria && categoria) {
           if (
-            p.categoria !== categoria ||
-            p.subcategoria !== subcategoria ||
-            p.subsubcategoria !== subsubcategoria
+            !sameCategoryId(p.categoria, categoria) ||
+            !sameCategoryId(p.subcategoria, subcategoria) ||
+            !sameCategoryId(p.subsubcategoria, subsubcategoria)
           ) {
             return false;
           }
         } else if (subcategoria && categoria) {
           if (
-            p.categoria !== categoria ||
-            p.subcategoria !== subcategoria
+            !sameCategoryId(p.categoria, categoria) ||
+            !sameCategoryId(p.subcategoria, subcategoria)
           ) {
             return false;
           }
         } else if (categoria) {
-          // Mostrar todos los productos de la categoría, sin importar subcategoría o subsubcategoría
-          if (p.categoria !== categoria) {
+          if (!sameCategoryId(p.categoria, categoria)) {
             return false;
           }
         }
@@ -200,7 +199,7 @@ export default function ProductsByCategoryPage() {
   return (
     <div className="min-h-screen flex flex-col mt-2 bg-white dark:bg-black text-slate-900 dark:text-white transition-colors">
 
-      <main className="max-w-7xl mx-auto w-full px-3 sm:px-5 py-10 flex-1">
+      <main className="max-w-[1400px] mx-auto w-full px-3 sm:px-5 py-10 flex-1">
 
         {/* ── Cabecera ─────────────────────────────────────────── */}
         {(categoria || subcategoria || subsubcategoria) && (
@@ -334,7 +333,7 @@ export default function ProductsByCategoryPage() {
 
         {/* ── Grid de productos ─────────────────────────────────── */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {Array.from({ length: 10 }).map((_, i) => (
               <div
                 key={i}
@@ -366,7 +365,7 @@ export default function ProductsByCategoryPage() {
           </div>
         ) : (
             <>
-            <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 animate-in fade-in duration-700`}>
+            <div className={`grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 animate-in fade-in duration-700`}>
               {paginatedProducts.map((p: any) => (
                 <ProductoCard
                   key={p.id}

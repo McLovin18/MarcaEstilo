@@ -98,7 +98,7 @@ export default function BannerSection({
         <div className="absolute left-0 right-0 top-0 bottom-0 flex flex-col justify-center items-center px-6 py-6 md:px-10 md:py-8 max-w-3xl w-full h-full pointer-events-none">
           {title && (
             <h2
-              className="font-bold mb-1 drop-shadow-lg"
+              className="section-title mb-1 drop-shadow-lg"
               style={{
                 ...(fieldStyles?.title || {}),
                 ...(typeof window !== 'undefined' && window.innerWidth < 640 ? (fieldStyles?.titleMobile || {}) : {}),
@@ -111,7 +111,7 @@ export default function BannerSection({
           )}
           {subtitle && (
             <p
-              className="opacity-90 drop-shadow"
+              className="section-subtitle page-lead opacity-90 drop-shadow"
               style={{
                 ...(fieldStyles?.subtitle || {}),
                 ...(typeof window !== 'undefined' && window.innerWidth < 640 ? (fieldStyles?.subtitleMobile || {}) : {}),
@@ -124,7 +124,7 @@ export default function BannerSection({
           )}
           {subtitle2 && (
             <p
-              className="opacity-90 drop-shadow"
+              className="section-subtitle page-lead opacity-90 drop-shadow"
               style={{
                 ...(fieldStyles?.subtitle2 || {}),
                 ...(typeof window !== 'undefined' && window.innerWidth < 640 ? (fieldStyles?.subtitle2Mobile || {}) : {}),
@@ -137,7 +137,7 @@ export default function BannerSection({
           )}
           {subtitle3 && (
             <p
-              className="opacity-90 drop-shadow"
+              className="section-subtitle page-lead opacity-90 drop-shadow"
               style={{
                 ...(fieldStyles?.subtitle3 || {}),
                 ...(typeof window !== 'undefined' && window.innerWidth < 640 ? (fieldStyles?.subtitle3Mobile || {}) : {}),

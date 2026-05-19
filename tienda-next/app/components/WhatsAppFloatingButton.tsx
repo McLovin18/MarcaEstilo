@@ -105,9 +105,10 @@ const WhatsAppFloatingButton: React.FC = () => {
           transform: translateY(-50%) translateX(-4px);
           background: #111827;
           color: #f9fafb;
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-body-family);
           font-size: 12.5px;
-          font-weight: 400;
+          font-style: var(--font-body-style);
+          font-weight: var(--font-body-weight);
           padding: 6px 12px;
           border-radius: 8px;
           white-space: nowrap;

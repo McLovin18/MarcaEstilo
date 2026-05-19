@@ -2,7 +2,11 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { db } from "../lib/firebase";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
+import {
+  mapCategorySnapshot,
+  sortCategoriasByOrder,
+} from "../lib/categorias-db";
 import { useUser } from "../context/UserContext";
 import { useTracking } from "../lib/useAnalytics";
 
@@ -18,27 +22,10 @@ const CategoriesBar = () => {
 
   const [categorias, setCategorias] = useState<any[]>([]);
 
-  // Ordenar categorías recursivamente por el campo 'orden'
-  const sortByOrder = (items: any[]): any[] => {
-    return items
-      .sort((a, b) => (a.orden ?? 999) - (b.orden ?? 999))
-      .map(item => ({
-        ...item,
-        subcategorias: item.subcategorias ? sortByOrder(item.subcategorias) : undefined
-      }));
-  };
-
   useEffect(() => {
-    const unsub = onSnapshot(
-      collection(db, "categorias"),
-      (snap) => {
-        const cats = snap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setCategorias(sortByOrder(cats));
-      }
-    );
+    const unsub = onSnapshot(collection(db, "categorias"), (snap) => {
+      setCategorias(sortCategoriasByOrder(mapCategorySnapshot(snap.docs)));
+    });
 
     return () => unsub();
   }, []);

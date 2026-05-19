@@ -7,6 +7,7 @@ import { useUser } from "../context/UserContext";
 import { useRouter } from "next/navigation";
 import { useTracking } from "../lib/useAnalytics";
 import { useToast } from "../context/ToastContext";
+import { getCatalogPricing } from "../lib/pricing";
 
 function ProductoCard({
   producto,
@@ -17,7 +18,16 @@ function ProductoCard({
   onEye,
   showFav = false,
   isCompact = true,
-}) {
+}: {
+  producto?: any;
+  onClick?: any;
+  showCart?: boolean;
+  showEye?: boolean;
+  onAddCart?: any;
+  onEye?: any;
+  showFav?: boolean;
+  isCompact?: boolean;
+} = {}): JSX.Element | null {
   // Validar que producto existe y tiene id
   if (!producto || !producto.id) {
     return null;
@@ -40,20 +50,17 @@ function ProductoCard({
   const isFav = favoritos?.some((p) => p.id === producto.id);
   const inCart = carrito?.some((p) => p.id === producto.id);
   
-  // Manejo de stock para productos normales y camisetas
-  const isCamiseta = producto?.isCamiseta === true;
-  const totalStock = isCamiseta 
-    ? (producto?.stockVariants?.reduce((sum: number, v: any) => sum + (v?.cantidad || 0), 0) || 0)
+  // Manejo de stock y variaciones
+  const hasVariations = producto?.hasVariations || producto?.isCamiseta || false;
+  const variationAttributeIds = producto?.variationAttributeIds || [];
+  const stockVariants = producto?.stockVariants || [];
+  
+  const totalStock = hasVariations 
+    ? (stockVariants.reduce((sum: number, v: any) => sum + (v?.cantidad || 0), 0) || 0)
     : (producto?.stock || 0);
   const sinStock = totalStock === 0;
 
-  const basePrice = Number(producto?.precio || 0);
-  const discount = Number(producto?.descuento || 0);
-  const hasDiscount = !isNaN(discount) && discount > 0 && discount < 100;
-  const fakeOldPrice = hasDiscount
-    ? Math.ceil(basePrice / (1 - discount / 100))
-    : basePrice;
-  const finalPrice = hasDiscount ? basePrice * (1 - discount / 100) : basePrice;
+  const { basePrice, discount, hasDiscount, fakeOldPrice, finalPrice } = getCatalogPricing(producto);
 
   const getDetailUrl = () => {
     let detailUrl = `/product-detail?id=${producto.id}`;
@@ -85,21 +92,37 @@ function ProductoCard({
     e.preventDefault();
     e.stopPropagation();
     if (sinStock) return;
-    if (isCamiseta) {
-      showToast("Selecciona talla y color en el detalle del producto", "info");
+    
+    // Si tiene variaciones dinámicas, redirigir a detalle para seleccionar
+    if (hasVariations && variationAttributeIds.length > 0) {
+      showToast("Selecciona las opciones en el detalle del producto", "info");
       router.push(detailUrl);
       return;
     }
+    
+    // Si solo tiene stock sin variaciones
     if (onAddCart) { 
-      onAddCart(producto); 
+      onAddCart({
+        ...producto,
+        precioBase: basePrice,
+        precioUnitario: finalPrice,
+        descuento: hasDiscount ? discount : 0,
+      }); 
       showToast("Añadido al carrito", "success");
       return; 
     }
+    
     if (inCart) {
       removeCarrito(producto.id);
       showToast("Eliminado del carrito", "info");
     } else {
-      addCarrito({ ...producto, cantidad: 1 });
+      addCarrito({
+        ...producto,
+        cantidad: 1,
+        precioBase: basePrice,
+        precioUnitario: finalPrice,
+        descuento: hasDiscount ? discount : 0,
+      });
       showToast(`${producto.nombre} añadido al carrito`, "success");
     }
   };
@@ -107,14 +130,14 @@ function ProductoCard({
   const detailUrl = getDetailUrl();
 
   return (
-    <Link href={detailUrl} className={`block md:h-full ${isCompact ? 'max-w-[160px] sm:max-w-[260px]' : 'max-w-[160px] sm:max-w-[260px] md:max-w-xs'} mx-auto`}>
+    <Link href={detailUrl} className={`block h-full w-full`}>
       <div
         onClick={onClick || goToDetail}
         className="
           group cursor-pointer
-          bg-white dark:bg-white/[0.04]
+          bg-white dark:bg-white/4
           border border-slate-100 dark:border-white/10
-          rounded-2xl overflow-hidden
+           overflow-hidden
           shadow-sm
           hover:shadow-xl dark:hover:shadow-purple-950/60
           hover:border-[#E0A11A] dark:hover:border-[#E0A11A]
@@ -127,8 +150,8 @@ function ProductoCard({
       >
       <div
         className="
-          relative flex-shrink-0 overflow-hidden
-          bg-white dark:bg-white/[0.03]
+          relative shrink-0 overflow-hidden
+          bg-white dark:bg-white/3
 
           /* ── VERTICAL: imagen cuadrada/rectangular arriba ── */
           w-full h-32 sm:h-48
@@ -215,8 +238,9 @@ function ProductoCard({
           text-xs
           sm:text-sm
 
-          /* recortar si es muy largo */
-          line-clamp-3 sm:line-clamp-3
+          /* recortar si es muy largo - máximo 2 líneas */
+          line-clamp-2
+          min-h-10
         ">
           {producto.nombre}
         </p>
@@ -243,29 +267,38 @@ function ProductoCard({
             text-base sm:text-lg font-extrabold
             text-[#E0A11A] dark:text-purple-300
           ">
-            ${basePrice.toFixed(2)}
+            ${finalPrice.toFixed(2)}
           </span>
         </div>
 
         {/* Acciones */}
         {(showCart || showEye) && (
           <div className="mt-1.5 sm:mt-3 flex gap-1.5 sm:gap-2">
-            {showCart && (
+            {showCart &&(
               <button
-                onClick={handleCart}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+
+                  if (sinStock) return;
+
+                  handleCart(e);
+                }}
                 disabled={sinStock}
                 className={`
                   flex-1 flex items-center justify-center gap-1
                   py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold
                   transition-all duration-200
-                  ${sinStock
-                    ? "bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-white/20 cursor-not-allowed"
-                    : inCart
-                      ? "bg-purple-100 dark:bg-purple-900/40 text-[#E0A11A] dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/60"
-                      : "bg-[#E0A11A] hover:bg-purple-700 text-white shadow-sm hover:shadow-md active:scale-95"
+                  ${
+                    sinStock
+                      ? "bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-white/20 cursor-not-allowed opacity-50"
+                      : inCart
+                        ? "bg-purple-100 dark:bg-purple-900/40 text-[#E0A11A] dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/60"
+                        : "bg-[#E0A11A] hover:bg-purple-700 text-white shadow-sm hover:shadow-md active:scale-95"
                   }
                 `}
               >
+
                 <span className="material-icons-round text-[14px] sm:text-[16px]">
                   {inCart ? "remove_shopping_cart" : "add_shopping_cart"}
                 </span>
@@ -284,7 +317,7 @@ function ProductoCard({
                 }}
                 className="
                   flex items-center justify-center
-                  w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex-shrink-0
+                  w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl shrink-0
                   bg-slate-100 dark:bg-white/5
                   text-slate-500 dark:text-white/50
                   hover:bg-slate-200 dark:hover:bg-white/10
