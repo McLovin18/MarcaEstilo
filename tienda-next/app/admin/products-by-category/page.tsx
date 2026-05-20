@@ -241,7 +241,7 @@ export default function ProductsByCategoryPage() {
           {/* Fila 1: buscador + precio + limpiar */}
           <div className="flex flex-wrap gap-2 items-center">
             {/* Search */}
-            <div className="relative flex-1 min-w-[160px] max-w-sm">
+            <div className="relative flex-1 min-w-[160px] max-w-[min(75vw,300px)] sm:max-w-sm">
               <span className="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/30 text-[17px] pointer-events-none">
                 search
               </span>

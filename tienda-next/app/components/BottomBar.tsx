@@ -18,16 +18,16 @@ export default function BottomBar({ role = "admin" }) {
   const items = adminItems;
   const { carrito } = useUser();
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 w-full bg-white dark:bg-black border-t border-slate-200 dark:border-slate-700 flex overflow-x-auto z-50">
+    <nav className="lg:hidden fixed bottom-0 left-0 w-full flex overflow-x-auto z-50" style={{ background: "#000000", borderColor: "#333333", borderTop: "1px solid #333333" }}>
       <ul className="flex w-full justify-between items-center">
         {items.map((item) => (
           <li key={item.path} className="flex-1">
-            <a href={item.path} className="flex flex-col items-center py-3 px-2 text-[#3a1859] dark:text-white hover:bg-slate-100 dark:hover:bg-white/10 relative">
+            <a href={item.path} className="flex flex-col items-center py-3 px-2 hover:bg-white/10 relative transition-colors" style={{ color: "#ffffff" }}>
               <span className="material-icons-round text-xl">{item.icon}</span>
               {/* Badge solo para carrito */}
               {(item.icon === "shopping_bag" || item.icon === "shopping_cart") ? (
                 carrito && carrito.length > 0 && (
-                  <span className="absolute top-0 right-3 bg-red-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white dark:border-black z-[20]">
+                  <span className="absolute top-0 right-3 bg-red-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 z-[20]" style={{ borderColor: "#000000" }}>
                     {carrito.length}
                   </span>
                 )

@@ -16,10 +16,10 @@ export default function BottomBarPublic() {
 
   return (
     <nav
-      className="lg:hidden  fixed bottom-0 left-0 w-full border-t flex z-50"
-      style={{ background: "var(--navBg)", borderColor: "var(--border)" }}
+      className="lg:hidden fixed bottom-0 left-0 w-full border-t flex z-50"
+      style={{ background: "#000000", borderColor: "#333333" }}
     >
-      <ul className="flex w-full justify-between items-center text-black dark:text-white">
+      <ul className="flex w-full justify-between items-center" style={{ color: "#ffffff" }}>
         {publicItems.map((item) => {
           const isCart = item.icon === "shopping_bag" || item.icon === "shopping_cart";
           const showBadge = isCart && cartCount > 0;
@@ -29,7 +29,7 @@ export default function BottomBarPublic() {
               <a
                 href={item.path}
                 className="flex flex-col items-center py-2 px-2 transition-colors relative"
-                style={{ color: "var(--textMuted)" }}
+                style={{ color: "#ffffff" }}
               >
                 {/* Ícono + badge */}
                 <span className="relative inline-flex items-center justify-center">
@@ -53,7 +53,7 @@ export default function BottomBarPublic() {
                         background: "red",
                         color: "#fff",
                         // Borde que separa del ícono
-                        outline: "2px solid var(--navBg)",
+                        outline: "2px solid #000000",
                         // Pulso sutil cuando hay items
                         animation: "badgePop 0.35s cubic-bezier(0.34,1.56,0.64,1) both",
                         zIndex: 10,

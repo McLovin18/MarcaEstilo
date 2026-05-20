@@ -279,7 +279,7 @@ export default function ProductosPage() {
       <main className="max-w-7xl mx-auto w-full px-3 sm:px-5 py-6 sm:py-15 flex-1">
         <div className="bg-white dark:bg-white/3 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3.5 mb-5 space-y-3">
           <div className="flex flex-wrap gap-2 items-center">
-            <div className="relative flex-1 min-w-40 max-w-sm">
+            <div className="relative flex-1 min-w-40 max-w-[min(75vw,300px)] sm:max-w-sm">
               <span className="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/30 text-[17px] pointer-events-none">
                 search
               </span>

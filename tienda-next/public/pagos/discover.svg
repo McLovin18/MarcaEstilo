@@ -1,0 +1,8 @@
+<svg viewBox="0 0 38 24" xmlns="http://www.w3.org/2000/svg">
+  <rect width="38" height="24" rx="3" fill="white"/>
+  <rect width="38" height="24" rx="3" fill="none" stroke="#e0e0e0" stroke-width="0.5"/>
+  <text x="1.5" y="14.5" font-size="5.8" font-weight="bold" fill="#231F20" font-family="Arial,sans-serif">DISC</text>
+  <circle cx="18.3" cy="11.5" r="2.8" fill="#F48120"/>
+  <text x="21.2" y="14.5" font-size="5.8" font-weight="bold" fill="#231F20" font-family="Arial,sans-serif">VER</text>
+  <path d="M27 16.5 Q32 20 38 14.5 L38 24 L27 24 Z" fill="#F48120"/>
+</svg>

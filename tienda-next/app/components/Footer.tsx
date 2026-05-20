@@ -59,30 +59,13 @@ const Footer: React.FC = () => {
         <div className={styles.ftGlowLeft} />
         <div className={styles.ftGlowRight} />
 
-        {/* Main grid */}
-        <div className={styles.ftMain}>
+        {/* Main grid - 3 columns: Políticas, Contacto, Redes */}
+        <div className={`${styles.ftMain} grid grid-cols-1 md:grid-cols-3 gap-8`}>
 
-          {/* Brand */}
-          <div className="flex flex-col items-center text-center">
-            <Image
-              className={styles.ftBrandImg}
-              src="/logo_ME.png"
-              alt="Marca Estilo"
-              width={150}
-              height={54}
-              priority={false}
-              loading="lazy"
-            />
-            <p className={styles.ftBrandDesc}>
-              💎 MARCA TU ESTILO - Streetwear exclusivo para hombres. Piezas limitadas que se agotan rápido. Envíos a todo Ecuador.
-            </p>
-          </div>
-
-          {/* Políticas */}
+          {/* Políticas - Izquierda */}
           <div>
             <span className={styles.ftColLabel}>Servicio al cliente</span>
             <ul className={styles.ftLinks}>
-
               <li>
                 <Link href="/politicas/privacidad">
                   <span className={styles.ftDot} />
@@ -92,7 +75,7 @@ const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Contacto */}
+          {/* Contacto - Centro */}
           <div>
             <span className={styles.ftColLabel}>Contacto</span>
             <div>
@@ -110,25 +93,35 @@ const Footer: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Redes Sociales - Derecha */}
+          <div className="flex flex-col md:flex-col items-center md:items-start">
+            <span className={styles.ftColLabel}>Síguenos</span>
+            <ul className={`${styles.ftSocials} flex gap-2 md:gap-4`}>
+              {socialLinks.map(({ href, label, Icon }) => (
+                <li key={label}>
+                  <a href={href} className={styles.ftSocialsLink} target="_blank" rel="noreferrer" title={label} onClick={() => trackLinkClick().catch(console.error)}>
+                    <Icon />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {/* Divider */}
         <div className={styles.ftDivider} />
 
-        {/* Bottom bar: redes + pagos */}
-        <div className={styles.ftBottom}>
-          <ul className={styles.ftSocials}>
-            {socialLinks.map(({ href, label, Icon }) => (
-              <li key={label}>
-                <a href={href} target="_blank" rel="noreferrer" title={label} onClick={() => trackLinkClick().catch(console.error)}>
-                  <Icon />
-                </a>
-              </li>
-            ))}
-          </ul>
-
-
+        {/* Payment Methods - Centered */}
+        <div className={`flex justify-center  items-center gap-4 md:gap-6 py-3 px-8 flex-wrap`}>
+          <img src="/pagos/amex.svg" alt="American Express" className="h-8 md:h-10 object-contain" />
+          <img src="/pagos/discover.svg" alt="Discover" className="h-8 md:h-10 object-contain" />
+          <img src="/pagos/mastercard.svg" alt="Mastercard" className="h-8 md:h-10 object-contain" />
+          <img src="/pagos/visa.svg" alt="Visa" className="h-8 md:h-10 object-contain" />
         </div>
+
+        {/* Divider */}
+        <div className={styles.ftDivider} />
 
         {/* Copyright row */}
         <div className={styles.ftCopyRow}>

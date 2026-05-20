@@ -31,14 +31,14 @@ function MobileCategoriesAccordion({ basePath }: { basePath: string }) {
   return (
     <div className="flex flex-col gap-1 my-3">
       <p className="text-xs font-semibold uppercase tracking-wider px-2 mb-1"
-        style={{ color: "var(--textMuted)" }}>
+        style={{ color: "rgba(255,255,255,0.7)" }}>
         Categorías
       </p>
       {categorias.map((cat) => (
         <div key={cat.id}>
           <button
             className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
-            style={{ color: "var(--text)" }}
+            style={{ color: "#ffffff" }}
             onClick={() =>
               setOpenCat(openCat === cat.id ? null : cat.id)
             }
@@ -46,7 +46,7 @@ function MobileCategoriesAccordion({ basePath }: { basePath: string }) {
             <span className="flex items-center gap-2">
               {cat.icono && (
                 <span className="material-icons-round text-base"
-                  style={{ color: "var(--accent)" }}>
+                  style={{ color: "#E0A11A" }}>
                   {cat.icono}
                 </span>
               )}
@@ -56,7 +56,7 @@ function MobileCategoriesAccordion({ basePath }: { basePath: string }) {
               <span
                 className="material-icons-round text-sm transition-transform duration-200"
                 style={{
-                  color: "var(--textMuted)",
+                  color: "#ffffff",
                   transform: openCat === cat.id ? "rotate(180deg)" : "rotate(0deg)",
                 }}
               >
@@ -67,14 +67,14 @@ function MobileCategoriesAccordion({ basePath }: { basePath: string }) {
 
           {cat.subcategorias?.length > 0 && openCat === cat.id && (
             <div className="ml-4 mb-1 rounded-xl overflow-hidden border"
-              style={{ borderColor: "var(--border)" }}>
+              style={{ borderColor: "rgba(255,255,255,0.2)" }}>
               {cat.subcategorias.map((sub: any) => (
                 <div key={sub.id}>
                   {sub.subcategorias?.length > 0 ? (
                     <>
                       <button
                         className="w-full flex items-center justify-between px-3 py-2 text-sm transition-shadow hover:shadow-sm rounded-md"
-                        style={{ color: "var(--text)" }}
+                        style={{ color: "#ffffff" }}
                         onClick={() =>
                           setOpenSub(openSub === sub.id ? null : sub.id)
                         }
@@ -83,7 +83,7 @@ function MobileCategoriesAccordion({ basePath }: { basePath: string }) {
                         <span
                           className="material-icons-round text-sm transition-transform duration-200"
                           style={{
-                            color: "var(--textMuted)",
+                            color: "#ffffff",
                             transform:
                               openSub === sub.id
                                 ? "rotate(180deg)"
@@ -95,13 +95,13 @@ function MobileCategoriesAccordion({ basePath }: { basePath: string }) {
                       </button>
                       {openSub === sub.id && (
                         <div className="ml-3 border-l"
-                          style={{ borderColor: "var(--border)" }}>
+                          style={{ borderColor: "rgba(255,255,255,0.2)" }}>
                           {sub.subcategorias.map((subsub: any) => (
                             <a
                               key={subsub.id}
                               href={`${basePath}?cat=${cat.id}&sub=${sub.id}&subsub=${subsub.id}`}
                               className="block px-4 py-2 text-xs transition-colors"
-                              style={{ color: "var(--textMuted)" }}
+                              style={{ color: "rgba(255,255,255,0.7)" }}
                             >
                               {subsub.nombre}
                             </a>
@@ -113,7 +113,7 @@ function MobileCategoriesAccordion({ basePath }: { basePath: string }) {
                     <a
                       href={`${basePath}?cat=${cat.id}&sub=${sub.id}`}
                       className="block px-3 py-2 text-sm transition-shadow hover:shadow-sm rounded-md"
-                      style={{ color: "var(--text)" }}
+                      style={{ color: "#ffffff" }}
                     >
                       {sub.nombre}
                     </a>
@@ -127,7 +127,7 @@ function MobileCategoriesAccordion({ basePath }: { basePath: string }) {
             <a
               href={`${basePath}?cat=${cat.id}`}
               className="block px-3 py-2 text-sm"
-              style={{ color: "var(--text)" }}
+              style={{ color: "#ffffff" }}
             >
               {cat.nombre}
             </a>
@@ -305,15 +305,7 @@ export const Navbar = () => {
               href={user ? "/admin" : "/"}
               className="flex items-center gap-2 shrink-0 text-white pointer-events-auto"
             >
-              <Image
-                src="/logo_ME.png"
-                alt="Marca Estilo"
-                width={56}
-                height={56}
-                priority={false}
-                loading="lazy"
-                className="rounded-lg"
-              />
+
               <span className="font-heading tracking-tight whitespace-nowrap text-xl sm:text-2xl">
                 Marca Estilo
               </span>
@@ -333,7 +325,7 @@ export const Navbar = () => {
                 </button>
               ) : (
                 <form
-                  className="absolute right-0 top-1/2 transform -translate-y-1/2 w-[min(92vw,420px)] rounded-2xl border shadow-2xl z-50 overflow-hidden text-body"
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 w-[min(75vw,300px)] md:w-[min(92vw,420px)] rounded-2xl border shadow-2xl z-50 overflow-hidden text-body"
                   style={{ background: "#ffffff", borderColor: "rgba(17,24,39,0.12)" }}
                   onSubmit={(e) => { e.preventDefault(); handleSearch(); }}
                 >
@@ -613,21 +605,21 @@ export const Navbar = () => {
         >
           <div
             className="absolute left-0 top-0 w-[85vw] max-w-xs max-h-[calc(100vh-80px)] overflow-y-auto shadow-2xl flex flex-col"
-            style={{ background: "var(--cardBg)", color: "var(--text)" }}
+            style={{ background: "#000000", color: "#ffffff" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header drawer */}
             <div
               className="flex items-center justify-between px-5 py-4 border-b"
-              style={{ borderColor: "var(--border)" }}
+              style={{ borderColor: "rgba(255,255,255,0.1)" }}
             >
-              <span className="font-bold text-base" style={{ color: "var(--text)" }}>
-                TECNO THINGS
+                              <span className="font-bold text-base" style={{ color: "#ffffff" }}>
+                MarcaEstilo
               </span>
               <button
                 onClick={() => setMobileOpen(false)}
                 className="p-1.5 rounded-xl transition-colors"
-                style={{ color: "var(--textMuted)" }}
+                style={{ color: "#ffffff" }}
               >
                 <span className="material-icons-round text-xl">close</span>
               </button>
@@ -637,7 +629,7 @@ export const Navbar = () => {
               {/* Búsqueda móvil */}
               <form
                 className="relative flex items-center gap-2 px-3 py-2 rounded-xl border mb-3"
-                style={{ background: "var(--hover)", borderColor: "var(--border)" }}
+                style={{ background: "rgba(255,255,255,0.1)", borderColor: "rgba(255,255,255,0.2)" }}
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (searchValue.trim()) {
@@ -646,7 +638,7 @@ export const Navbar = () => {
                   }
                 }}
               >
-                <span className="material-icons-round text-lg" style={{ color: "var(--textMuted)" }}>
+                                  <span className="material-icons-round text-lg" style={{ color: "#ffffff" }}>
                   search
                 </span>
                 <input
@@ -654,7 +646,7 @@ export const Navbar = () => {
                   type="text"
                   placeholder="Buscar productos..."
                   className="bg-transparent outline-none text-sm flex-1"
-                  style={{ color: "var(--text)" }}
+                  style={{ color: "#ffffff" }}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   autoComplete="off"
@@ -665,14 +657,14 @@ export const Navbar = () => {
                   <div
                     className="absolute left-0 top-full mt-1 w-full rounded-xl border shadow-xl z-50 overflow-hidden"
                     style={{
-                      background: "var(--cardBg)",
-                      borderColor: "var(--border)",
+                      background: "#000000",
+                      borderColor: "rgba(255,255,255,0.2)",
                       maxHeight: 300,
                       overflowY: "auto",
                     }}
                   >
                     {searchLoading ? (
-                      <div className="p-4 text-center text-sm" style={{ color: "var(--textMuted)" }}>
+                      <div className="p-4 text-center text-sm" style={{ color: "#ffffff" }}>
                         Buscando...
                       </div>
                     ) : suggestions.length > 0 ? (
@@ -684,7 +676,7 @@ export const Navbar = () => {
                             key={prod.id}
                             href={href}
                             className="flex items-center gap-3 px-4 py-2.5 transition-colors text-sm"
-                            style={{ color: "var(--text)" }}
+                            style={{ color: "#ffffff" }}
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => {
                               setMobileOpen(false);
@@ -700,7 +692,7 @@ export const Navbar = () => {
                             )}
                             <span className="truncate flex-1">{prod.nombre}</span>
                             {prod.marca && (
-                              <span className="text-xs shrink-0" style={{ color: "var(--textMuted)" }}>
+                              <span className="text-xs shrink-0" style={{ color: "rgba(255,255,255,0.6)" }}>
                                 {prod.marca}
                               </span>
                             )}
@@ -708,7 +700,7 @@ export const Navbar = () => {
                         );
                       })
                     ) : (
-                      <div className="p-4 text-center text-sm" style={{ color: "var(--textMuted)" }}>
+                      <div className="p-4 text-center text-sm" style={{ color: "#ffffff" }}>
                         Sin resultados
                       </div>
                     )}
@@ -722,7 +714,7 @@ export const Navbar = () => {
                   key={link.href}
                   href={link.href}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
-                  style={{ color: "var(--text)" }}
+                  style={{ color: "#ffffff" }}
                 >
                   {link.label}
                 </a>
@@ -732,7 +724,8 @@ export const Navbar = () => {
               <MobileCategoriesAccordion basePath={basePath} />
 
               {/* Divisor */}
-              <div className="border-t my-2" style={{ borderColor: "var(--border)" }} />
+              <div className="border-t my-2" style={{ borderColor: "rgba(255,255,255,0.1)" }} />
+              <div className="border-t my-2" style={{ borderColor: "rgba(255,255,255,0.1)" }} />
 
               {/* Usuario - Opciones si está autenticado */}
               {user && (
@@ -740,7 +733,7 @@ export const Navbar = () => {
                   <a
                     href="/admin/perfil"
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
-                    style={{ color: "var(--text)" }}
+                    style={{ color: "#ffffff" }}
                   >
                     <span className="material-icons-round text-base">person</span>
                     Perfil
@@ -748,7 +741,7 @@ export const Navbar = () => {
                   <a
                     href="/admin/config"
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
-                    style={{ color: "var(--text)" }}
+                    style={{ color: "#ffffff" }}
                   >
                     <span className="material-icons-round text-base">settings</span>
                     Configuración
