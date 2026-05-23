@@ -379,7 +379,6 @@ const innerStyle: React.CSSProperties = {
       className="absolute inset-0 w-full h-full block"
       style={{
         objectFit: "cover",
-        objectPosition: "center 15%",
         filter: "brightness(0.6)",
         opacity: 0,
         transition: "opacity 0.6s ease",
