@@ -151,8 +151,9 @@ function ProductoCard({
       <div
         className="
           relative shrink-0 overflow-hidden
-          bg-slate-100 dark:bg-white/5  // ✅ fondo placeholder mientras carga
+          bg-white dark:bg-white/3
 
+          /* ── VERTICAL: imagen cuadrada/rectangular arriba ── */
           w-full h-32 sm:h-48
         "
       >
