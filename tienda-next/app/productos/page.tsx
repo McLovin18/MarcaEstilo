@@ -336,22 +336,21 @@ export default function ProductosPage() {
         )}
 
         {loading ? (
-          <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <ProductoCard
-                key={i}
-                producto={{} as Producto}
-                showCart
-                showEye
-                showFav={false}
-                onClick={() => {}}
-                onAddCart={() => {}}
-                onEye={() => {}}
-                isCompact={false}
-              />
-            ))}
-          </div>
-        ) : productosFiltrados.length === 0 ? (
+  <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
+    {Array.from({ length: 10 }).map((_, i) => (
+      <div key={i} className="rounded-xl overflow-hidden bg-white dark:bg-white/4 border border-slate-100 dark:border-white/10 shadow-sm animate-pulse">
+        {/* Imagen placeholder */}
+        <div className="w-full h-32 sm:h-48 bg-slate-200 dark:bg-white/10" />
+        {/* Contenido placeholder */}
+        <div className="p-1.5 sm:p-4 flex flex-col gap-2">
+          <div className="h-4 bg-slate-200 dark:bg-white/10 rounded w-3/4" />
+          <div className="h-4 bg-slate-200 dark:bg-white/10 rounded w-1/2" />
+          <div className="h-6 bg-slate-200 dark:bg-white/10 rounded w-1/3 mt-1" />
+        </div>
+      </div>
+    ))}
+  </div>
+  ) : productosFiltrados.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
             <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
               <span className="material-icons-round text-3xl text-slate-300 dark:text-white/20">
