@@ -351,46 +351,60 @@ const [galleryAspectRatio, setGalleryAspectRatio] = React.useState(() => {
   const hasVideo = !!current.videoUrl && !hasGallery && !hasSingleImage;
   const shouldRenderDefaultOverlay = !hasPositionedHeroElements && (!hasGallery || current.title || current.subtitle || current.badge || current.buttonText);
 
-  const innerStyle: React.CSSProperties = {
-    borderRadius: hasGallery ? "0" : borderRadius,
-    aspectRatio: hasGallery ? "2400 / 1800" : "2400 / 850",
-    overflow: "hidden",
-  };
+const innerStyle: React.CSSProperties = {
+  borderRadius: hasGallery ? "0" : borderRadius,
+  aspectRatio: hasGallery ? "2400 / 1800" : "2400 / 1000",
+  overflow: "hidden",
+  position: "relative",
+  minHeight: "300px", // ✅ evita el colapso inicial
+};
 
   return (
     <>
     <section style={containerStyle} className="m-0">
       <div
-        className="relative overflow-hidden w-full max-w-full min-h-0"
-        style={innerStyle}
+        className="relative overflow-hidden w-full max-w-full min-h-0 bg-slate-950"
+        style={{ ...innerStyle, willChange: "contents"}}
       >
 {hasGallery ? (
   <div
     className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-0"
     style={imagePositionStyle}
   >
-    {galleryImages.slice(0, 4).map((src, index) => (
-      <div key={`${src}-${index}`} className="relative overflow-hidden">
-        <img
-          src={src}
-          alt={current.title || `Hero ${index + 1}`}
-          className="w-full h-full block"
-          style={{
-            display: "block",
-            objectFit: "cover",
-            filter: "brightness(0.6)"
-          }}
-          draggable={false}
-        />
-      </div>
-    ))}
+{galleryImages.slice(0, 4).map((src, index) => (
+  <div key={`${src}-${index}`} className="relative overflow-hidden">
+    <img
+      src={src}
+      alt={current.title || `Hero ${index + 1}`}  // ✅ valor real
+      className="absolute inset-0 w-full h-full block"
+      style={{
+        objectFit: "cover",
+        objectPosition: "center 15%",
+        filter: "brightness(0.6)",
+        opacity: 0,
+        transition: "opacity 0.6s ease",
+      }}
+      onLoad={(e) => {
+        (e.currentTarget as HTMLImageElement).style.opacity = "1";
+      }}
+      draggable={false}
+    />
+  </div>
+))}
   </div>
 ) : hasSingleImage ? (
   <img
     src={galleryImages[0]}
     alt={current.title || "Hero"}
-    className="w-full h-full object-cover block"
-    style={{ display: "block", filter: "brightness(0.6)" }}
+    className="absolute inset-0 w-full h-full block"  // ✅ absolute como la galería
+    style={{
+      objectFit: "cover",
+      objectPosition: "center 15%",
+      filter: "brightness(0.6)",
+      opacity: 0,
+      transition: "opacity 0.5s ease",
+    }}
+    onLoad={(e) => { e.currentTarget.style.opacity = "1"; }}
     draggable={false}
   />
 ) : hasVideo ? (
@@ -409,12 +423,15 @@ const [galleryAspectRatio, setGalleryAspectRatio] = React.useState(() => {
   <img
     src={current.image}
     alt={current.title || "Hero"}
-    width={1920}
-    height={840}
-    loading="eager"
-    decoding="async"
-    className="w-full h-full object-cover block"
-    style={{ borderRadius, display: "block" }}
+    className="absolute inset-0 w-full h-full block"  // ✅ absolute
+    style={{
+      objectFit: "cover",
+      objectPosition: "center 15%",
+      filter: "brightness(0.6)",
+      opacity: 0,
+      transition: "opacity 0.5s ease",
+    }}
+    onLoad={(e) => { e.currentTarget.style.opacity = "1"; }}
     draggable={false}
   />
 ) : null}

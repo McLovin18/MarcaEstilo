@@ -83,9 +83,26 @@ const lastHeroIndex = useMemo(() => {
       <WhatsAppFloatingButton />
       <main className="min-h-screen w-full bg-white text-slate-900 dark:bg-slate-950 dark:text-white">
         {loading ? (
-          <div className="flex min-h-screen items-center justify-center px-6 text-sm text-slate-500">
-            Cargando landing...
-          </div>
+        <div
+            className="w-full bg-slate-950 relative overflow-hidden"
+            style={{ aspectRatio: "2400 / 1000", minHeight: "300px" }}
+        >
+            <div className="absolute inset-0 bg-slate-900" />
+            <div
+            className="absolute inset-0"
+            style={{
+                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%)",
+                animation: "shimmer 1.8s infinite",
+                backgroundSize: "200% 100%",
+            }}
+            />
+            <style>{`
+            @keyframes shimmer {
+                0% { background-position: -200% 0; }
+                100% { background-position: 200% 0; }
+            }
+            `}</style>
+        </div>
         ) : landingSections.length > 0 ? (
           <div className="flex flex-col">
             {landingSections.map((section, index) => (
