@@ -58,6 +58,7 @@ type HeroItem = {
 };
 
 export type HeroSectionProps = {
+  isLast?: boolean;
   title?: string;
   subtitle?: string;
   badge?: string;
@@ -71,6 +72,11 @@ export type HeroSectionProps = {
   generalMessage?: string;
   buttonText?: string;
   buttonLink?: string;
+  buttonBackgroundColor?: string;
+  buttonTextColor?: string;
+  buttonBorderColor?: string;
+  buttonBorderWidth?: string;
+  buttonBorderRadius?: string;
   image?: string | null;
   images?: string[];
   videoUrl?: string | null;
@@ -81,6 +87,8 @@ export type HeroSectionProps = {
   // When provided by an editor/preview, forces rendering for that device
   device?: "desktop" | "mobile";
 };
+
+
 
 // ── Componente de estrellas ──────────────────────────────────────────────────
 function StarRating({ rating }: { rating: number }) {
@@ -117,8 +125,9 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-// ── Componente principal ─────────────────────────────────────────────────────
+
 export default function HeroSection({
+  isLast,
   title,
   subtitle,
   badge,
@@ -128,6 +137,11 @@ export default function HeroSection({
   buttonTextMobileFontSize,
   buttonText,
   buttonLink,
+  buttonBackgroundColor,
+  buttonTextColor,
+  buttonBorderColor,
+  buttonBorderWidth,
+  buttonBorderRadius,
   image,
   images,
   videoUrl,
@@ -139,19 +153,15 @@ export default function HeroSection({
   generalMessage,
   device,
 }: HeroSectionProps) {
-  
+
   const bg = styles?.backgroundColor;
   const color = styles?.textColor;
   const textAlign: React.CSSProperties["textAlign"] = styles?.textAlign || "center";
   const borderRadius = styles?.borderRadius || "1.5rem";
 
-  // Dimensiones base de la imagen en píxeles
   const BASE_IMAGE_WIDTH = 2400;
   const BASE_IMAGE_HEIGHT = 1000;
-  const BASE_ASPECT_RATIO = BASE_IMAGE_WIDTH / BASE_IMAGE_HEIGHT; // 2.4
 
-  // ── Helper para convertir posiciones de píxeles a porcentajes
-  // positionsSource: se puede pasar `current.fieldPositions` para priorizar posiciones por item
   const getPositioningStyle = (
     fieldName: string,
     isDesktop: boolean,
@@ -159,52 +169,46 @@ export default function HeroSection({
   ): React.CSSProperties => {
     const src = positionsSource || fieldPositions;
     if (!src?.[fieldName]) return {};
-
     const position = isDesktop ? src[fieldName].desktop : src[fieldName].mobile;
     if (!position) return {};
-
-    // Convertir píxeles a porcentajes relativos a las dimensiones base
-    const style = {
+    return {
       ...(position.left !== undefined && { left: `${(position.left / BASE_IMAGE_WIDTH) * 100}%` }),
       ...(position.top !== undefined && { top: `${(position.top / BASE_IMAGE_HEIGHT) * 100}%` }),
-      // Para badge y buttonText dejamos que el contenido determine el tamaño
       ...((fieldName !== "badge" && fieldName !== "buttonText" && position.width !== undefined) && { width: `${(position.width / BASE_IMAGE_WIDTH) * 50}%` }),
       ...((fieldName !== "badge" && fieldName !== "buttonText" && position.height !== undefined) && { height: `${(position.height / BASE_IMAGE_HEIGHT) * 50}%` }),
       ...(position.zIndex !== undefined && { zIndex: position.zIndex }),
     };
-
-    // (no debug logs in production)
-
-    return style;
   };
 
-  // ── Device detection: prefer explicit `device` prop from editor/preview when provided
+  // ── 1. TODOS LOS useState ─────────────────────────────────────────────────
   const [isDesktop, setIsDesktop] = React.useState<boolean>(() => {
     if (typeof device !== "undefined") return device === "desktop";
     return typeof window !== "undefined" ? window.innerWidth >= 768 : true;
   });
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+const [galleryAspectRatio, setGalleryAspectRatio] = React.useState(() => {
+  const imgs = (items?.[0]?.images ?? images ?? []).filter(Boolean);
+  return imgs.length > 1 ? "2400 / 1800" : "2400 / 1000";
+});
 
+  // ── 2. TODOS LOS useEffect ────────────────────────────────────────────────
   React.useEffect(() => {
     if (typeof device !== "undefined") {
       setIsDesktop(device === "desktop");
       return;
     }
-
-    const checkDesktop = () => setIsDesktop(window.innerWidth >= 768); // md breakpoint
+    const checkDesktop = () => setIsDesktop(window.innerWidth >= 768);
     checkDesktop();
     window.addEventListener("resize", checkDesktop);
     return () => window.removeEventListener("resize", checkDesktop);
   }, [device]);
 
+  // ── 3. HOOKS CUSTOM ───────────────────────────────────────────────────────
   const placeId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_PLACE_ID;
-  const hasGoogleMaps =
-    googleMaps || (items && items.some((i) => i.googleMaps));
+  const hasGoogleMaps = googleMaps || (items && items.some((i) => i.googleMaps));
   const { data: googleMapsData } = useGoogleMapsPlaceDetails(placeId, hasGoogleMaps);
 
-  // ── TODOS los hooks antes de cualquier return condicional ────────────────
-  const [currentIndex, setCurrentIndex] = React.useState(0);
-
-
+  // ── 4. useMemo ────────────────────────────────────────────────────────────
   const heroItems: HeroItem[] = React.useMemo(() => {
     const sourceItems = items && items.length ? items : [];
     const baseItem = sourceItems[0] || {
@@ -214,7 +218,7 @@ export default function HeroSection({
       buttonText,
       buttonLink,
       image,
-      images,          // ✅ AGREGAR ESTO — prop raíz `images` incluido
+      images,
       videoUrl,
       googleMaps,
       rating: googleMapsData?.rating,
@@ -233,8 +237,6 @@ export default function HeroSection({
 
     const singleHero = {
       ...baseItem,
-      // ✅ Prioriza images del baseItem (que ya incluye el prop raíz),
-      //    luego las collectedImages de los sub-items
       images: (baseItem.images?.length ? baseItem.images : null)
         ?? (collectedImages.length ? collectedImages : undefined),
     } as HeroItem;
@@ -248,18 +250,17 @@ export default function HeroSection({
       (h) => h && (h.title || h.subtitle || h.image || h.videoUrl || (h.images && h.images.length))
     );
   }, [items, googleMapsData, title, subtitle, badge, buttonText, buttonLink, image, images, videoUrl, googleMaps, generalMessage]);
-  //                                                                                         ^^^^^^ agregar `images` a las deps
 
 
+
+  // ── 6. RETURN CONDICIONAL — después de todos los hooks ───────────────────
   if (!heroItems.length) return null;
 
+  // ── 7. Derivados (no son hooks) ───────────────────────────────────────────
   const current = heroItems[0];
   const currentFieldStyles = current.fieldStyles || {};
   const currentFieldPositions = current.fieldPositions || fieldPositions || {};
 
-  // debug logs removed
-
-  // Helper para resolver estilos por campo considerando legacy y device-aware shape
   const resolveFieldStyle = (fieldName: string): React.CSSProperties => {
     const top = (fieldStyles as any)?.[fieldName] || {};
     const item = (currentFieldStyles as any)[fieldName] || {};
@@ -272,12 +273,9 @@ export default function HeroSection({
       return value;
     };
 
-    const topPicked = pickFor(top);
-    const itemPicked = pickFor(item);
-
     return {
-      ...topPicked,
-      ...itemPicked,
+      ...pickFor(top),
+      ...pickFor(item),
       ...getPositioningStyle(fieldName, isDesktop, currentFieldPositions),
     } as React.CSSProperties;
   };
@@ -288,13 +286,19 @@ export default function HeroSection({
   const buttonTextStyle: React.CSSProperties = resolveFieldStyle("buttonText");
   const imagePositionStyle: React.CSSProperties = getPositioningStyle("image", isDesktop, currentFieldPositions);
 
-  // Aplicar tamaños de fuente móvil si están definidos (priorizar item > props)
+  const buttonCustomStyle: React.CSSProperties = {
+    backgroundColor: buttonBackgroundColor ?? "transparent",
+    color: buttonTextColor ?? "white",
+    border: buttonBorderColor
+      ? `${buttonBorderWidth ?? "2px"} solid ${buttonBorderColor}`
+      : "2px solid white",
+    borderRadius: buttonBorderRadius ?? "1rem",
+    ...buttonTextStyle,
+  };
+
   const getMobileFontSizeFor = (fieldName: string): string | undefined => {
-    // Priorizar valor por item (current)
     const itemVal = (current as any)?.[`${fieldName}MobileFontSize`];
     if (itemVal !== undefined && itemVal !== null) return typeof itemVal === "number" ? `${itemVal}px` : String(itemVal);
-
-    // Luego props a nivel de sección (destructurados arriba)
     const topMap: Record<string, any> = {
       title: titleMobileFontSize,
       subtitle: subtitleMobileFontSize,
@@ -303,18 +307,9 @@ export default function HeroSection({
     };
     const topVal = topMap[fieldName];
     if (topVal !== undefined && topVal !== null) return typeof topVal === "number" ? `${topVal}px` : String(topVal);
-
     return undefined;
   };
 
-
-
-  
-
-
-
-
-  // Añadir fontSize a estilos si estamos en mobile y existe valor
   if (!isDesktop) {
     const tfs = getMobileFontSizeFor("title");
     if (tfs) titleStyle.fontSize = tfs;
@@ -326,15 +321,11 @@ export default function HeroSection({
     if (btnfs) buttonTextStyle.fontSize = btnfs;
   }
 
-  // Estilos inline para la variante por defecto (cuando no hay posicionamiento)
   const defaultBadgeInlineStyle: React.CSSProperties = !isDesktop && getMobileFontSizeFor("badge") ? { fontSize: getMobileFontSizeFor("badge") } : {};
   const defaultTitleInlineStyle: React.CSSProperties = !isDesktop && getMobileFontSizeFor("title") ? { fontSize: getMobileFontSizeFor("title") } : {};
   const defaultSubtitleInlineStyle: React.CSSProperties = !isDesktop && getMobileFontSizeFor("subtitle") ? { fontSize: getMobileFontSizeFor("subtitle") } : {};
   const defaultButtonInlineStyle: React.CSSProperties = !isDesktop && getMobileFontSizeFor("buttonText") ? { fontSize: getMobileFontSizeFor("buttonText") } : {};
 
-  
-
-  // Container style: include background image as fallback so hero shows image
   const containerStyle: React.CSSProperties = {
     ...(bg ? { backgroundColor: bg } : {}),
     ...(color ? { color } : {}),
@@ -343,65 +334,31 @@ export default function HeroSection({
     textAlign,
   };
 
-
-
   const galleryImages = Array.isArray(current.images) && current.images.length
     ? current.images.filter((url): url is string => !!url)
     : current.image
       ? [current.image]
       : [];
+
   const hasPositionedHeroElements =
     !!fieldPositions?.title ||
     !!fieldPositions?.buttonText ||
     !!fieldPositions?.subtitle ||
     !!fieldPositions?.badge;
+
   const hasGallery = galleryImages.length > 1;
   const hasSingleImage = galleryImages.length === 1;
   const hasVideo = !!current.videoUrl && !hasGallery && !hasSingleImage;
   const shouldRenderDefaultOverlay = !hasPositionedHeroElements && (!hasGallery || current.title || current.subtitle || current.badge || current.buttonText);
 
-
-  // Agrega este hook antes del return principal
-  const [galleryAspectRatio, setGalleryAspectRatio] = React.useState("2400 / 1000");
-
-  React.useEffect(() => {
-    if (!hasGallery) return;
-
-    let maxRatio = 2400 / 1000; // horizontal por defecto
-
-    const promises = galleryImages.slice(0, 4).map(
-      (src) =>
-        new Promise<number>((resolve) => {
-          const img = new Image();
-          img.onload = () => resolve(img.naturalWidth / img.naturalHeight);
-          img.onerror = () => resolve(maxRatio);
-          img.src = src;
-        })
-    );
-
-    Promise.all(promises).then((ratios) => {
-      // Si alguna imagen es vertical (ratio < 1), adaptamos el contenedor
-      const hasVertical = ratios.some((r) => r < 1);
-      if (hasVertical) {
-        // Grid 2x2: el aspect ratio del contenedor = (ancho de 2 cols) / (alto de 2 filas)
-        // Usamos el ratio más estrecho para que quepan casi completas
-        const minRatio = Math.min(...ratios);
-        // Contenedor = 2 imágenes de ancho, 2 de alto → ratio_contenedor = minRatio * (2/2)
-        const containerRatio = minRatio * 1; // 2 cols / 2 rows se cancela
-        setGalleryAspectRatio(`${containerRatio * 1000} / 1000`);
-      } else {
-        setGalleryAspectRatio("2400 / 1000");
-      }
-    });
-  }, [galleryImages, hasGallery]);
-
-
   const innerStyle: React.CSSProperties = {
-    aspectRatio: hasGallery ? "2400 / 1800" : "2400 / 900", // más alto
+    borderRadius: hasGallery ? "0" : borderRadius,
+    aspectRatio: hasGallery ? "2400 / 1800" : "2400 / 850",
     overflow: "hidden",
   };
 
   return (
+    <>
     <section style={containerStyle} className="m-0">
       <div
         className="relative overflow-hidden w-full max-w-full min-h-0"
@@ -412,54 +369,58 @@ export default function HeroSection({
     className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-0"
     style={imagePositionStyle}
   >
-        {galleryImages.slice(0, 4).map((src, index) => (
-          <div key={`${src}-${index}`} className="relative overflow-hidden">
-            <img
-              src={src}
-              alt={current.title || `Hero ${index + 1}`}
-              className="w-full h-full block"
-              style={{
-                display: "block",
-                objectFit: "cover",
-              }}
-              draggable={false}
-            />
-          </div>
-        ))}
-    </div>
-        ) : hasSingleImage ? (
-          <img
-            src={galleryImages[0]}
-            alt={current.title || "Hero"}
-            className="w-full h-full object-cover block"
-            style={{ display: "block" }}
-            draggable={false}
-          />
-        ) : hasVideo ? (
-          <video
-            className="w-full h-full object-cover block"
-            style={{ borderRadius, display: "block" }}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-          >
-            <source src={current.videoUrl || ""} type="video/mp4" />
-          </video>
-        ) : current.image ? (
-          <img
-            src={current.image}
-            alt={current.title || "Hero"}
-            width={1920}
-            height={840}
-            loading="eager"
-            decoding="async"
-            className="w-full h-full object-cover block"
-            style={{ borderRadius, display: "block" }}
-            draggable={false}
-          />
-        ) : null}
+    {galleryImages.slice(0, 4).map((src, index) => (
+      <div key={`${src}-${index}`} className="relative overflow-hidden">
+        <img
+          src={src}
+          alt={current.title || `Hero ${index + 1}`}
+          className="w-full h-full block"
+          style={{
+            display: "block",
+            objectFit: "cover",
+            filter: "brightness(0.6)"
+          }}
+          draggable={false}
+        />
+      </div>
+    ))}
+  </div>
+) : hasSingleImage ? (
+  <img
+    src={galleryImages[0]}
+    alt={current.title || "Hero"}
+    className="w-full h-full object-cover block"
+    style={{ display: "block", filter: "brightness(0.6)" }}
+    draggable={false}
+  />
+) : hasVideo ? (
+  <video
+    className="w-full h-full object-cover block"
+    style={{ borderRadius, display: "block" }}
+    autoPlay
+    muted
+    loop
+    playsInline
+    preload="metadata"
+  >
+    <source src={current.videoUrl || ""} type="video/mp4" />
+  </video>
+) : current.image ? (
+  <img
+    src={current.image}
+    alt={current.title || "Hero"}
+    width={1920}
+    height={840}
+    loading="eager"
+    decoding="async"
+    className="w-full h-full object-cover block"
+    style={{ borderRadius, display: "block" }}
+    draggable={false}
+  />
+) : null}
+
+{/* ✅ Overlay oscuro sobre todas las imágenes/video */}
+<div className="absolute inset-0 bg-black/30 z-10 pointer-events-none" />
 
         {/* Badge de Google Maps */}
         {current.googleMaps && (current.rating || current.ratingCount) && (
@@ -530,14 +491,17 @@ export default function HeroSection({
         {fieldPositions?.buttonText && current.buttonText && (
           <a
             href={current.buttonLink || "/products-by-category"}
-            className="absolute inline-flex items-center gap-1 sm:gap-2 bg-white/95 hover:bg-white text-black font-bold text-[9px] sm:text-2xl px- py-1.5 sm:px-1 sm:py-4 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
+            className="absolute inline-flex items-center gap-1 sm:gap-2 font-bold text-[9px] sm:text-2xl px-3 py-1.5 sm:px-4 sm:py-3 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
             style={{
+              backgroundColor: buttonTextStyle.backgroundColor ?? "white",
+              color: buttonTextStyle.color ?? "black",
+              border: buttonTextStyle.border ?? "none",
+              backdropFilter: (buttonTextStyle as any).backdropFilter,
               position: "absolute",
               ...buttonTextStyle,
             }}
           >
             <span>{current.buttonText}</span>
-            <span className="material-icons-round text-xs sm:text-sm">arrow_forward</span>
           </a>
         )}
 
@@ -572,11 +536,18 @@ export default function HeroSection({
               {current.buttonText && (
                 <a
                   href={current.buttonLink || "/products-by-category"}
-                  className="inline-flex items-center gap-2 bg-white hover:bg-white text-black font-bold text-xs sm:text-lg px-4 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
-                  style={{ ...defaultButtonInlineStyle, ...buttonTextStyle }}
+                  className="inline-flex items-center gap-2 font-bold text-xs sm:text-lg px-4 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
+                  style={{
+                    backgroundColor: buttonTextStyle.backgroundColor ?? "white",
+                    color: buttonTextStyle.color ?? "black",
+                    border: buttonTextStyle.border ?? "none",
+                    backdropFilter: (buttonTextStyle as any).backdropFilter,
+                    ...defaultButtonInlineStyle,
+                    ...buttonTextStyle,
+                    ...buttonCustomStyle
+                  }}
                 >
                   <span>{current.buttonText}</span>
-                  <span className="material-icons-round text-sm">arrow_forward</span>
                 </a>
               )}
             </div>
@@ -584,5 +555,40 @@ export default function HeroSection({
         )}
       </div>
     </section>
+
+    {isLast && (
+  <section
+    className="relative w-full overflow-hidden"
+    style={{ minHeight: "500px", height: "60vh" }}
+  >
+    {/* Imagen con efecto parallax */}
+    <div
+      className="absolute inset-0"
+      style={{
+        backgroundImage: `url(https://marcaestilo593.com/cdn/shop/files/WhatsApp_Image_2025-04-10_at_14.38.14.jpg?v=1744313930&width=1500)`,
+        backgroundAttachment: "fixed",   // ✅ parallax
+        backgroundSize: "cover",
+        backgroundPosition: "center center",
+      }}
+    />
+
+    {/* Overlay oscuro */}
+    <div className="absolute inset-0 bg-black/40" />
+
+    {/* Texto abajo centrado */}
+    <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-8 sm:pb-12">
+      <p
+        className="text-white text-center italic text-sm sm:text-xl lg:text-2xl drop-shadow-lg px-6"
+        style={{ fontFamily: "Georgia, serif" }}
+      >
+        Exclusividad que viste, Viste la diferencia, Marca tu Estilo
+      </p>
+    </div>
+  </section>
+)}
+
+
+    </>
+
   );
 }

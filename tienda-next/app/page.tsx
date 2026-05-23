@@ -45,6 +45,10 @@ export default function Home() {
     };
   }, []);
 
+
+
+
+
   const landingSections = useMemo(() => {
     const sections = landing?.sections ?? [];
     const heroSection = landing?.hero
@@ -64,6 +68,16 @@ export default function Home() {
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   }, [landing]);
 
+
+    // Detecta el índice del último hero
+const lastHeroIndex = useMemo(() => {
+  let last = -1;
+  landingSections.forEach((s, i) => {
+    if (s.type === "hero") last = i;
+  });
+  return last;
+}, [landingSections]);
+
   return (
     <>
       <WhatsAppFloatingButton />
@@ -74,8 +88,12 @@ export default function Home() {
           </div>
         ) : landingSections.length > 0 ? (
           <div className="flex flex-col">
-            {landingSections.map((section) => (
-              <SectionRenderer key={section.id} section={section} />
+            {landingSections.map((section, index) => (
+            <SectionRenderer 
+                key={section.id} 
+                section={section}
+                isLastHero={section.type === "hero" && index === lastHeroIndex}
+            />
             ))}
           </div>
         ) : (

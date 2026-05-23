@@ -25,6 +25,8 @@ export type SectionComponentProps = {
 };
 
 
+
+
 // import HeroGoogleReviewSection, { HeroGoogleReviewSectionProps } from "./sections/HeroGoogleReviewSection";
 
 export const sectionRegistry: Record<string, ComponentType<any>> = {
@@ -42,7 +44,13 @@ export const sectionRegistry: Record<string, ComponentType<any>> = {
 
 // Eliminado fragmento duplicado
 
-export function SectionRenderer({ section }: { section: LandingSection }) {
+export function SectionRenderer({ 
+  section,
+  isLastHero = false,
+}: { 
+  section: LandingSection;
+  isLastHero?: boolean;
+}) {
   if (section.hidden) return null;
 
   const Component = sectionRegistry[section.type];
@@ -68,9 +76,12 @@ export function SectionRenderer({ section }: { section: LandingSection }) {
   }
 
   return (
-    <>
-      <Component {...parsedProps} styles={styles} fieldStyles={fieldStyles} fieldPositions={fieldPositions} />
-    </>
+    <Component 
+      {...parsedProps} 
+      styles={styles} 
+      fieldStyles={fieldStyles} 
+      fieldPositions={fieldPositions}
+      isLast={isLastHero} // ✅
+    />
   );
 }
-

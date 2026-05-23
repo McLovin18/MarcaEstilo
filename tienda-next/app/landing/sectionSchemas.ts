@@ -15,17 +15,30 @@ export const sectionSchemas: { [key: string]: { type: string; label: string; ico
       { name: "buttonText", type: "text", label: "Texto del botón", group: "content", stylable: true },
       { name: "buttonTextMobileFontSize", type: "text", label: "Tamaño móvil (px) para Botón", group: "styles", stylable: true },
       { name: "buttonLink", type: "text", label: "Enlace del botón", group: "content" },
-      { name: "image", type: "image", label: "Foto o video principal", group: "content" },
+
+      // ── Imágenes ─────────────────────────────────────────────────────
+      { name: "image", type: "image", label: "Imagen principal (1 imagen)", group: "content" },
+      { name: "images", type: "images", label: "Galería de imágenes (2–4 fotos)", group: "content" }, // ✅ NUEVO
+
       { name: "videoUrl", type: "text", label: "Video principal (URL)", group: "content" },
-      // Campos especiales para Google Maps
-      // rating y ratingCount ahora se obtienen automáticamente, solo mostrar generalMessage
+
+      // ── Google Maps ───────────────────────────────────────────────────
       { name: "generalMessage", type: "textarea", label: "Mensaje general", group: "content", showIf: { googleMaps: true } },
+
+      // ── Estilos generales ─────────────────────────────────────────────
       { name: "backgroundColor", type: "color", label: "Color de fondo", group: "styles" },
       { name: "textColor", type: "color", label: "Color de texto", group: "styles" },
       { name: "paddingTop", type: "text", label: "Padding superior", group: "styles" },
       { name: "paddingBottom", type: "text", label: "Padding inferior", group: "styles" },
       { name: "textAlign", type: "text", label: "Alineación texto (left/center/right)", group: "styles" },
       { name: "borderRadius", type: "text", label: "Border radius contenedor", group: "styles" },
+
+      // ── Estilos del botón ─────────────────────────────────────────────
+      { name: "buttonBackgroundColor", type: "color", label: "Color de fondo del botón", group: "styles" },       // ✅ NUEVO
+      { name: "buttonTextColor", type: "color", label: "Color de texto del botón", group: "styles" },             // ✅ NUEVO
+      { name: "buttonBorderColor", type: "color", label: "Color de borde del botón", group: "styles" },           // ✅ NUEVO
+      { name: "buttonBorderWidth", type: "text", label: "Grosor de borde del botón (ej: 2px)", group: "styles" }, // ✅ NUEVO
+      { name: "buttonBorderRadius", type: "text", label: "Border radius del botón (ej: 1rem)", group: "styles" }, // ✅ NUEVO
     ],
   },
   googleComments: {
