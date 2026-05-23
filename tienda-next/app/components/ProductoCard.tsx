@@ -247,11 +247,7 @@ function ProductoCard({
 
         {/* Descripción corta — solo en móvil donde hay más espacio */}
         {producto.descripcion && (
-          <p className="
-            mt-0.5 text-xs text-slate-400 dark:text-white/35
-            line-clamp-2
-            sm:hidden
-          ">
+          <p className="mt-0.5 text-xs text-slate-400 dark:text-white/35 line-clamp-2 sm:hidden">
             {producto.descripcion}
           </p>
         )}
@@ -259,13 +255,13 @@ function ProductoCard({
         {/* Precios */}
         <div className="mt-1 md:mt-auto md:mb-3 flex items-baseline gap-1.5 flex-wrap">
           {hasDiscount && (
-            <span className="text-[10px] sm:text-sm text-[#E0A11A] dark:text-white/30 line-through">
+            <span className="text-[10px] sm:text-sm text-slate-500 dark:text-white/30 line-through">
               ${fakeOldPrice.toFixed(2)}
             </span>
           )}
           <span className="
             text-base sm:text-lg font-extrabold
-            text-[#E0A11A] dark:text-purple-300
+              text-black dark:text-white
           ">
             ${finalPrice.toFixed(2)}
           </span>
@@ -288,13 +284,14 @@ function ProductoCard({
                 className={`
                   flex-1 flex items-center justify-center gap-1
                   py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold
-                  transition-all duration-200
+                  border border-slate-300 bg-white text-slate-900
+                  shadow-sm transition-all duration-200
                   ${
                     sinStock
-                      ? "bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-white/20 cursor-not-allowed opacity-50"
+                      ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-50 shadow-none"
                       : inCart
-                        ? "bg-purple-100 dark:bg-purple-900/40 text-[#E0A11A] dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/60"
-                        : "bg-[#E0A11A] hover:bg-purple-700 text-white shadow-sm hover:shadow-md active:scale-95"
+                        ? "border-black/40 bg-white text-black hover:border-black/60 hover:shadow-md active:scale-95"
+                        : "hover:border-black/70 hover:text-black hover:shadow-md active:scale-95"
                   }
                 `}
               >
@@ -318,10 +315,8 @@ function ProductoCard({
                 className="
                   flex items-center justify-center
                   w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl shrink-0
-                  bg-slate-100 dark:bg-white/5
-                  text-slate-500 dark:text-white/50
-                  hover:bg-slate-200 dark:hover:bg-white/10
-                  hover:text-slate-700 dark:hover:text-white
+                  border border-slate-300 bg-white text-slate-700
+                  hover:border-black/40 hover:text-black hover:shadow-sm
                   transition-all duration-200
                 "
                 title="Ver detalle"

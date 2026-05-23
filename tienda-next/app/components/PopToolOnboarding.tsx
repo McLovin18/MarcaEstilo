@@ -230,7 +230,7 @@ export default function PopToolOnboarding({ onFinish, layoutReady, mode, onReady
 					<button
 						className={
 							(mode === "welcome" || step === 0)
-								? "mt-2 px-6 py-2 bg-white/90 text-[#E0A11A] rounded-xl font-bold text-lg shadow hover:bg-white transition"
+								? "mt-2 px-6 py-2 bg-white/90 text-black rounded-xl font-bold text-lg shadow hover:bg-white transition"
 								: "mt-2 px-4 py-2 bg-[#3a1859] text-white rounded-xl font-semibold hover:bg-[#5a2ca0] transition"
 						}
 						onClick={handleNext}

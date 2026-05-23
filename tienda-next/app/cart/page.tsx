@@ -115,7 +115,7 @@ function ProformaView({
                               ${fakeOldPrice?.toFixed(2)}
                             </span>
                           )}
-                          <span className="text-[#E0A11A] dark:text-[#f5d890] font-semibold">
+                            <span className="text-slate-900 dark:text-white font-semibold">
                             ${finalPrice.toFixed(2)}
                           </span>
                           {hasDiscount && (
@@ -183,7 +183,7 @@ export default function CartPage() {
   const [ordenCreada, setOrdenCreada] = useState<any>(null);
   const router = useRouter();
   const { isLogged } = useUser();
-  const [atributos, setAtributos] = useState([]);
+  const [atributos, setAtributos] = useState<any[]>([]);
 
   const calcularPrecioData = (p: any) => {
     const { basePrice, discount, hasDiscount, fakeOldPrice, finalPrice } = getSnapshotPricing(p);
@@ -348,7 +348,7 @@ export default function CartPage() {
       </div>
       <a
         href="/products-by-category"
-        className="mt-2 inline-flex items-center gap-2 bg-[#E0A11A] hover:bg-[#c88c0a] text-white font-semibold px-6 py-2.5 rounded-xl transition-colors shadow"
+        className="mt-2 inline-flex items-center gap-2 bg-white border border-slate-300 text-slate-900 hover:border-black/60 hover:shadow-md font-semibold px-6 py-2.5 rounded-xl transition-colors shadow"
       >
         <span className="material-icons-round text-base">storefront</span>
         Ver productos
@@ -365,7 +365,7 @@ export default function CartPage() {
               Carrito
             </h1>
             {carrito.length > 0 && (
-              <span className="bg-[#FFF8E8] dark:bg-rgba(224, 161, 26, 0.1) text-[#E0A11A] dark:text-[#f5d890] text-xs font-bold px-2.5 py-1 rounded-full">
+              <span className="bg-white border border-slate-300 text-slate-900 text-xs font-bold px-2.5 py-1 rounded-full">
                 {carrito.length} {carrito.length === 1 ? "producto" : "productos"}
               </span>
             )}
@@ -430,7 +430,7 @@ export default function CartPage() {
                               ${fakeOldPrice?.toFixed(2)}
                             </span>
                           )}
-                          <span className="text-sm font-bold text-[#E0A11A] dark:text-[#f5d890]">
+                          <span className="text-sm font-bold text-slate-900 dark:text-white">
                             ${finalPrice.toFixed(2)}
                           </span>
                           {hasDiscount && (
@@ -482,7 +482,7 @@ export default function CartPage() {
 
                 <a
                   href="/products-by-category"
-                  className="inline-flex items-center gap-1.5 text-sm text-[#E0A11A] dark:text-[#e8c862] hover:underline mt-1"
+                  className="inline-flex items-center gap-1.5 text-sm text-slate-900 dark:text-white hover:underline mt-1"
                 >
                   <span className="material-icons-round text-base">arrow_back</span>
                   Continuar comprando
@@ -509,7 +509,7 @@ export default function CartPage() {
                     </div>
                     <div className="border-t border-slate-100 dark:border-rgba(224, 161, 26, 0.1) mt-3 pt-3 flex justify-between font-bold text-base">
                       <span>Total</span>
-                      <span className="text-[#E0A11A] dark:text-[#f5d890]">
+                      <span className="text-slate-900 dark:text-white">
                         ${total.toFixed(2)}
                       </span>
                     </div>
@@ -521,7 +521,7 @@ export default function CartPage() {
                     </p>
                     <button
                       onClick={handleGenerarOrden}
-                      className="w-full flex items-center text-center justify-center gap-2 py-3.5 px-6 bg-[#E0A11A] hover:bg-[#c88c0a] text-white font-bold text-sm rounded-xl transition-colors shadow-md"
+                      className="w-full flex items-center text-center justify-center gap-2 py-3.5 px-6 bg-white border border-slate-300 text-slate-900 hover:border-black/60 hover:shadow-md font-bold text-sm rounded-xl transition-colors shadow-md"
                       title="Enviar pedido por WhatsApp"
                     >
                       Generar orden

@@ -47,6 +47,8 @@ type HeroItem = {
   buttonText?: string;
   buttonLink?: string;
   image?: string | null;
+  images?: string[];
+  videoUrl?: string | null;
   googleMaps?: boolean;
   rating?: number;
   ratingCount?: number;
@@ -70,6 +72,8 @@ export type HeroSectionProps = {
   buttonText?: string;
   buttonLink?: string;
   image?: string | null;
+  images?: string[];
+  videoUrl?: string | null;
   styles?: LandingSectionStyles;
   fieldStyles?: Record<string, LandingFieldStyle>;
   fieldPositions?: Record<string, { desktop?: FieldPosition; mobile?: FieldPosition }>;
@@ -125,6 +129,8 @@ export default function HeroSection({
   buttonText,
   buttonLink,
   image,
+  images,
+  videoUrl,
   styles,
   fieldStyles,
   fieldPositions,
@@ -198,72 +204,56 @@ export default function HeroSection({
   // ── TODOS los hooks antes de cualquier return condicional ────────────────
   const [currentIndex, setCurrentIndex] = React.useState(0);
 
+
   const heroItems: HeroItem[] = React.useMemo(() => {
-    return (
-      items && items.length
-        ? items.map((item) =>
-            item.googleMaps && googleMapsData
-              ? {
-                  ...item,
-                  rating: googleMapsData.rating,
-                  ratingCount: googleMapsData.user_ratings_total,
-                }
-              : item
-          )
-        : [
-            {
-              title,
-              subtitle,
-              badge,
-              buttonText,
-              buttonLink,
-              image,
-              googleMaps,
-              rating: googleMapsData?.rating,
-              ratingCount: googleMapsData?.user_ratings_total,
-              generalMessage,
-            },
-          ]
-    ).filter((h) => h && (h.title || h.subtitle || h.image));
-  }, [items, googleMapsData, title, subtitle, badge, buttonText, buttonLink, image, googleMaps, generalMessage]);
+    const sourceItems = items && items.length ? items : [];
+    const baseItem = sourceItems[0] || {
+      title,
+      subtitle,
+      badge,
+      buttonText,
+      buttonLink,
+      image,
+      images,          // ✅ AGREGAR ESTO — prop raíz `images` incluido
+      videoUrl,
+      googleMaps,
+      rating: googleMapsData?.rating,
+      ratingCount: googleMapsData?.user_ratings_total,
+      generalMessage,
+    };
 
-  // debug logs removed
-
-  const goToNext = React.useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % heroItems.length);
-  }, [heroItems.length]);
-
-  const goToPrev = React.useCallback(() => {
-    setCurrentIndex((prev) =>
-      prev === 0 ? heroItems.length - 1 : prev - 1
+    const collectedImages = Array.from(
+      new Set(
+        sourceItems
+          .flatMap((item) => Array.isArray(item.images) ? item.images : [])
+          .concat(sourceItems.map((item) => item.image || null))
+          .filter((url): url is string => !!url)
+      )
     );
-  }, [heroItems.length]);
 
-  // Autoplay
-  React.useEffect(() => {
-    if (heroItems.length <= 1) return;
-    const id = setInterval(goToNext, 5000);
-    return () => clearInterval(id);
-  }, [heroItems.length, goToNext]);
+    const singleHero = {
+      ...baseItem,
+      // ✅ Prioriza images del baseItem (que ya incluye el prop raíz),
+      //    luego las collectedImages de los sub-items
+      images: (baseItem.images?.length ? baseItem.images : null)
+        ?? (collectedImages.length ? collectedImages : undefined),
+    } as HeroItem;
 
-  // Precargar la siguiente imagen en paralelo para transición suave sin parpadeo
-  React.useEffect(() => {
-    if (heroItems.length <= 1) return;
-    
-    // Precargar la siguiente imagen
-    const nextIndex = (currentIndex + 1) % heroItems.length;
-    const nextImage = heroItems[nextIndex]?.image;
-    
-    if (nextImage) {
-      const img = new window.Image();
-      img.src = nextImage;
+    if (singleHero.googleMaps && googleMapsData) {
+      singleHero.rating = googleMapsData.rating;
+      singleHero.ratingCount = googleMapsData.user_ratings_total;
     }
-  }, [currentIndex, heroItems]);
 
-  // ── Return condicional DESPUÉS de todos los hooks ────────────────────────
+    return [singleHero].filter(
+      (h) => h && (h.title || h.subtitle || h.image || h.videoUrl || (h.images && h.images.length))
+    );
+  }, [items, googleMapsData, title, subtitle, badge, buttonText, buttonLink, image, images, videoUrl, googleMaps, generalMessage]);
+  //                                                                                         ^^^^^^ agregar `images` a las deps
+
+
   if (!heroItems.length) return null;
 
-  const current = heroItems[Math.min(currentIndex, heroItems.length - 1)];
+  const current = heroItems[0];
   const currentFieldStyles = current.fieldStyles || {};
   const currentFieldPositions = current.fieldPositions || fieldPositions || {};
 
@@ -296,6 +286,7 @@ export default function HeroSection({
   const titleStyle: React.CSSProperties = resolveFieldStyle("title");
   const subtitleStyle: React.CSSProperties = resolveFieldStyle("subtitle");
   const buttonTextStyle: React.CSSProperties = resolveFieldStyle("buttonText");
+  const imagePositionStyle: React.CSSProperties = getPositioningStyle("image", isDesktop, currentFieldPositions);
 
   // Aplicar tamaños de fuente móvil si están definidos (priorizar item > props)
   const getMobileFontSizeFor = (fieldName: string): string | undefined => {
@@ -315,6 +306,13 @@ export default function HeroSection({
 
     return undefined;
   };
+
+
+
+  
+
+
+
 
   // Añadir fontSize a estilos si estamos en mobile y existe valor
   if (!isDesktop) {
@@ -345,9 +343,61 @@ export default function HeroSection({
     textAlign,
   };
 
-  const innerStyle: React.CSSProperties = { 
-    borderRadius,
-    aspectRatio: "2400 / 1000", // Mantiene el aspect ratio sin saltos
+
+
+  const galleryImages = Array.isArray(current.images) && current.images.length
+    ? current.images.filter((url): url is string => !!url)
+    : current.image
+      ? [current.image]
+      : [];
+  const hasPositionedHeroElements =
+    !!fieldPositions?.title ||
+    !!fieldPositions?.buttonText ||
+    !!fieldPositions?.subtitle ||
+    !!fieldPositions?.badge;
+  const hasGallery = galleryImages.length > 1;
+  const hasSingleImage = galleryImages.length === 1;
+  const hasVideo = !!current.videoUrl && !hasGallery && !hasSingleImage;
+  const shouldRenderDefaultOverlay = !hasPositionedHeroElements && (!hasGallery || current.title || current.subtitle || current.badge || current.buttonText);
+
+
+  // Agrega este hook antes del return principal
+  const [galleryAspectRatio, setGalleryAspectRatio] = React.useState("2400 / 1000");
+
+  React.useEffect(() => {
+    if (!hasGallery) return;
+
+    let maxRatio = 2400 / 1000; // horizontal por defecto
+
+    const promises = galleryImages.slice(0, 4).map(
+      (src) =>
+        new Promise<number>((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(img.naturalWidth / img.naturalHeight);
+          img.onerror = () => resolve(maxRatio);
+          img.src = src;
+        })
+    );
+
+    Promise.all(promises).then((ratios) => {
+      // Si alguna imagen es vertical (ratio < 1), adaptamos el contenedor
+      const hasVertical = ratios.some((r) => r < 1);
+      if (hasVertical) {
+        // Grid 2x2: el aspect ratio del contenedor = (ancho de 2 cols) / (alto de 2 filas)
+        // Usamos el ratio más estrecho para que quepan casi completas
+        const minRatio = Math.min(...ratios);
+        // Contenedor = 2 imágenes de ancho, 2 de alto → ratio_contenedor = minRatio * (2/2)
+        const containerRatio = minRatio * 1; // 2 cols / 2 rows se cancela
+        setGalleryAspectRatio(`${containerRatio * 1000} / 1000`);
+      } else {
+        setGalleryAspectRatio("2400 / 1000");
+      }
+    });
+  }, [galleryImages, hasGallery]);
+
+
+  const innerStyle: React.CSSProperties = {
+    aspectRatio: hasGallery ? "2400 / 1800" : "2400 / 900", // más alto
     overflow: "hidden",
   };
 
@@ -355,30 +405,67 @@ export default function HeroSection({
     <section style={containerStyle} className="m-0">
       <div
         className="relative overflow-hidden w-full max-w-full min-h-0"
-        style={{
-          ...innerStyle,
-          backgroundImage: `url(${current.image})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
+        style={innerStyle}
       >
-        <img
-          src={current.image}
-          alt={current.title || "Hero"}
-          width={1920}
-          height={840}
-          loading="eager"
-          decoding="async"
-          className="w-full h-full object-cover block"
-          style={{ borderRadius, display: "block" }}
-          draggable={false}
-        />
+{hasGallery ? (
+  <div
+    className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-0"
+    style={imagePositionStyle}
+  >
+        {galleryImages.slice(0, 4).map((src, index) => (
+          <div key={`${src}-${index}`} className="relative overflow-hidden">
+            <img
+              src={src}
+              alt={current.title || `Hero ${index + 1}`}
+              className="w-full h-full block"
+              style={{
+                display: "block",
+                objectFit: "cover",
+              }}
+              draggable={false}
+            />
+          </div>
+        ))}
+    </div>
+        ) : hasSingleImage ? (
+          <img
+            src={galleryImages[0]}
+            alt={current.title || "Hero"}
+            className="w-full h-full object-cover block"
+            style={{ display: "block" }}
+            draggable={false}
+          />
+        ) : hasVideo ? (
+          <video
+            className="w-full h-full object-cover block"
+            style={{ borderRadius, display: "block" }}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          >
+            <source src={current.videoUrl || ""} type="video/mp4" />
+          </video>
+        ) : current.image ? (
+          <img
+            src={current.image}
+            alt={current.title || "Hero"}
+            width={1920}
+            height={840}
+            loading="eager"
+            decoding="async"
+            className="w-full h-full object-cover block"
+            style={{ borderRadius, display: "block" }}
+            draggable={false}
+          />
+        ) : null}
 
         {/* Badge de Google Maps */}
         {current.googleMaps && (current.rating || current.ratingCount) && (
-          <div className="absolute top-3 left-3 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg flex flex-col gap-1 max-w-[180px] sm:max-w-none">
+          <div className="absolute top-3 left-3 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg flex flex-col gap-1 max-w-45 sm:max-w-none">
             <div className="flex items-center gap-1.5">
-              <svg width="16" height="16" viewBox="0 0 24 24" className="flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" className="shrink-0">
                 <path
                   fill="#4285F4"
                   d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"
@@ -420,7 +507,7 @@ export default function HeroSection({
             style={{
               position: "absolute",
               ...titleStyle,
-              maxWidth: "90%",
+              whiteSpace: "nowrap",
             }}
           >
             {current.title}
@@ -454,88 +541,45 @@ export default function HeroSection({
           </a>
         )}
 
-        {/* Flechas de navegación */}
-        {heroItems.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={goToPrev}
-              aria-label="Anterior"
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white flex items-center justify-center transition-all hover:scale-105"
-            >
-              <span className="material-icons-round text-lg sm:text-xl">chevron_left</span>
-            </button>
-            <button
-              type="button"
-              onClick={goToNext}
-              aria-label="Siguiente"
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white flex items-center justify-center transition-all hover:scale-105"
-            >
-              <span className="material-icons-round text-lg sm:text-xl">chevron_right</span>
-            </button>
-          </>
-        )}
-
-        {/* Contenido textual por defecto (sin posicionamiento personalizado) */}
-        {!fieldPositions?.badge && !fieldPositions?.title && !fieldPositions?.subtitle && (
-          <div className="absolute left-0 right-0 bottom-7 z-20 flex flex-col items-start text-left gap-0 sm:gap-0 pb-1 px-2 sm:pb-4 sm:px-8 w-full max-w-full">
-            <div className="absolute sm:bottom-50 bottom-15">
-                {current.badge && (
-                  <span
-                    className="inline-block px-2 py-0.5 text-[6px] sm:px-3 sm:py-1 sm:text-xs font-bold tracking-widest uppercase bg-white/90 text-black dark:bg-slate-900/90 dark:text-white rounded-full shadow"
-                    style={{ ...defaultBadgeInlineStyle, ...badgeStyle }}
-                  >
-                    {current.badge}
-                  </span>
-                )}
-                {current.title && (
-                  <h2
-                    className="text-xl sm:text-5xl lg:text-5xl font-extrabold text-white leading-tight max-w-[90vw] sm:max-w-2xl drop-shadow-lg"
-                    style={{ ...defaultTitleInlineStyle, ...titleStyle }}
-                  >
-                    {current.title}
-                  </h2>
-                )}
-                {current.subtitle && (
-                  <p
-                    className="text-white/80 text-[9px] sm:text-sm max-w-[90vw] sm:max-w-2xl drop-shadow"
-                    style={{ ...defaultSubtitleInlineStyle, ...subtitleStyle }}
-                  >
-                    {current.subtitle}
-                  </p>
-                )}
-            </div>
-
-            {current.buttonText && (
-              <div className="w-full flex justify-center sm:py-3 pb-5">
+        {/* Contenido textual y CTA del hero */}
+        {shouldRenderDefaultOverlay && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-4 sm:px-8 pointer-events-none">
+            <div className="pointer-events-auto flex flex-col items-center gap-3 max-w-3xl">
+              {current.badge && (
+                <span
+                  className="inline-block px-3 py-1 text-[10px] sm:text-xs font-bold tracking-widest uppercase bg-white/90 text-black dark:bg-slate-900/90 dark:text-white rounded-full shadow"
+                  style={{ ...defaultBadgeInlineStyle, ...badgeStyle }}
+                >
+                  {current.badge}
+                </span>
+              )}
+              {current.title && (
+                <h2
+                  className="text-2xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight drop-shadow-lg"
+                  style={{ ...defaultTitleInlineStyle, ...titleStyle }}
+                >
+                  {current.title}
+                </h2>
+              )}
+              {current.subtitle && (
+                <p
+                  className="text-white/85 text-sm sm:text-lg max-w-[90vw] sm:max-w-2xl drop-shadow"
+                  style={{ ...defaultSubtitleInlineStyle, ...subtitleStyle }}
+                >
+                  {current.subtitle}
+                </p>
+              )}
+              {current.buttonText && (
                 <a
                   href={current.buttonLink || "/products-by-category"}
-                  className="inline-flex items-centersm:gap-2 bg-white/95 hover:bg-white text-black font-bold text-[9px] sm:text-2xl px-3 py-1.5 sm:px-4 sm:py-3 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
+                  className="inline-flex items-center gap-2 bg-white hover:bg-white text-black font-bold text-xs sm:text-lg px-4 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
                   style={{ ...defaultButtonInlineStyle, ...buttonTextStyle }}
                 >
                   <span>{current.buttonText}</span>
-                  <span className="material-icons-round text-xs sm:text-sm">arrow_forward</span>
+                  <span className="material-icons-round text-sm">arrow_forward</span>
                 </a>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Dots indicadores */}
-        {heroItems.length > 1 && (
-          <div className="absolute bottom-2 inset-x-0 flex justify-center gap-1.5 z-20">
-            {heroItems.map((_, i) => (
-              <button
-                key={i}
-                aria-label={`Slide ${i + 1}`}
-                onClick={() => setCurrentIndex(i)}
-                className={`rounded-full transition-all duration-300 ${
-                  i === currentIndex
-                    ? "w-5 h-1.5 bg-white"
-                    : "w-1.5 h-1.5 bg-white/50 hover:bg-white/80"
-                }`}
-              />
-            ))}
+              )}
+            </div>
           </div>
         )}
       </div>

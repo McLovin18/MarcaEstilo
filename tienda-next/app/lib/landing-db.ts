@@ -71,10 +71,7 @@ const getLandingByVersion = async (version: "draft" | "published") => {
 
     // Hero draft/published con fallback al legacy hero
     const heroKey = version === "draft" ? "heroDraft" : "heroPublished";
-    let hero: any =
-      base[heroKey] ||
-      base.hero ||
-      (version === "published" ? DEFAULT_LANDING.hero : null);
+    let hero: any = base[heroKey] || base.hero || null;
 
     // En el editor (draft) no queremos que aparezca el hero
     // por defecto "Bienvenido a TecnoThings" como si fuera
@@ -90,6 +87,18 @@ const getLandingByVersion = async (version: "draft" | "published") => {
       if (isDefaultHero) {
         hero = null;
       }
+    }
+
+    if (
+      version === "published" &&
+      hero &&
+      hero.title === DEFAULT_LANDING.hero.title &&
+      hero.subtitle === DEFAULT_LANDING.hero.subtitle &&
+      hero.buttonText === DEFAULT_LANDING.hero.buttonText &&
+      hero.buttonLink === DEFAULT_LANDING.hero.buttonLink &&
+      !base.heroPublished
+    ) {
+      hero = null;
     }
 
     // Productos destacados draft/published con fallback
@@ -171,6 +180,7 @@ export const updateHero = async (
         buttonText: heroData.buttonText || "Explorar",
         buttonLink: heroData.buttonLink || "/",
         image: heroData.image || null,
+        videoUrl: heroData.videoUrl || null,
         badge: heroData.badge || "",
       },
       updatedAt: Timestamp.now(),
@@ -190,6 +200,18 @@ export const uploadLandingImage = async (imageFile, type = "hero") => {
     return downloadURL;
   } catch (error) {
     console.error("Error subiendo imagen de landing:", error);
+    throw error;
+  }
+};
+
+export const uploadLandingVideo = async (videoFile, type = "hero") => {
+  try {
+    const fileRef = ref(storage, `landing_page/${type}/${videoFile.name}`);
+    await uploadBytes(fileRef, videoFile);
+    const downloadURL = await getDownloadURL(fileRef);
+    return downloadURL;
+  } catch (error) {
+    console.error("Error subiendo video de landing:", error);
     throw error;
   }
 };

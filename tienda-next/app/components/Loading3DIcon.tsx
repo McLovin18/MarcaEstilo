@@ -13,7 +13,7 @@ export function Loading3DIcon() {
         {/* Glow principal */}
         <div className="
           absolute inset-0
-          bg-[#E0A11A]/20
+          bg-black/15
           blur-3xl
           rounded-full
           animate-pulse
@@ -24,7 +24,7 @@ export function Loading3DIcon() {
           absolute inset-2
           rounded-full
          
-          border border-[#E0A11A]/20
+          border border-black/15
         " />
 
         {/* Ring animado */}
@@ -33,7 +33,7 @@ export function Loading3DIcon() {
           rounded-full
           
           border-2 border-transparent
-          border-t-[#E0A11A]
+          border-t-black
           animate-spin
         "
         style={{
@@ -47,7 +47,7 @@ export function Loading3DIcon() {
           rounded-full
           bg-black dark:bg-[#111]
 
-          shadow-[0_0_40px_rgba(224,161,26,0.15)]
+          shadow-[0_0_40px_rgba(0,0,0,0.18)]
           flex items-center justify-center
         ">
 
@@ -58,7 +58,7 @@ export function Loading3DIcon() {
               src="/diamante.png"
               alt="Loading"
               fill
-              className="object-contain drop-shadow-[0_0_12px_rgba(224,161,26,0.45)]"
+              className="object-contain drop-shadow-[0_0_12px_rgba(0,0,0,0.35)]"
               priority
             />
 
@@ -74,7 +74,7 @@ export function Loading3DIcon() {
           font-bold
           tracking-[0.35em]
           uppercase
-          text-[#E0A11A]
+          text-black
         ">
           Marca tu estilo
         </span>
@@ -84,11 +84,11 @@ export function Loading3DIcon() {
 
           <div className="flex gap-1.5 animate-loadingSteps">
 
-            <div className="w-1.5 h-1.5 rounded-full bg-[#E0A11A]" />
+            <div className="w-1.5 h-1.5 rounded-full bg-black" />
 
-            <div className="w-1.5 h-1.5 rounded-full bg-[#E0A11A]" />
+            <div className="w-1.5 h-1.5 rounded-full bg-black" />
 
-            <div className="w-1.5 h-1.5 rounded-full bg-[#E0A11A]" />
+            <div className="w-1.5 h-1.5 rounded-full bg-black" />
 
           </div>
         </div>

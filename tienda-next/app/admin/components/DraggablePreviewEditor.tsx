@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import type { FieldPosition } from "../../lib/landing-types";
 
 type ElementConfig = {
@@ -8,9 +8,7 @@ type ElementConfig = {
 };
 
 const ELEMENTS: Record<string, ElementConfig> = {
-  badge: { label: "Badge", defaultPosition: { left: 50, top: 100, width: 200, height: 50, zIndex: 10 } },
   title: { label: "Título", defaultPosition: { left: 50, top: 200, width: 800, height: 150, zIndex: 10 } },
-  subtitle: { label: "Subtítulo", defaultPosition: { left: 50, top: 400, width: 800, height: 100, zIndex: 10 } },
   buttonText: { label: "Botón", defaultPosition: { left: 50, top: 650, width: 300, height: 60, zIndex: 10 } },
 };
 
@@ -55,6 +53,68 @@ export default function DraggablePreviewEditor({
   const [containerSize, setContainerSize] = useState({ width: 800, height: 500 });
   const [showModal, setShowModal] = useState(false);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
+
+  const hasRenderableValue = (field: string) => {
+    const value = values?.[field];
+    if (typeof value === "string") return value.trim().length > 0;
+    return value !== undefined && value !== null;
+  };
+
+  const editableFields = useMemo(() => {
+    const baseFields =
+      sectionType === "hero"
+        ? ["title", "buttonText"]
+        : sectionType === "banner"
+          ? ["title", "subtitle", "buttonText"]
+          : [];
+
+    return baseFields.filter((field) => hasRenderableValue(field));
+  }, [sectionType, values]);
+
+  const renderFieldContent = (field: string) => {
+    const value = values?.[field];
+    if (sectionType === "hero") {
+      if (field === "title") {
+        return (
+          <div className="pointer-events-none text-center px-3 py-1 whitespace-nowrap font-serif italic text-slate-900 dark:text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.18)]">
+            {value}
+          </div>
+        );
+      }
+
+      if (field === "buttonText") {
+        return (
+          <div className="pointer-events-none inline-flex items-center gap-2 whitespace-nowrap rounded-2xl bg-white text-black font-bold px-4 py-2 shadow-md border border-slate-200">
+            <span>{value}</span>
+            <span className="material-icons-round text-sm">arrow_forward</span>
+          </div>
+        );
+      }
+    }
+
+    return (
+      <div className="pointer-events-none text-center px-2 py-1">
+        {value}
+      </div>
+    );
+  };
+
+  const getFieldChromeClassName = (field: string, isSelected: boolean) => {
+    if (sectionType === "hero") {
+      return isSelected
+        ? "absolute cursor-move transition-all ring-2 ring-purple-500 ring-offset-2 ring-offset-transparent rounded-2xl"
+        : "absolute cursor-move transition-all rounded-2xl";
+    }
+
+    return `absolute cursor-move border-2 flex items-center justify-center transition-all ${
+      isSelected
+        ? "border-purple-500 bg-purple-200/30 dark:bg-purple-900/30"
+        : "border-blue-400 bg-blue-100/50 dark:bg-blue-900/30"
+    } text-slate-800 dark:text-white rounded-xl`;
+  };
+
+  const shouldUseAutoSize = (field: string) =>
+    sectionType === "hero" && (field === "title" || field === "buttonText");
 
   // Monitorear cambios de tamaño del contenedor
   useEffect(() => {
@@ -188,11 +248,11 @@ export default function DraggablePreviewEditor({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (dragState) {
-        // Si estamos en el modal, no escalar; si estamos en el preview, escalar
-        const scaleMultiplier = showModal ? 1 : getInverseScale().scaleX;
-        
-        const deltaX = (e.clientX - dragState.startX) * scaleMultiplier;
-        const deltaY = (e.clientY - dragState.startY) * getInverseScale().scaleY;
+        // Si estamos en el modal (1:1), no escalar; en preview sí se escala.
+        const { scaleX, scaleY } = showModal ? { scaleX: 1, scaleY: 1 } : getInverseScale();
+
+        const deltaX = (e.clientX - dragState.startX) * scaleX;
+        const deltaY = (e.clientY - dragState.startY) * scaleY;
         const newLeft = Math.max(0, dragState.startLeft + deltaX);
         const newTop = Math.max(0, dragState.startTop + deltaY);
 
@@ -237,6 +297,15 @@ export default function DraggablePreviewEditor({
       };
     }
   }, [dragState, resizeState, showModal, imageDimensions, containerSize]);
+
+  useEffect(() => {
+    // Keep selection in sync when fields become hidden due to empty values.
+    setSelectedFields((prev) => {
+      const next = new Set(Array.from(prev).filter((field) => editableFields.includes(field)));
+      if (next.size === prev.size) return prev;
+      return next;
+    });
+  }, [editableFields]);
 
   return (
     <div className="flex flex-col gap-3 w-full">
@@ -289,51 +358,49 @@ export default function DraggablePreviewEditor({
 
         {/* Elementos arrastrables */}
         {(sectionType === "hero" || sectionType === "banner") &&
-          (sectionType === "hero"
-              ? ["badge", "title", "subtitle", "buttonText"]
-              : ["title", "subtitle", "buttonText"]
-            ).map((field) => {
+          editableFields.map((field) => {
             const pos = getScaledPosition(field);
             const isSelected = selectedFields.has(field);
 
             return (
               <div
                 key={field}
-                className={`absolute cursor-move border-2 flex items-center justify-center font-bold transition-all ${
-                  isSelected
-                    ? "border-purple-500 bg-purple-200/30 dark:bg-purple-900/30"
-                    : "border-blue-400 bg-blue-100/50 dark:bg-blue-900/30"
-                } text-slate-800 dark:text-white`}
+                className={getFieldChromeClassName(field, isSelected)}
                 style={{
                   left: pos.left,
                   top: pos.top,
                   ...(pos.zIndex !== undefined ? { zIndex: pos.zIndex } : {}),
-                  // For badge and buttonText allow auto-sizing when width/height not provided
-                  ...(pos.width !== undefined && !(field === "badge" || field === "buttonText") ? { width: pos.width } : {}),
-                  ...(pos.height !== undefined && !(field === "badge" || field === "buttonText") ? { height: pos.height } : {}),
-                  fontSize: field === "badge" ? "12px" : field === "title" ? "20px" : field === "buttonText" ? "14px" : "16px",
+                  ...(pos.width !== undefined && !shouldUseAutoSize(field) ? { width: pos.width } : {}),
+                  ...(pos.height !== undefined && !shouldUseAutoSize(field) ? { height: pos.height } : {}),
+                  fontSize: field === "title" ? "20px" : field === "buttonText" ? "14px" : "16px",
                 }}
                 onMouseDown={(e) => handleMouseDown(e, field, "drag")}
               >
                 {/* Punto de referencia en esquina superior izquierda */}
                 <div
-                  className="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full cursor-grab active:cursor-grabbing border-2 border-red-700 shadow-lg"
+                  className={`absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full cursor-grab active:cursor-grabbing border-2 border-red-700 shadow-lg ${sectionType === "hero" ? "opacity-70" : ""}`}
                   title="Punto de referencia - agarra aquí para mover"
                 />
                 
-                <div className="pointer-events-none text-center px-2 py-1">
-                  {values?.[field] ?? ELEMENTS[field]?.label}
-                </div>
+                {renderFieldContent(field)}
                 
                 {/* Handle de redimensionamiento en esquina inferior derecha */}
-                    <div
-                      className="absolute bottom-0 right-0 w-4 h-4 bg-purple-600 cursor-se-resize hover:bg-purple-700 border border-purple-800"
-                      onMouseDown={(e) => handleMouseDown(e, field, "resize")}
-                      title="Arrastra para redimensionar"
-                    />
+                <div
+                  className={`absolute bottom-0 right-0 w-4 h-4 bg-purple-600 cursor-se-resize hover:bg-purple-700 border border-purple-800 ${sectionType === "hero" ? "opacity-70" : ""}`}
+                  onMouseDown={(e) => handleMouseDown(e, field, "resize")}
+                  title="Arrastra para redimensionar"
+                />
               </div>
             );
           })}
+
+        {editableFields.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="px-3 py-1 rounded-full bg-white/85 text-slate-600 text-xs border border-slate-200 shadow-sm">
+              No hay elementos con valor para posicionar
+            </span>
+          </div>
+        )}
         </div>
       </div>
 
@@ -348,8 +415,8 @@ export default function DraggablePreviewEditor({
 
       {/* Modal de posicionamiento en dimensiones reales */}
       {showModal && image && imageDimensions.width > 0 && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-950 rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+          <div className="bg-white dark:bg-slate-950 shadow-2xl w-screen h-screen max-w-none max-h-none flex flex-col">
             {/* Header del modal */}
             <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">
@@ -364,12 +431,12 @@ export default function DraggablePreviewEditor({
             </div>
 
             {/* Contenedor de scroll con la imagen */}
-            <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
+            <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-900 flex items-start justify-start p-4">
               <div
-                className="relative bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 shadow-lg"
+                className="relative shrink-0 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 shadow-lg"
                 style={{
                   width: imageDimensions.width,
-                  maxWidth: "calc(100vw - 48px)",
+                  height: imageDimensions.height,
                   aspectRatio: `${imageDimensions.width}/${imageDimensions.height}`,
                   backgroundImage: `url(${image})`,
                   backgroundSize: "contain",
@@ -379,44 +446,35 @@ export default function DraggablePreviewEditor({
               >
                 {/* Elementos arrastrables en tamaño real */}
                 {(sectionType === "hero" || sectionType === "banner") &&
-                  (sectionType === "hero"
-                    ? ["badge", "title", "subtitle", "buttonText"]
-                    : ["title", "subtitle", "buttonText"]
-                  ).map((field) => {
+                  editableFields.map((field) => {
                     const pos = getPosition(field);
                     const isSelected = selectedFields.has(field);
 
                     return (
                       <div
                         key={field}
-                        className={`absolute cursor-move border-2 inline-flex items-center justify-center font-bold transition-all ${
-                          isSelected
-                            ? "border-purple-500 bg-purple-200/30 dark:bg-purple-900/30"
-                            : "border-blue-400 bg-blue-100/50 dark:bg-blue-900/30"
-                        } text-slate-800 dark:text-white`}
+                        className={getFieldChromeClassName(field, isSelected)}
                         style={{
                           left: pos.left,
                           top: pos.top,
                           ...(pos.zIndex !== undefined ? { zIndex: pos.zIndex } : {}),
-                          ...(pos.width !== undefined && !(field === "badge" || field === "buttonText") ? { width: pos.width } : {}),
-                          ...(pos.height !== undefined && !(field === "badge" || field === "buttonText") ? { height: pos.height } : {}),
-                          fontSize: field === "badge" ? "12px" : field === "title" ? "20px" : field === "buttonText" ? "14px" : "16px",
+                          ...(pos.width !== undefined && !shouldUseAutoSize(field) ? { width: pos.width } : {}),
+                          ...(pos.height !== undefined && !shouldUseAutoSize(field) ? { height: pos.height } : {}),
+                          fontSize: field === "title" ? "20px" : field === "buttonText" ? "14px" : "16px",
                         }}
                         onMouseDown={(e) => handleMouseDown(e, field, "drag")}
                       >
                         {/* Punto de referencia */}
                         <div
-                          className="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full cursor-grab active:cursor-grabbing border-2 border-red-700 shadow-lg"
+                          className={`absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full cursor-grab active:cursor-grabbing border-2 border-red-700 shadow-lg ${sectionType === "hero" ? "opacity-70" : ""}`}
                           title="Punto de referencia"
                         />
                         
-                        <div className="pointer-events-none text-center px-2 py-1 whitespace-nowrap">
-                          {values?.[field] ?? ELEMENTS[field]?.label}
-                        </div>
+                        {renderFieldContent(field)}
                         
                         {/* Handle de redimensionamiento */}
                         <div
-                          className="absolute bottom-0 right-0 w-4 h-4 bg-purple-600 cursor-se-resize hover:bg-purple-700 border border-purple-800"
+                          className={`absolute bottom-0 right-0 w-4 h-4 bg-purple-600 cursor-se-resize hover:bg-purple-700 border border-purple-800 ${sectionType === "hero" ? "opacity-70" : ""}`}
                           onMouseDown={(e) => handleMouseDown(e, field, "resize")}
                           title="Redimensionar"
                         />

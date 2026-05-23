@@ -144,8 +144,8 @@ export default function QuickProductsSection({
                 onClick={() => setSelectedCategoryId(cat.id)}
                 className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
                   selectedCategoryId === cat.id
-                    ? "shadow-md scale-105 bg-[#E0A11A] text-white"
-                    : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
+                    ? "shadow-sm scale-105 bg-black text-white border border-black"
+                    : "bg-white text-slate-900 border border-slate-300 hover:border-black/60 hover:shadow-sm"
                 }`}
               >
                 {cat.icono && <span className="mr-1">🏷️</span>}
@@ -166,14 +166,14 @@ export default function QuickProductsSection({
                 <button
                   onClick={handlePrev}
                   disabled={currentIndex === 0}
-                  className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-10 bg-[#E0A11A] hover:bg-[#d89213] disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-full p-2 transition-all shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+                  className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-slate-50 disabled:bg-slate-100 text-slate-900 border border-slate-300 rounded-full p-2 transition-all shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
                 >
                   <span className="material-icons-round text-sm">chevron_left</span>
                 </button>
                 <button
                   onClick={handleNext}
                   disabled={currentIndex >= maxIndex}
-                  className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-10 bg-[#E0A11A] hover:bg-[#d89213] disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-full p-2 transition-all shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
+                  className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-slate-50 disabled:bg-slate-100 text-slate-900 border border-slate-300 rounded-full p-2 transition-all shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
                 >
                   <span className="material-icons-round text-sm">chevron_right</span>
                 </button>
@@ -209,7 +209,7 @@ export default function QuickProductsSection({
                     onClick={() => setCurrentIndex(idx)}
                     className={`h-2 rounded-full transition-all ${
                       idx === currentIndex
-                        ? "bg-[#E0A11A] w-6"
+                        ? "bg-black w-6"
                         : "bg-slate-300 dark:bg-slate-600 w-2 hover:bg-slate-400 dark:hover:bg-slate-500"
                     }`}
                   />
@@ -227,7 +227,7 @@ export default function QuickProductsSection({
           <div className="text-center mt-10">
             <Link
               href={`/products-by-category?cat=${selectedCategoryId}`}
-              className="inline-block px-6 py-3 rounded-lg font-semibold bg-[#E0A11A] text-white hover:bg-[#d89213] transition-all shadow-md hover:shadow-lg"
+              className="inline-block px-6 py-3 rounded-lg font-semibold bg-white text-slate-900 border border-slate-300 hover:border-black/60 hover:shadow-md transition-all shadow-md"
             >
               Ver más productos
             </Link>

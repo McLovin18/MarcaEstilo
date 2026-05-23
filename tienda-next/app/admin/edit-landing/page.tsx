@@ -16,6 +16,7 @@ import {
   deleteSection,
   saveLandingSections,
   uploadLandingImage,
+  uploadLandingVideo,
   publishLanding,
 } from "../../lib/landing-db";
 import { LandingSection } from "../../lib/landing-types";
@@ -78,7 +79,7 @@ function getDefaultSection(type: SectionType): Section {
 export default function LandingEditor() {
     // Estado para error de comentarios de Google Maps
     const [googleCommentsError, setGoogleCommentsError] = useState("");
-    // Estado para detectar cambios pendientes (activar botón guardar)
+    // Estado para detectar cambios pendientes (activar bot+�n guardar)
     const [hasChanges, setHasChanges] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [productos, setProductos] = useState<any[]>([]);
@@ -162,7 +163,7 @@ export default function LandingEditor() {
   // Guardar comentarios seleccionados
   const saveSelectedGoogleComments = async () => {
     setSaving(true);
-    // Log selección antes de guardar
+    // Log selecci+�n antes de guardar
     console.log("[Admin] selectedGoogleComments:", selectedGoogleComments);
     // Mapear los comentarios al formato esperado por GoogleCommentsSection
     const mappedComments = selectedGoogleComments.map((c: any) => ({
@@ -207,15 +208,15 @@ export default function LandingEditor() {
     alert("Comentarios de Google guardados");
   };
 
-  // Abrir/cerrar modal de selección
+  // Abrir/cerrar modal de selecci+�n
   const openGoogleCommentsModal = () => setShowGoogleCommentsModal(true);
   const closeGoogleCommentsModal = () => setShowGoogleCommentsModal(false);
 
   // Seleccionar/deseleccionar comentarios
   const toggleGoogleComment = (comment: any) => {
-    // Log antes y después de seleccionar/deseleccionar
+    // Log antes y despu+�s de seleccionar/deseleccionar
     console.log("[Admin] toggleGoogleComment BEFORE:", selectedGoogleComments);
-    // Usar el texto como clave única
+    // Usar el texto como clave +�nica
     if (selectedGoogleComments.some((c) => c.text === comment.text)) {
       setSelectedGoogleComments(selectedGoogleComments.filter((c) => c.text !== comment.text));
       console.log("[Admin] toggleGoogleComment REMOVED:", comment);
@@ -233,7 +234,7 @@ export default function LandingEditor() {
   };
   // Abrir modal y cargar comentarios
   // (removed duplicate definition)
-  // Cargar comentarios seleccionados desde sección al abrir modal
+  // Cargar comentarios seleccionados desde secci+�n al abrir modal
   useEffect(() => {
     if (showGoogleCommentsModal) {
       const section = sections.find(s => s.type === "googleComments");
@@ -261,51 +262,88 @@ export default function LandingEditor() {
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      const [landingData, prods] = await Promise.all([
-        getLandingDraft(),
-        obtenerProductos(),
-      ]);
+      try {
+        const [landingData, prods] = await Promise.all([
+          getLandingDraft(),
+          obtenerProductos(),
+        ]);
 
-      setHero(landingData?.hero ?? null);
+        setHero(landingData?.hero ?? null);
 
-      // Guardamos todos los productos disponibles (inventario)
-      setProductos(prods ?? []);
-      setAllProductos(prods ?? []);
+        // Guardamos todos los productos disponibles (inventario)
+        setProductos(prods ?? []);
+        setAllProductos(prods ?? []);
 
-      // Resolver productos destacados del borrador (IDs -> objetos)
-      const allProds = prods ?? [];
-      const featuredIds: string[] = landingData?.featuredProducts || [];
+        // Resolver productos destacados del borrador (IDs -> objetos)
+        const allProds = prods ?? [];
+        const featuredIds: string[] = landingData?.featuredProducts || [];
 
-      // Solo cargar los productos seleccionados explícitamente en la landing
-      // (NO agregar automáticamente los productos marcados como destacados en inventario)
-      const explicitFeatured: any[] = featuredIds
-        .map((id) => allProds.find((p) => p.id === id))
-        .filter(Boolean);
+        // Solo cargar los productos seleccionados expl+�citamente en la landing
+        // (NO agregar autom+�ticamente los productos marcados como destacados en inventario)
+        const explicitFeatured: any[] = featuredIds
+          .map((id) => allProds.find((p) => p.id === id))
+          .filter(Boolean);
 
-      setFeaturedProducts(explicitFeatured);
+        setFeaturedProducts(explicitFeatured);
 
-      // Migramos secciones antiguas (no JSON) al nuevo formato en memoria
-      const rawSections: any[] = landingData?.sections ?? [];
-      const migrated: Section[] = rawSections.map((s: any, index: number) => {
-        if (s && s.props) return s as Section;
+        // Migramos secciones antiguas (no JSON) al nuevo formato en memoria
+        const rawSections: any[] = landingData?.sections ?? [];
+        const migrated: Section[] = rawSections.map((s: any, index: number) => {
+          if (s && s.props) return s as Section;
 
-        const inferredType: SectionType = (s && s.type) || "banner";
-        return {
-          id: s.id || `section-${index}`,
-          type: inferredType,
-          props: {
-            title: s.title,
-            subtitle: s.subtitle,
-            content: s.content,
-            image: s.image || s.imageUrl || null,
-          },
-          styles: {},
-          order: s.order ?? index + 1,
-        };
-      });
-      setSections(migrated);
+          const inferredType: SectionType = (s && s.type) || "banner";
+          return {
+            id: s.id || `section-${index}`,
+            type: inferredType,
+            props: {
+              title: s.title,
+              subtitle: s.subtitle,
+              content: s.content,
+              image: s.image || s.imageUrl || null,
+            },
+            styles: {},
+            order: s.order ?? index + 1,
+          };
+        });
 
-      setLoading(false);
+        const normalizedSections: Section[] = migrated.map((section) => {
+          if (section.type !== "hero") return section;
+
+          const rawItems = Array.isArray(section.props?.items) ? section.props.items : [];
+          const firstItem = rawItems[0] || {};
+          const collectedImages = Array.from(
+            new Set(
+              rawItems
+                .flatMap((item: any) => Array.isArray(item?.images) ? item.images : [])
+                .concat(rawItems.map((item: any) => item?.image || null))
+                .filter(Boolean)
+            )
+          );
+
+          return {
+            ...section,
+            props: {
+              ...(section.props || {}),
+              items: [
+                {
+                  ...firstItem,
+                  images: firstItem.images?.length ? firstItem.images : collectedImages,
+                },
+              ],
+            },
+          };
+        });
+        setSections(normalizedSections);
+      } catch (error) {
+        console.error("Error cargando landing del editor:", error);
+        setHero(null);
+        setProductos([]);
+        setAllProductos([]);
+        setFeaturedProducts([]);
+        setSections([]);
+      } finally {
+        setLoading(false);
+      }
     }
 
     fetchData();
@@ -498,6 +536,8 @@ export default function LandingEditor() {
         buttonText?: string;
         buttonLink?: string;
         image?: string | null;
+        images?: string[];
+        videoUrl?: string | null;
         fieldStyles?: Record<
           string,
           import("../../lib/landing-types").LandingFieldStyle
@@ -510,6 +550,8 @@ export default function LandingEditor() {
       buttonText?: string;
       buttonLink?: string;
       image?: string | null;
+      images?: string[];
+      videoUrl?: string | null;
       fieldStyles?: Record<
         string,
         import("../../lib/landing-types").LandingFieldStyle
@@ -527,6 +569,8 @@ export default function LandingEditor() {
       buttonText?: string;
       buttonLink?: string;
       image?: string | null;
+      images?: string[];
+      videoUrl?: string | null;
       fieldStyles?: Record<
         string,
         import("../../lib/landing-types").LandingFieldStyle
@@ -634,15 +678,79 @@ export default function LandingEditor() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const url = await uploadLandingImage(
-      file,
-      `hero-${sectionIndex}-${itemIndex}`
-    );
+    const isVideo = file.type.startsWith("video/");
+    const url = isVideo
+      ? await uploadLandingVideo(file, `hero-${sectionIndex}-${itemIndex}`)
+      : await uploadLandingImage(file, `hero-${sectionIndex}-${itemIndex}`);
 
     await updateHeroItems(sectionIndex, (items) => {
       const copy = [...items];
       const current = copy[itemIndex] || {};
-      copy[itemIndex] = { ...current, image: url };
+      const currentImages = Array.isArray((current as any).images)
+        ? (current as any).images.filter(Boolean)
+        : current.image
+          ? [current.image]
+          : [];
+
+      if (isVideo) {
+        if (currentImages.length > 0) {
+          alert("Si hay más de un recurso, solo se admiten imágenes.");
+          return items;
+        }
+
+        copy[itemIndex] = {
+          ...current,
+          image: null,
+          images: [],
+          videoUrl: url,
+        };
+        return copy;
+      }
+
+      const nextImages = Array.from(new Set([...currentImages, url].filter(Boolean)));
+      copy[itemIndex] = {
+        ...current,
+        image: nextImages[0] || null,
+        images: nextImages,
+        videoUrl: null,
+      };
+      return copy;
+    });
+  };
+
+  const handleHeroItemRemoveImage = async (
+    sectionIndex: number,
+    itemIndex: number,
+    imageUrl: string
+  ) => {
+    await updateHeroItems(sectionIndex, (items) => {
+      const copy = [...items];
+      const current = copy[itemIndex] || {};
+      const currentImages = Array.isArray((current as any).images)
+        ? (current as any).images.filter(Boolean)
+        : current.image
+          ? [current.image]
+          : [];
+      const nextImages = currentImages.filter((existingUrl: string) => existingUrl !== imageUrl);
+      copy[itemIndex] = {
+        ...current,
+        image: nextImages[0] || null,
+        images: nextImages,
+      };
+      return copy;
+    });
+  };
+
+  const handleHeroItemClearMedia = async (sectionIndex: number, itemIndex: number) => {
+    await updateHeroItems(sectionIndex, (items) => {
+      const copy = [...items];
+      const current = copy[itemIndex] || {};
+      copy[itemIndex] = {
+        ...current,
+        image: null,
+        images: [],
+        videoUrl: null,
+      };
       return copy;
     });
   };
@@ -666,7 +774,7 @@ export default function LandingEditor() {
     }
   };
 
-  // ──────── Manejador para actualizar fieldPositions ──────────────────────────
+  // ������������������������ Manejador para actualizar fieldPositions ������������������������������������������������������������������������������
   const handleFieldPositionChange = async (
     sectionIndex: number,
     fieldPositions: Record<string, { desktop?: any; mobile?: any }>
@@ -686,7 +794,7 @@ export default function LandingEditor() {
     setSaving(false);
   };
 
-  // ──────── Crear callback memoizado para onPositionChange del editor ─────────
+  // ������������������������ Crear callback memoizado para onPositionChange del editor ���������������������������
   const [autosaveTimer, setAutosaveTimer] = useState<NodeJS.Timeout | null>(null);
 
   const createPositionChangeHandler = useCallback(
@@ -830,7 +938,7 @@ export default function LandingEditor() {
     );
   };
 
-  // ──────── Reordenar items dentro de galería ────────────────────────────────
+  // ������������������������ Reordenar items dentro de galer+�a ������������������������������������������������������������������������������������������������
   const reorderGalleryItems = async (
     sectionIndex: number,
     fromIndex: number,
@@ -846,7 +954,7 @@ export default function LandingEditor() {
     });
   };
 
-  // ──────── Reordenar items dentro de featured categories ────────────────────
+  // ������������������������ Reordenar items dentro de featured categories ������������������������������������������������������������
   const reorderFeaturedCategoryItems = async (
     sectionIndex: number,
     fromIndex: number,
@@ -868,13 +976,64 @@ export default function LandingEditor() {
     const delta = direction === "left" ? -240 : 240;
     container.scrollBy({ left: delta, behavior: "smooth" });
   };
+
+  const getResolvedHeroIndex = (sectionId: string, itemCount: number) => {
+    if (!itemCount) return undefined;
+    const storedIndex = activeHeroIndex[sectionId];
+    if (typeof storedIndex !== "number" || Number.isNaN(storedIndex)) {
+      return 0;
+    }
+    return Math.max(0, Math.min(storedIndex, itemCount - 1));
+  };
+
+  const buildHeroPreviewProps = (section: any, previewDeviceValue: "desktop" | "mobile") => {
+    const sectionProps = section.props || {};
+    const { items: _ignoredItems, ...baseProps } = sectionProps;
+    const heroItems = Array.isArray(sectionProps.items) ? sectionProps.items : [];
+    const activeIdx = getResolvedHeroIndex(section.id, heroItems.length);
+
+    if (typeof activeIdx === "number" && heroItems[activeIdx]) {
+      const activeItem = heroItems[activeIdx] || {};
+      const { fieldPositions, fieldStyles, ...safeItem } = activeItem;
+
+      return {
+        props: {
+          ...baseProps,
+          items: [{ ...safeItem }],
+          device: previewDeviceValue,
+        },
+        fieldPositions: fieldPositions || {},
+        fieldStyles: fieldStyles || {},
+      };
+    }
+
+    return {
+      props: {
+        ...baseProps,
+        device: previewDeviceValue,
+      },
+      fieldPositions: section.fieldPositions || {},
+      fieldStyles: section.fieldStyles || {},
+    };
+  };
+
+  const buildHeroPositioningValues = (section: any, activeIdx?: number) => {
+    const sectionProps = section.props || {};
+    const heroItems = Array.isArray(sectionProps.items) ? sectionProps.items : [];
+    const activeItem = typeof activeIdx === "number" ? heroItems[activeIdx] || {} : {};
+
+    return {
+      title: activeItem.title ?? sectionProps.title ?? "",
+      buttonText: activeItem.buttonText ?? sectionProps.buttonText ?? "",
+    };
+  };
         {/* ADMIN DESTACADOS */}
         <div className="mb-10">
           <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
             <span className="material-icons-round text-purple-600">star</span>
             Productos destacados en landing
           </h2>
-          <p className="text-slate-600 dark:text-slate-300 mb-2 text-sm">Selecciona, reordena y publica los productos destacados que verán los clientes en la landing principal.</p>
+          <p className="text-slate-600 dark:text-slate-300 mb-2 text-sm">Selecciona, reordena y publica los productos destacados que ver+�n los clientes en la landing principal.</p>
           <div className="flex flex-col md:flex-row gap-6">
             {/* Lista de seleccionables */}
             <div className="flex-1">
@@ -896,7 +1055,7 @@ export default function LandingEditor() {
             </div>
             {/* Lista de destacados actuales (drag & drop) */}
             <div className="flex-1">
-              <h3 className="font-semibold mb-2 text-sm">Orden y publicación</h3>
+              <h3 className="font-semibold mb-2 text-sm">Orden y publicaci+�n</h3>
               <DragDropContext onDragEnd={onDragEndFeatured}>
                 <div className="relative">
                   {featuredProducts.length > 3 && (
@@ -1217,7 +1376,7 @@ export default function LandingEditor() {
                               <span
                                 {...provided.dragHandleProps}
                                 className="material-icons-round cursor-move select-none text-slate-400 text-lg mr-2"
-                                title="Arrastrar para reordenar sección"
+                                title="Arrastrar para reordenar secci+�n"
                               >
                                 drag_indicator
                               </span>
@@ -1264,7 +1423,7 @@ export default function LandingEditor() {
                                 className="px-1.5 py-1 rounded border border-slate-200 hover:bg-slate-50 flex items-center gap-1 disabled:opacity-40"
                                 onClick={() => moveSection(idx, "up")}
                                 disabled={idx === 0}
-                                title="Mover sección hacia arriba"
+                                title="Mover secci+�n hacia arriba"
                               >
                                 <span className="material-icons-round text-[16px]">
                                   arrow_upward
@@ -1275,7 +1434,7 @@ export default function LandingEditor() {
                                 className="px-1.5 py-1 rounded border border-slate-200 hover:bg-slate-50 flex items-center gap-1 disabled:opacity-40"
                                 onClick={() => moveSection(idx, "down")}
                                 disabled={idx === sections.length - 1}
-                                title="Mover sección hacia abajo"
+                                title="Mover secci+�n hacia abajo"
                               >
                                 <span className="material-icons-round text-[16px]">
                                   arrow_downward
@@ -1319,13 +1478,13 @@ export default function LandingEditor() {
                             ))}
                           </div>
 
-                          {/* Form builder dinámico basado en sectionSchemas */}
+                          {/* Form builder din+�mico basado en sectionSchemas */}
                           {(() => {
                             const schema = sectionSchemas[section.type];
                             if (!schema) return null;
                             const props = section.props || {};
                             const heroItems = (props?.items as any[]) || [];
-                            const activeHeroIdx = activeHeroIndex[section.id] ?? 0;
+                            const activeHeroIdx = getResolvedHeroIndex(section.id, heroItems.length) ?? 0;
                             const styles = section.styles || {};
                             // If editing a hero item, prefer the item's fieldStyles so the editor
                             // reflects and edits the active variant. Otherwise fall back to section styles.
@@ -1335,7 +1494,7 @@ export default function LandingEditor() {
                                 : (section.fieldStyles || {});
 
                             const contentFields = schema.fields.filter(
-                              (f: any) => !f.group || f.group === "content"
+                              (f: any) => (!f.group || f.group === "content") && !(section.type === "hero" && f.name === "image")
                             );
                             const styleFields = schema.fields.filter(
                               (f: any) => f.group === "styles"
@@ -1352,7 +1511,7 @@ export default function LandingEditor() {
                                     </h4>
                                     {contentFields.map((field: any) => {
                                       let value = props[field.name] ?? "";
-                                      if (section.type === "hero" && Array.isArray(heroItems) && heroItems.length > 0) {
+                                      if (section.type === "hero" && Array.isArray(heroItems) && heroItems.length > 0 && typeof activeHeroIdx === "number") {
                                         value = (heroItems[activeHeroIdx] && (heroItems[activeHeroIdx][field.name] ?? "")) || "";
                                       }
                                       const isStylable = field.stylable;
@@ -1389,7 +1548,7 @@ export default function LandingEditor() {
                                         );
                                       }
 
-                                      // Campos especiales Google Maps solo si el checkbox está activo
+                                      // Campos especiales Google Maps solo si el checkbox est+� activo
                                       if (field.showIf && field.showIf.googleMaps && !props.googleMaps) {
                                         return null;
                                       }
@@ -1541,7 +1700,7 @@ export default function LandingEditor() {
                                                   <span className="material-icons-round text-[14px]">format_underlined</span>
                                                 </button>
                                                 <div className="flex items-center gap-1">
-                                                  <span className="text-slate-600">Tamaño</span>
+                                                  <span className="text-slate-600">Tama+�o</span>
                                                   <input
                                                     type="text"
                                                     className="w-16 border rounded px-1 py-0.5 text-[11px]"
@@ -1715,7 +1874,7 @@ export default function LandingEditor() {
                                                 </button>
                                               )}
                                             </div>
-                                            {/* Botón para abrir modal de selección de comentarios Google Maps */}
+                                            {/* Bot+�n para abrir modal de selecci+�n de comentarios Google Maps */}
                                             <div className="mt-2">
                                               <button
                                                 className="bg-blue-600 text-white px-4 py-2 rounded"
@@ -1789,7 +1948,7 @@ export default function LandingEditor() {
                                                   )}
                                                   <div className="mt-4 flex justify-end gap-2">
                                                     <button className="bg-slate-200 px-4 py-2 rounded" onClick={closeGoogleCommentsModal}>Cancelar</button>
-                                                    <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={saveSelectedGoogleComments}>Guardar selección</button>
+                                                    <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={saveSelectedGoogleComments}>Guardar selecci+�n</button>
                                                   </div>
                                                   <div className="mt-2 text-xs text-slate-500">Puedes seleccionar hasta 6 comentarios para mostrar en la landing page.</div>
                                                 </div>
@@ -1880,7 +2039,7 @@ export default function LandingEditor() {
                                                   <span className="material-icons-round text-[14px]">format_underlined</span>
                                                 </button>
                                                 <div className="flex items-center gap-1">
-                                                  <span className="text-slate-600">Tamaño</span>
+                                                  <span className="text-slate-600">Tama+�o</span>
                                                   <input
                                                     type="text"
                                                     className="w-16 border rounded px-1 py-0.5 text-[11px]"
@@ -1980,13 +2139,13 @@ export default function LandingEditor() {
                                         if (section.type === "hero") {
                                           dimensionHelp = (
                                             <div className="text-[11px] text-purple-700 bg-purple-50 rounded px-2 py-1 mt-1 border border-purple-100">
-                                              Mínimo: <b>1200x500px</b>
+                                              M+�nimo: <b>1200x500px</b>
                                             </div>
                                           );
                                         } else if (section.type === "banner") {
                                           dimensionHelp = (
                                             <div className="text-[11px] text-blue-700 bg-blue-50 rounded px-2 py-1 mt-1 border border-blue-100">
-                                              Mínimo: <b>1200x500px</b>
+                                              M+�nimo: <b>1200x500px</b>
                                             </div>
                                           );
                                         }
@@ -2014,7 +2173,7 @@ export default function LandingEditor() {
                                   </div>
                                 )}
 
-                                {/* Vista rápida de productos destacados para esta sección */}
+                                {/* Vista r+�pida de productos destacados para esta secci+�n */}
                                 {section.type === "featuredProducts" &&
                                   currentTab === "content" && (
                                     <div className="mt-3 border border-dashed border-slate-200 rounded-md p-3 bg-slate-50 dark:bg-slate-900">
@@ -2026,10 +2185,10 @@ export default function LandingEditor() {
                                       </h4>
                                       {featuredProducts.length === 0 ? (
                                         <p className="text-[11px] text-slate-500">
-                                          No hay productos destacados configurados aún.
+                                          No hay productos destacados configurados a+�n.
                                           Marca productos como destacados en el inventario
                                           y/o usa el panel "Productos destacados en landing"
-                                          de más arriba para seleccionarlos.
+                                          de m+�s arriba para seleccionarlos.
                                         </p>
                                       ) : (
                                         <div className="flex items-stretch gap-3 overflow-x-auto pb-1">
@@ -2066,7 +2225,7 @@ export default function LandingEditor() {
                                     </div>
                                   )}
 
-                                {/* Editor de items para secciones de galería */}
+                                {/* Editor de items para secciones de galer+�a */}
                                 {section.type === "gallery" &&
                                   currentTab === "content" && (
                                     <div className="mt-3 border border-dashed border-slate-200 rounded-md p-3 bg-slate-50 dark:bg-slate-900">
@@ -2074,7 +2233,7 @@ export default function LandingEditor() {
                                         <span className="material-icons-round text-[14px] text-purple-500">
                                           collections
                                         </span>
-                                        Items de galería (título + logo)
+                                        Items de galer+�a (t+�tulo + logo)
                                       </h4>
                                       {(() => {
                                         const galleryItems = ((section.props?.items as any[]) || []) as {
@@ -2086,8 +2245,8 @@ export default function LandingEditor() {
                                           return (
                                             <div className="space-y-2">
                                               <p className="text-[11px] text-slate-500">
-                                                No hay items aún. Agrega logos de distribuidores u otras imágenes
-                                                usando el botón de abajo.
+                                                No hay items a+�n. Agrega logos de distribuidores u otras im+�genes
+                                                usando el bot+�n de abajo.
                                               </p>
                                               <button
                                                 type="button"
@@ -2143,7 +2302,7 @@ export default function LandingEditor() {
                                                   <input
                                                     type="text"
                                                     className="border rounded px-2 py-1 text-xs"
-                                                    placeholder="Título (opcional)"
+                                                    placeholder="T+�tulo (opcional)"
                                                     value={item.title || ""}
                                                     onChange={(e) =>
                                                       handleGalleryItemTitleChange(
@@ -2196,7 +2355,7 @@ export default function LandingEditor() {
                                                   format_paint
                                                 </span>
                                                 <span className="font-semibold text-slate-600">
-                                                  Estilos de títulos de items
+                                                  Estilos de t+�tulos de items
                                                 </span>
                                               </div>
                                               {(() => {
@@ -2276,14 +2435,14 @@ export default function LandingEditor() {
                                                       <span className="material-icons-round text-[14px]">format_underlined</span>
                                                     </button>
                                                     <div className="flex items-center gap-1">
-                                                      <span className="text-slate-600">Tamaño</span>
+                                                      <span className="text-slate-600">Tama+�o</span>
                                                       <input
                                                         type="text"
                                                         className="w-16 border rounded px-1 py-0.5 text-[11px]"
                                                         placeholder="16px"
                                                         value={fontSizeValue}
                                                         onChange={e => {
-                                                          // Permitir edición libre
+                                                          // Permitir edici+�n libre
                                                           handleFieldStyleChange(
                                                             idx,
                                                             "itemTitle",
@@ -2293,7 +2452,7 @@ export default function LandingEditor() {
                                                         }}
                                                         onBlur={e => {
                                                           let value = e.target.value;
-                                                          // Si es un número, agrega px al salir del input
+                                                          // Si es un n+�mero, agrega px al salir del input
                                                           if (/^\d+$/.test(value)) {
                                                             value = value + "px";
                                                           }
@@ -2316,7 +2475,7 @@ export default function LandingEditor() {
                                     </div>
                                   )}
 
-                                {/* Editor de categorías destacadas */}
+                                {/* Editor de categor+�as destacadas */}
                                 {section.type === "featuredCategories" &&
                                   currentTab === "content" && (
                                     <div className="mt-3 border border-dashed border-slate-200 rounded-md p-3 bg-slate-50 dark:bg-slate-900">
@@ -2324,7 +2483,7 @@ export default function LandingEditor() {
                                         <span className="material-icons-round text-[14px] text-purple-500">
                                           category
                                         </span>
-                                        Categorías destacadas
+                                        Categor+�as destacadas
                                       </h4>
                                       {(() => {
                                         const items = ((section.props?.items as any[]) || []) as {
@@ -2337,7 +2496,7 @@ export default function LandingEditor() {
                                           return (
                                             <div className="space-y-2">
                                               <p className="text-[11px] text-slate-500">
-                                                No hay categorías aún. Crea la primera categoría destacada con título, imagen y enlace.
+                                                No hay categor+�as a+�n. Crea la primera categor+�a destacada con t+�tulo, imagen y enlace.
                                               </p>
                                               <button
                                                 type="button"
@@ -2347,7 +2506,7 @@ export default function LandingEditor() {
                                                 <span className="material-icons-round text-[14px]">
                                                   add
                                                 </span>
-                                                Agregar categoría
+                                                Agregar categor+�a
                                               </button>
                                             </div>
                                           );
@@ -2398,7 +2557,7 @@ export default function LandingEditor() {
                                                   <input
                                                     type="text"
                                                     className="border rounded px-2 py-1 text-xs"
-                                                    placeholder="Título de la categoría"
+                                                    placeholder="T+�tulo de la categor+�a"
                                                     value={item.title || ""}
                                                     onChange={(e) =>
                                                       handleFeaturedCategoryFieldChange(
@@ -2428,7 +2587,7 @@ export default function LandingEditor() {
                                                       <div className="aspect-square rounded-md overflow-hidden bg-slate-100 dark:bg-slate-800">
                                                         <img
                                                           src={item.image}
-                                                          alt={item.title || "Categoría"}
+                                                          alt={item.title || "Categor+�a"}
                                                           className="w-full h-full object-cover"
                                                         />
                                                       </div>
@@ -2458,7 +2617,7 @@ export default function LandingEditor() {
                                               <span className="material-icons-round text-[14px]">
                                                 add
                                               </span>
-                                              Agregar otra categoría
+                                              Agregar otra categor+�a
                                             </button>
                                           </>
                                         );
@@ -2466,15 +2625,15 @@ export default function LandingEditor() {
                                     </div>
                                   )}
 
-                                {/* Editor de variantes para secciones Hero */}
+                                {/* Editor de galería para la sección Hero */}
                                 {section.type === "hero" &&
                                   currentTab === "content" && (
                                     <div className="mt-3 border border-dashed border-slate-200 rounded-md p-3 bg-slate-50 dark:bg-slate-900">
                                       <h4 className="text-xs font-semibold uppercase text-slate-500 mb-2 flex items-center gap-1">
                                         <span className="material-icons-round text-[14px] text-purple-500">
-                                          slideshow
+                                          collections
                                         </span>
-                                        Variantes de hero (carrusel)
+                                        Galería del hero
                                       </h4>
                                       {(() => {
                                         const heroItems = ((section.props?.items as any[]) || []) as {
@@ -2483,7 +2642,9 @@ export default function LandingEditor() {
                                           badge?: string;
                                           buttonText?: string;
                                           buttonLink?: string;
+                                          images?: string[];
                                           image?: string | null;
+                                          videoUrl?: string | null;
                                           fieldStyles?: Record<
                                             string,
                                             import("../../lib/landing-types").LandingFieldStyle
@@ -2493,21 +2654,9 @@ export default function LandingEditor() {
                                         if (!heroItems.length) {
                                           return (
                                             <div className="space-y-2">
-                                              <p className="text-[11px] text-slate-500">
-                                                No hay variantes aún. Puedes crear varios heros (título, subtítulo,
-                                                badge, botón e imagen) que se mostrarán uno a la vez cada 5 segundos
-                                                en la landing.
+                                                <p className="text-[11px] text-slate-500">
+                                                El hero ya no usa variantes. Aquí administras una sola tarjeta con varias imágenes.
                                               </p>
-                                              <button
-                                                type="button"
-                                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-purple-600 text-white text-xs hover:bg-purple-700"
-                                                onClick={() => handleAddHeroItem(idx)}
-                                              >
-                                                <span className="material-icons-round text-[14px]">
-                                                  add
-                                                </span>
-                                                Agregar hero
-                                              </button>
                                             </div>
                                           );
                                         }
@@ -2693,7 +2842,7 @@ export default function LandingEditor() {
                                                               </button>
                                                               <div className="flex items-center gap-1">
                                                                 <span className="text-slate-600">
-                                                                  Tamaño
+                                                                  Tama+�o
                                                                 </span>
                                                                 <input
                                                                   type="text"
@@ -2826,28 +2975,30 @@ export default function LandingEditor() {
                                                               })
                                                             }
                                                           >
-                                                            Hero {itemIndex + 1}
+                                                            Hero único
                                                           </button>
-                                                          <button
-                                                            type="button"
-                                                            className="text-[10px] px-2 py-0.5 rounded bg-red-600 text-white hover:bg-red-700"
-                                                            onClick={() =>
-                                                              handleRemoveHeroItem(
-                                                                idx,
-                                                                itemIndex
-                                                              )
-                                                            }
-                                                          >
-                                                            Quitar
-                                                          </button>
+                                                          {heroItems.length > 1 && (
+                                                            <button
+                                                              type="button"
+                                                              className="text-[10px] px-2 py-0.5 rounded bg-red-600 text-white hover:bg-red-700"
+                                                              onClick={() =>
+                                                                handleRemoveHeroItem(
+                                                                  idx,
+                                                                  itemIndex
+                                                                )
+                                                              }
+                                                            >
+                                                              Quitar
+                                                            </button>
+                                                          )}
                                                         </div>
                                                         {renderFieldWithStyles(
-                                                          "Título",
+                                                          "T+�tulo",
                                                           "title",
                                                           <input
                                                             type="text"
                                                             className="border rounded px-2 py-1 text-xs"
-                                                            placeholder="Título"
+                                                            placeholder="T+�tulo"
                                                             value={item.title || ""}
                                                             onChange={(e) =>
                                                               handleHeroItemFieldChange(
@@ -2860,11 +3011,11 @@ export default function LandingEditor() {
                                                           />
                                                         )}
                                                         {renderFieldWithStyles(
-                                                          "Subtítulo",
+                                                          "Subt+�tulo",
                                                           "subtitle",
                                                           <textarea
                                                             className="border rounded px-2 py-1 text-xs resize-none h-16"
-                                                            placeholder="Subtítulo"
+                                                            placeholder="Subt+�tulo"
                                                             value={item.subtitle || ""}
                                                             onChange={(e) =>
                                                               handleHeroItemFieldChange(
@@ -2895,13 +3046,13 @@ export default function LandingEditor() {
                                                           />
                                                         )}
                                                         {renderFieldWithStyles(
-                                                          "Texto del botón",
+                                                          "Texto del bot+�n",
                                                           "buttonText",
                                                           <div className="flex gap-2">
                                                             <input
                                                               type="text"
                                                               className="flex-1 border rounded px-2 py-1 text-xs"
-                                                              placeholder="Texto del botón"
+                                                              placeholder="Texto del bot+�n"
                                                               value={item.buttonText || ""}
                                                               onChange={(e) =>
                                                                 handleHeroItemFieldChange(
@@ -2915,7 +3066,7 @@ export default function LandingEditor() {
                                                             <input
                                                               type="text"
                                                               className="flex-1 border rounded px-2 py-1 text-xs"
-                                                              placeholder="Enlace del botón"
+                                                              placeholder="Enlace del bot+�n"
                                                               value={item.buttonLink || ""}
                                                               onChange={(e) =>
                                                                 handleHeroItemFieldChange(
@@ -2931,42 +3082,120 @@ export default function LandingEditor() {
                                                       </>
                                                     );
                                                   })()}
-                                                  <div className="space-y-1 mt-1">
-                                                    {item.image && (
-                                                      <div className="aspect-video rounded-md overflow-hidden bg-slate-100 dark:bg-slate-800">
-                                                        <img
-                                                          src={item.image}
-                                                          alt={item.title || "Hero"}
-                                                          className="w-full h-full object-cover"
-                                                        />
-                                                      </div>
-                                                    )}
-                                                    <input
-                                                      type="file"
-                                                      accept="image/*"
-                                                      className="text-[11px]"
-                                                      onChange={(e) =>
-                                                        handleHeroItemImage(
-                                                          e,
-                                                          idx,
-                                                          itemIndex
-                                                        )
+                                                  <div className="space-y-2 mt-2">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                      <p className="text-[11px] text-slate-500">
+                                                        {(() => {
+                                                          const currentGallery = Array.isArray(item.images) && item.images.length
+                                                            ? item.images.filter(Boolean)
+                                                            : item.image
+                                                              ? [item.image]
+                                                              : [];
+                                                          return currentGallery.length > 0
+                                                            ? "Si agregas más de un recurso, solo se admitirán imágenes."
+                                                            : "Sube una foto o un video para esta sección.";
+                                                        })()}
+                                                      </p>
+                                                      <input
+                                                        type="file"
+                                                        accept={(() => {
+                                                          const currentGallery = Array.isArray(item.images) && item.images.length
+                                                            ? item.images.filter(Boolean)
+                                                            : item.image
+                                                              ? [item.image]
+                                                              : [];
+                                                          return currentGallery.length > 0 ? "image/*" : "image/*,video/*";
+                                                        })()}
+                                                        className="text-[11px]"
+                                                        onChange={(e) =>
+                                                          handleHeroItemImage(
+                                                            e,
+                                                            idx,
+                                                            itemIndex
+                                                          )
+                                                        }
+                                                      />
+                                                    </div>
+
+                                                    {(() => {
+                                                      const gallery = Array.isArray(item.images) && item.images.length
+                                                        ? item.images.filter(Boolean)
+                                                        : item.image
+                                                          ? [item.image]
+                                                          : [];
+
+                                                      if (!gallery.length && !item.videoUrl) {
+                                                        return (
+                                                          <div className="rounded-md border border-dashed border-slate-300 dark:border-slate-700 p-4 text-center text-[11px] text-slate-500">
+                                                            Aún no hay imágenes.
+                                                          </div>
+                                                        );
                                                       }
-                                                    />
+
+                                                      if (item.videoUrl && !gallery.length) {
+                                                        return (
+                                                          <div className="space-y-2">
+                                                            <div className="aspect-video rounded-md overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                                              <video
+                                                                className="w-full h-full object-cover"
+                                                                autoPlay
+                                                                muted
+                                                                loop
+                                                                playsInline
+                                                              >
+                                                                <source src={item.videoUrl} type="video/mp4" />
+                                                              </video>
+                                                            </div>
+                                                            <button
+                                                              type="button"
+                                                              className="text-[10px] px-2 py-0.5 rounded bg-red-600 text-white hover:bg-red-700"
+                                                              onClick={() =>
+                                                                handleHeroItemClearMedia(
+                                                                  idx,
+                                                                  itemIndex
+                                                                )
+                                                              }
+                                                            >
+                                                              Quitar video
+                                                            </button>
+                                                          </div>
+                                                        );
+                                                      }
+
+                                                      return (
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                          {gallery.map((src, imageIndex) => (
+                                                            <div key={`${src}-${imageIndex}`} className="relative aspect-video rounded-md overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                                                              <img
+                                                                src={src}
+                                                                alt={`${item.title || "Hero"} ${imageIndex + 1}`}
+                                                                className="w-full h-full object-cover"
+                                                              />
+                                                              <button
+                                                                type="button"
+                                                                className="absolute top-2 right-2 rounded-full bg-black/70 text-white px-2 py-1 text-[10px]"
+                                                                onClick={() =>
+                                                                  handleHeroItemRemoveImage(
+                                                                    idx,
+                                                                    itemIndex,
+                                                                    src
+                                                                  )
+                                                                }
+                                                              >
+                                                                Quitar
+                                                              </button>
+                                                            </div>
+                                                          ))}
+                                                        </div>
+                                                      );
+                                                    })()}
                                                   </div>
                                                 </div>
                                               ))}
                                             </div>
-                                            <button
-                                              type="button"
-                                              className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded bg-purple-600 text-white text-xs hover:bg-purple-700"
-                                              onClick={() => handleAddHeroItem(idx)}
-                                            >
-                                              <span className="material-icons-round text-[14px]">
-                                                add
-                                              </span>
-                                              Agregar otro hero
-                                            </button>
+                                            <div className="mt-2 text-[11px] text-slate-500">
+                                              El hero ya no crea variantes nuevas.
+                                            </div>
                                           </>
                                         );
                                       })()}
@@ -3044,7 +3273,7 @@ export default function LandingEditor() {
                                 {/* Avanzado (placeholder por ahora) */}
                                 {currentTab === "advanced" && (
                                   <div className="pt-2 border-t border-dashed border-slate-200 text-[11px] text-slate-500">
-                                    Próximamente: reglas de visibilidad por
+                                    Pr+�ximamente: reglas de visibilidad por
                                     dispositivo, animaciones, etc.
                                   </div>
                                 )}
@@ -3088,7 +3317,7 @@ export default function LandingEditor() {
                                     <div className="bg-linear-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 py-6 px-4 overflow-x-auto min-h-fit">
                                       {(() => {
                                         const heroItems = (section.props?.items as any[]) || [];
-                                        const activeIdx = activeHeroIndex[section.id];
+                                        const activeIdx = getResolvedHeroIndex(section.id, heroItems.length);
                                         const positionsToPass =
                                           section.type === "hero"
                                             ? typeof activeIdx === "number"
@@ -3103,8 +3332,8 @@ export default function LandingEditor() {
                                             device={previewDevice}
                                             positions={positionsToPass}
                                             values={
-                                              section.type === "hero" && typeof activeIdx === "number" && heroItems[activeIdx]
-                                                ? heroItems[activeIdx]
+                                              section.type === "hero"
+                                                ? buildHeroPositioningValues(section, activeIdx)
                                                 : ((section.props as any) || {})
                                             }
                                             onPositionChange={createPositionChangeHandler(
@@ -3117,7 +3346,7 @@ export default function LandingEditor() {
                                       })()}
                                     </div>
 
-                                    {/* Botón guardar posiciones */}
+                                    {/* Bot+�n guardar posiciones */}
                                     <button
                                       type="button"
                                       className="w-full mx-4 px-3 py-2 rounded bg-purple-600 text-white text-xs font-medium hover:bg-purple-700 transition-colors"
@@ -3159,14 +3388,14 @@ export default function LandingEditor() {
               onClick={() => openAddModal(null)}
               className="bg-blue-600 text-white px-4 py-2 rounded"
             >
-              Agregar sección
+              Agregar secci+�n
             </button>
             <button
               onClick={async () => {
                 setSaving(true);
                 // Guardar secciones (borrador)
                 await saveLandingSections(sections);
-                // Guardar también la configuración actual de productos destacados
+                // Guardar tambi+�n la configuraci+�n actual de productos destacados
                 await updateFeaturedProducts(
                   featuredProducts.map((p) => p.id || p)
                 );
@@ -3188,7 +3417,7 @@ export default function LandingEditor() {
             <button
               onClick={async () => {
                 setSaving(true);
-                // Aseguramos que la configuración actual de destacados
+                // Aseguramos que la configuraci+�n actual de destacados
                 // se copie primero a draft y luego a published
                 await updateFeaturedProducts(
                   featuredProducts.map((p) => p.id || p)
@@ -3249,7 +3478,7 @@ export default function LandingEditor() {
                 <span className="material-icons-round text-[16px]">
                   smartphone
                 </span>
-                Móvil
+                M+�vil
               </button>
             </div>
           </div>
@@ -3272,16 +3501,7 @@ export default function LandingEditor() {
                       section={{
                         id: "hero-preview",
                         type: "hero",
-                        props: {
-                          title: hero.title,
-                          subtitle: hero.subtitle,
-                          badge: (hero as any).badge,
-                          buttonText: hero.buttonText,
-                          buttonLink: hero.buttonLink,
-                          image: hero.image,
-                          device: previewDevice,
-                        },
-                        fieldPositions: (hero as any).fieldPositions || {},
+                        ...buildHeroPreviewProps({ id: "hero-preview", props: hero, fieldPositions: (hero as any).fieldPositions || {}, fieldStyles: (hero as any).fieldStyles || {} }, previewDevice),
                         styles: {},
                         order: 0,
                         hidden: false,
@@ -3300,18 +3520,10 @@ export default function LandingEditor() {
                       } else if (section.type === "featuredCategories") {
                         previewSection.props = { ...(section.props || {}), device: previewDevice };
                       } else if (section.type === "hero") {
-                        const items = (section.props?.items as any[]) || [];
-                        const activeIdx = activeHeroIndex[section.id];
-                        if (typeof activeIdx === "number" && items[activeIdx]) {
-                          const item = items[activeIdx];
-                          previewSection.props = { ...(section.props || {}), items: [{ ...(section.props || {}), ...(item || {}) }], device: previewDevice };
-                          previewSection.fieldPositions = item.fieldPositions || {};
-                          previewSection.fieldStyles = item.fieldStyles || previewSection.fieldStyles || {};
-                        } else {
-                          previewSection.props = { ...(section.props || {}), device: previewDevice };
-                          previewSection.fieldPositions = section.fieldPositions || {};
-                          previewSection.fieldStyles = previewSection.fieldStyles || section.fieldStyles || {};
-                        }
+                        const normalized = buildHeroPreviewProps(section, previewDevice);
+                        previewSection.props = normalized.props;
+                        previewSection.fieldPositions = normalized.fieldPositions;
+                        previewSection.fieldStyles = normalized.fieldStyles;
                       } else {
                         previewSection.props = { ...(section.props || {}), device: previewDevice };
                       }
@@ -3330,7 +3542,7 @@ export default function LandingEditor() {
                       }
                       return <SectionRenderer key={section.id} section={previewSection} />;
                     })}
-                      {/* Botón para abrir modal de selección de comentarios Google Maps */}
+                      {/* Bot+�n para abrir modal de selecci+�n de comentarios Google Maps */}
                       <div className="my-6">
                         <button
                           className="bg-blue-600 text-white px-4 py-2 rounded"
@@ -3349,7 +3561,7 @@ export default function LandingEditor() {
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-slate-900 dark:text-white p-6 rounded w-96">
-            <h2 className="font-bold mb-4">Selecciona tipo de sección</h2>
+            <h2 className="font-bold mb-4">Selecciona tipo de secci+�n</h2>
             {Object.values(sectionSchemas).map((schema) => (
               <button
                 key={schema.type}
@@ -3403,6 +3615,7 @@ export default function LandingEditor() {
                             buttonText: hero.buttonText,
                             buttonLink: hero.buttonLink,
                               image: hero.image,
+                              images: (hero as any).images,
                               device: previewDevice,
                           },
                             fieldPositions: (hero as any).fieldPositions || {},
@@ -3423,18 +3636,10 @@ export default function LandingEditor() {
                         } else if (section.type === "featuredCategories") {
                           previewSection.props = { ...(section.props || {}), device: previewDevice };
                         } else if (section.type === "hero") {
-                          const items = (section.props?.items as any[]) || [];
-                          const activeIdx = activeHeroIndex[section.id];
-                            if (typeof activeIdx === "number" && items[activeIdx]) {
-                              const item = items[activeIdx];
-                              previewSection.props = { ...(section.props || {}), items: [{ ...(section.props || {}), ...(item || {}) }], device: previewDevice };
-                              previewSection.fieldPositions = item.fieldPositions || {};
-                              previewSection.fieldStyles = item.fieldStyles || previewSection.fieldStyles || {};
-                            } else {
-                              previewSection.props = { ...(section.props || {}), device: previewDevice };
-                              previewSection.fieldPositions = section.fieldPositions || {};
-                              previewSection.fieldStyles = previewSection.fieldStyles || section.fieldStyles || {};
-                            }
+                            const normalized = buildHeroPreviewProps(section, previewDevice);
+                            previewSection.props = normalized.props;
+                            previewSection.fieldPositions = normalized.fieldPositions;
+                            previewSection.fieldStyles = normalized.fieldStyles;
                         } else {
                           previewSection.props = { ...(section.props || {}), device: previewDevice };
                         }

@@ -59,45 +59,10 @@ const Footer: React.FC = () => {
         <div className={styles.ftGlowLeft} />
         <div className={styles.ftGlowRight} />
 
-        {/* Main grid - 3 columns: Políticas, Contacto, Redes */}
-        <div className={`${styles.ftMain} grid grid-cols-1 md:grid-cols-3 gap-8`}>
-
-          {/* Políticas - Izquierda */}
-          <div>
-            <span className={styles.ftColLabel}>Servicio al cliente</span>
-            <ul className={styles.ftLinks}>
-              <li>
-                <Link href="/politicas/privacidad">
-                  <span className={styles.ftDot} />
-                  Política de privacidad
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contacto - Centro */}
-          <div>
-            <span className={styles.ftColLabel}>Contacto</span>
-            <div>
-              <div className={styles.ftContactItem}>
-                <span className={styles.ftContactLabel}>Teléfono</span>
-                <a href="tel:+5930999369105" className={styles.ftContactVal}>
-                  +593 099 936 9105
-                </a>
-              </div>
-              <div className={styles.ftContactItem}>
-                <span className={styles.ftContactLabel}>Correo</span>
-                <a href="mailto:marcaestilo@email.com" className={styles.ftContactVal}>
-                  marcaestilo593@gmail.com
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Redes Sociales - Derecha */}
-          <div className="flex flex-col md:flex-col items-center md:items-start">
-            <span className={styles.ftColLabel}>Síguenos</span>
-            <ul className={`${styles.ftSocials} flex gap-2 md:gap-4`}>
+        {/* Main row - centered social buttons */}
+        <div className={`${styles.ftMain} flex justify-center`}>
+          <div className="flex flex-col items-center gap-4">
+            <ul className={styles.ftSocials}>
               {socialLinks.map(({ href, label, Icon }) => (
                 <li key={label}>
                   <a href={href} className={styles.ftSocialsLink} target="_blank" rel="noreferrer" title={label} onClick={() => trackLinkClick().catch(console.error)}>

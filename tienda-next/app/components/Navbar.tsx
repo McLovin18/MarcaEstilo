@@ -529,7 +529,7 @@ export const Navbar = () => {
               {/* Dropdown nivel 1 */}
               {cat.subcategorias?.length > 0 && (
                 <div
-                  className="absolute left-0 top-full min-w-52 rounded-2xl border hover:text-[#E0A11A] shadow-xl py-1.5 z-50 bg-white dark:bg-[#181028]"
+                  className="absolute left-0 top-full min-w-52 rounded-2xl border hover:text-black shadow-xl py-1.5 z-50 bg-white dark:bg-[#181028]"
                   style={{
                     borderColor: "var(--border)",
                     opacity: openCatId === cat.id ? "1" : "0",
@@ -550,9 +550,9 @@ export const Navbar = () => {
                           onClick={() => setOpenSubId(openSubId === sub.id ? null : sub.id)}
                           className="w-full flex items-center justify-between px-4 py-2.5 text-sm transition-shadow text-slate-900 hover:shadow-sm rounded-md"
                         >
-                          <span className="text-slate-900 group-hover/sub:text-[#E0A11A] transition-colors">{sub.nombre}</span>
+                          <span className="text-slate-900 group-hover/sub:text-black transition-colors">{sub.nombre}</span>
                           <span 
-                            className="material-icons-round text-sm text-slate-500 hover:text-[#E0A11A] transition-transform duration-200"
+                            className="material-icons-round text-sm text-slate-500 hover:text-black transition-transform duration-200"
                             style={{ transform: openSubId === sub.id ? "rotate(90deg)" : "rotate(0deg)" }}
                           >
                             chevron_right
@@ -560,7 +560,7 @@ export const Navbar = () => {
 
                           {/* Dropdown nivel 2 */}
                           <div
-                            className="absolute left-full top-0 ml-1 min-w-44 rounded-2xl border shadow-xl py-1.5 z-60 bg-white hover:text-[#E0A11A]"
+                            className="absolute left-full top-0 ml-1 min-w-44 rounded-2xl border shadow-xl py-1.5 z-60 bg-white hover:text-black"
                             style={{
                               borderColor: "var(--border)",
                               opacity: openSubId === sub.id ? "1" : "0",
@@ -573,9 +573,9 @@ export const Navbar = () => {
                               <Link
                                 key={subsub.id}
                                 href={`${basePath}?cat=${cat.id}&sub=${sub.id}&subsub=${subsub.id}`}
-                                className="block px-4 py-2.5 text-sm hover:text-[#E0A11A] transition-colors text-slate-900"
+                                className="block px-4 py-2.5 text-sm hover:text-black transition-colors text-slate-900"
                               >
-                                <span className="hover:text-[#E0A11A]">{subsub.nombre}</span>
+                                <span className="hover:text-black">{subsub.nombre}</span>
                               </Link>
                             ))}
                           </div>
@@ -585,7 +585,7 @@ export const Navbar = () => {
                           href={`${basePath}?cat=${cat.id}&sub=${sub.id}`}
                           className="block px-4 py-2.5 text-sm transition-shadow text-slate-900 hover:shadow-sm rounded-md"
                         >
-                          <span className="group-hover/sub:text-[#E0A11A] transition-colors">{sub.nombre}</span>
+                          <span className="group-hover/sub:text-black transition-colors">{sub.nombre}</span>
                         </Link>
                       )}
                     </div>

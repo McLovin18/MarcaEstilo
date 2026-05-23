@@ -91,8 +91,8 @@ export default function OfertasPage() {
               onClick={() => setSelectedCategoryId("")}
               className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
                 selectedCategoryId === ""
-                  ? "shadow-md scale-105 bg-[#E0A11A] text-white"
-                  : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
+                  ? "shadow-sm scale-105 bg-black text-white border border-black"
+                  : "bg-white text-slate-900 border border-slate-300 hover:border-black/60 hover:shadow-sm"
               }`}
             >
               Todas
@@ -104,8 +104,8 @@ export default function OfertasPage() {
                 onClick={() => setSelectedCategoryId(cat.id)}
                 className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
                   selectedCategoryId === cat.id
-                    ? "shadow-md scale-105 bg-[#E0A11A] text-white"
-                    : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300"
+                    ? "shadow-sm scale-105 bg-black text-white border border-black"
+                    : "bg-white text-slate-900 border border-slate-300 hover:border-black/60 hover:shadow-sm"
                 }`}
               >
                 {cat.nombre}

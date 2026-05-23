@@ -404,8 +404,8 @@ export default function ProductDetailPage({ params }) {
                     onClick={() => handleTabToggle("caracteristicas")}
                     className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold transition-all ${
                       activeTab === "caracteristicas"
-                        ? "bg-[#E0A11A] dark:[#E0A11A] text-white dark:text-slate-900"
-                        : "bg-white dark:bg-white/[0.03] text-slate-500 dark:text-white/40 hover:bg-slate-50 dark:hover:bg-white/[0.07]"
+                            ? "bg-black text-white"
+                            : "bg-white text-slate-600 hover:bg-slate-50"
                     }`}
                   >
                     <span className="material-icons-round text-[16px]">list_alt</span>
@@ -418,8 +418,8 @@ export default function ProductDetailPage({ params }) {
                     hasCaracteristicas ? "border-l border-slate-200 dark:border-white/[0.08]" : ""
                   } ${
                     activeTab === "resenas"
-                      ? "bg-[#E0A11A] dark:bg-[#E0A11A] text-white dark:text-slate-900"
-                      : "bg-white dark:bg-white/[0.03] text-slate-500 dark:text-white/40 hover:bg-slate-50 dark:hover:bg-white/[0.07]"
+                      ? "bg-black text-white"
+                      : "bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
                   <span className="material-icons-round text-[16px]">star_outline</span>
@@ -427,8 +427,8 @@ export default function ProductDetailPage({ params }) {
                   {reviews.length > 0 && (
                     <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
                       activeTab === "resenas"
-                        ? "bg-white/20 dark:bg-slate-900/20"
-                        : "bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-white/50"
+                        ? "bg-white text-black"
+                        : "bg-slate-100 text-slate-600"
                     }`}>
                       {reviews.length}
                     </span>
@@ -577,12 +577,12 @@ export default function ProductDetailPage({ params }) {
               <button
                 onClick={handleAddCart}
                 disabled={maxCantidad === 0 || (hasVariations && variationAttributeIds.length > 0 && !variationAttributeIds.every(attrId => selectedVariations[attrId]))}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold border transition-all ${
                   maxCantidad === 0 || (hasVariations && variationAttributeIds.length > 0 && !variationAttributeIds.every(attrId => selectedVariations[attrId]))
-                    ? "bg-[#E0A11A] dark:bg-[#E0A11A] text-slate-300 dark:text-white/20 cursor-not-allowed opacity-50"
+                    ? "bg-white text-slate-300 border-slate-200 cursor-not-allowed opacity-50 shadow-none"
                     : inCart
-                      ? "bg-[#E0A11A] dark:bg-[#E0A11A] text-slate-700 dark:text-white hover:bg-slate-200 dark:hover:bg-white/[0.12]"
-                      : "bg-[#E0A11A] dark:bg-[#E0A11A] text-white dark:text-white hover:bg-[#c88c0a] dark:hover:bg-white/90 shadow"
+                      ? "bg-white text-black border-black/40 hover:border-black/60 hover:shadow-md"
+                      : "bg-white text-slate-900 border-black/30 hover:border-black hover:shadow-md"
                 }`}
               >
                 <span className="material-icons-round text-[18px]">
@@ -597,7 +597,7 @@ export default function ProductDetailPage({ params }) {
                   className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
                     isFav
                       ? "bg-red-500 text-white shadow"
-                      : "bg-slate-100 dark:bg-white/[0.06] text-slate-400 dark:text-white/30 hover:bg-slate-200 dark:hover:bg-white/10"
+                      : "bg-white border border-slate-300 text-slate-500 hover:border-black/40 hover:text-black hover:shadow-sm"
                   }`}
                   title={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
                 >
@@ -690,8 +690,8 @@ export default function ProductDetailPage({ params }) {
                 onClick={() => handleTabToggle("caracteristicas")}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold transition-all ${
                   activeTab === "caracteristicas"
-                    ? "bg-[#E0A11A] dark:bg-[#E0A11A] text-white dark:text-slate-900"
-                    : "bg-white dark:bg-white/[0.03] text-slate-500 dark:text-white/40 hover:bg-slate-50 dark:hover:bg-white/[0.07]"
+                    ? "bg-black text-white"
+                    : "bg-white text-slate-600 hover:bg-slate-50"
                 }`}
               >
                 <span className="material-icons-round text-[16px]">list_alt</span>
@@ -700,12 +700,12 @@ export default function ProductDetailPage({ params }) {
             )}
             <button
               onClick={() => handleTabToggle("resenas")}
-              className={`flex-1 bg-[#E0A11A] flex items-center justify-center gap-2 py-2.5 text-sm font-semibold transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold transition-all ${
                 hasCaracteristicas ? "border-l border-slate-200 dark:border-white/[0.08]" : ""
               } ${
                 activeTab === "resenas"
-                  ? "bg-[#E0A11A] dark:bg-[#E0A11A] text-white dark:text-slate-900"
-                  : "bg-white dark:bg-white/[0.03] text-slate-500 dark:text-white/40 hover:bg-slate-50 dark:hover:bg-white/[0.07]"
+                  ? "bg-black text-white"
+                  : "bg-white text-slate-600 hover:bg-slate-50"
               }`}
             >
               <span className="material-icons-round text-[16px]">star_outline</span>
@@ -713,8 +713,8 @@ export default function ProductDetailPage({ params }) {
               {reviews.length > 0 && (
                 <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
                   activeTab === "resenas"
-                    ? "bg-[#E0A11A] dark:bg-slate-900/20"
-                    : "bg-slate-100 dark:bg-[#E0A11A] text-slate-600 dark:text-white/50"
+                    ? "bg-white text-black"
+                    : "bg-slate-100 text-slate-600"
                 }`}>
                   {reviews.length}
                 </span>
@@ -848,7 +848,7 @@ function ReviewsSection({
 
         <div className="flex items-center justify-between gap-4">
           <button type="submit" disabled={reviewLoading}
-            className="px-6 py-2.5 rounded-xl bg-[#E0A11A] dark:bg-[[#E0A11A]] text-white dark:text-slate-900 text-sm font-bold hover:bg-slate-700 dark:hover:bg-white/90 disabled:opacity-40 transition-all">
+            className="px-6 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-900 text-sm font-bold hover:border-black/60 hover:text-black hover:shadow-sm disabled:opacity-40 transition-all">
             {reviewLoading ? "Enviando..." : "Publicar reseña"}
           </button>
         </div>

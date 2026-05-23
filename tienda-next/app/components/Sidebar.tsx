@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Link from "next/link";
 
 const Sidebar = ({ role = "admin" }) => {
   const adminItems = [
@@ -26,10 +27,10 @@ const Sidebar = ({ role = "admin" }) => {
           if (item.name === "Inicio") onboardingAttr = { 'data-onboarding': 'inicio' };
           return (
             <li key={item.path}>
-              <a href={item.path} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-[#3a1859] dark:text-white font-medium" {...onboardingAttr}>
+              <Link href={item.path} className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-[#3a1859] dark:text-white font-medium" {...onboardingAttr}>
                 <span className="material-icons-round text-xl">{item.icon}</span>
                 <span>{item.name}</span>
-              </a>
+              </Link>
             </li>
           );
         })}

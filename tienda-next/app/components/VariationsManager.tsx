@@ -102,6 +102,19 @@ export default function VariationsManager({
     onStockChange?.(currentStock);
   }, [currentStock, onStockChange]);
 
+  // Seleccionar por defecto la primera opción de la primera variación cuando exista.
+  React.useEffect(() => {
+    const firstAttrId = variationAttributeIds[0];
+    if (!firstAttrId) return;
+
+    const firstOption = availableOptions[firstAttrId]?.[0];
+    if (!firstOption) return;
+
+    if (!selectedVariations[firstAttrId]) {
+      onVariationChange(firstAttrId, firstOption);
+    }
+  }, [variationAttributeIds, availableOptions, selectedVariations, onVariationChange]);
+
   // Manejar cambio de variación - limpiar opciones dependientes
   const handleVariationChange = useCallback(
     (attrId: string, value: string) => {

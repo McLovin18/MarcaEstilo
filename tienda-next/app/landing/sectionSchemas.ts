@@ -15,7 +15,8 @@ export const sectionSchemas: { [key: string]: { type: string; label: string; ico
       { name: "buttonText", type: "text", label: "Texto del botón", group: "content", stylable: true },
       { name: "buttonTextMobileFontSize", type: "text", label: "Tamaño móvil (px) para Botón", group: "styles", stylable: true },
       { name: "buttonLink", type: "text", label: "Enlace del botón", group: "content" },
-      { name: "image", type: "image", label: "Imagen principal", group: "content" },
+      { name: "image", type: "image", label: "Foto o video principal", group: "content" },
+      { name: "videoUrl", type: "text", label: "Video principal (URL)", group: "content" },
       // Campos especiales para Google Maps
       // rating y ratingCount ahora se obtienen automáticamente, solo mostrar generalMessage
       { name: "generalMessage", type: "textarea", label: "Mensaje general", group: "content", showIf: { googleMaps: true } },

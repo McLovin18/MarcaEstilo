@@ -71,7 +71,7 @@ export default function OrderConfirmationPage() {
         )}
 
         {orderId && (
-          <div className="w-full mb-5 p-4 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-#E0A11A rounded-xl">
+          <div className="w-full mb-5 p-4 bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-white/10 rounded-xl">
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Número de orden</p>
             <p className="text-2xl font-extrabold text-[#3a1859] dark:text-white mb-3">{orderId}</p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">Link único de tu orden (guárdalo para consultarla luego)</p>

@@ -166,8 +166,8 @@ export default function SearchResultsPage() {
                 }}
                 className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
                   !categoriaId
-                    ? "shadow-md scale-105 bg-[#E0A11A] text-white"
-                    : "bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
+                    ? "shadow-sm scale-105 bg-black text-white border border-black"
+                    : "bg-white text-slate-900 border border-slate-300 hover:border-black/60 hover:shadow-sm"
                 }`}
               >
                 Todas
@@ -180,8 +180,8 @@ export default function SearchResultsPage() {
                   }}
                   className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
                     categoriaId === cat.id
-                      ? "shadow-md scale-105 bg-[#E0A11A] text-white"
-                      : "bg-slate-100 dark:bg-white/[0.05] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
+                      ? "shadow-sm scale-105 bg-black text-white border border-black"
+                      : "bg-white text-slate-900 border border-slate-300 hover:border-black/60 hover:shadow-sm"
                   }`}
                 >
                   {cat.icono && <span className="mr-1">🏷️</span>}
@@ -214,7 +214,7 @@ export default function SearchResultsPage() {
             {totalPages > 1 && (
               <div className="flex flex-wrap justify-center items-center gap-2 mt-8 select-none w-full">
                 <button
-                  className="px-3 py-1.5 rounded border text-xs font-medium bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/60 hover:border-#e8c862 dark:hover:border-purple-500 hover:text-#E0A11A dark:hover:text-#f5d890 transition-all disabled:opacity-40"
+                  className="px-3 py-1.5 rounded border text-xs font-medium bg-white border-slate-300 text-slate-900 hover:border-black/60 transition-all disabled:opacity-40"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                 >
@@ -223,14 +223,14 @@ export default function SearchResultsPage() {
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
                   <button
                     key={n}
-                    className={`px-3 py-1.5 rounded border text-xs font-medium transition-all ${currentPage === n ? 'bg-[#E0A11A] border-#E0A11A text-white shadow-sm' : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/60 hover:border-#e8c862 dark:hover:border-purple-500 hover:text-#E0A11A dark:hover:text-#f5d890'}`}
+                    className={`px-3 py-1.5 rounded border text-xs font-medium transition-all ${currentPage === n ? 'bg-black border-black text-white shadow-sm' : 'bg-white border-slate-300 text-slate-900 hover:border-black/60'}`}
                     onClick={() => setCurrentPage(n)}
                   >
                     {n}
                   </button>
                 ))}
                 <button
-                  className="px-3 py-1.5 rounded border text-xs font-medium bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-white/60 hover:border-#e8c862 dark:hover:border-purple-500 hover:text-#E0A11A dark:hover:text-#f5d890 transition-all disabled:opacity-40"
+                  className="px-3 py-1.5 rounded border text-xs font-medium bg-white border-slate-300 text-slate-900 hover:border-black/60 transition-all disabled:opacity-40"
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
                 >
