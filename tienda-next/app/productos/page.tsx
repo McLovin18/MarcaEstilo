@@ -377,13 +377,14 @@ export default function ProductosPage() {
         ) : (
           <>
             <div className="grid grid-cols-2 gap-2 lg:grid-cols-5 animate-in fade-in duration-700">
-              {paginatedProducts.map((p: any) => (
+              {paginatedProducts.map((p: any, index: number) => (
                 <ProductoCard
                   key={p.id}
                   producto={p}
+                  index={index}
                   showCart
                   showEye
-                  index={index}
+              
                   showFav={isAuthenticated}
                   onClick={() => {}}
                   onAddCart={() => {}}
