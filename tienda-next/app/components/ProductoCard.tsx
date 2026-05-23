@@ -157,20 +157,27 @@ function ProductoCard({
           w-full h-32 sm:h-48
         "
       >
-        <Image
-          src={producto.imagenes?.[0] || "/no-image.png"}
-          alt={producto.nombre}
-          fill
-          sizes="(max-width: 640px) 140px, (max-width: 768px) 100vw, 400px"
-          className="
-            object-contain
-            p-3 sm:p-5
-            group-hover:scale-105
-            transition-transform duration-500
-          "
-          priority={false}
-          loading="lazy"
-        />
+      <Image
+        src={producto.imagenes?.[0] || "/no-image.png"}
+        alt={producto.nombre}
+        fill
+        sizes="(max-width: 640px) 140px, (max-width: 768px) 100vw, 400px"
+        className="
+          object-contain
+          p-3 sm:p-5
+          group-hover:scale-105
+          transition-transform duration-500
+        "
+        style={{
+          opacity: 0,
+          transition: "opacity 0.5s ease, transform 0.5s", // ✅ combina con el scale del hover
+        }}
+        onLoad={(e) => {
+          (e.currentTarget as HTMLImageElement).style.opacity = "1";
+        }}
+        priority={false}
+        loading="lazy"
+      />
         {/* Badge descuento */}
         {hasDiscount && (
           <span className="
