@@ -233,21 +233,19 @@ function ProductoCard({
         <p className="
           font-semibold leading-tight
           text-slate-800 dark:text-white
-
-          /* móvil: tamaño reducido */
-          text-xs
-          sm:text-sm
-
-          /* recortar si es muy largo - máximo 2 líneas */
+          text-xs sm:text-sm
           line-clamp-2
-          min-h-10
-        ">
+        "
+        style={{ minHeight: "2.5rem" }} // ✅ siempre 2 líneas reservadas
+        >
           {producto.nombre}
         </p>
 
-        {/* Descripción corta — solo en móvil donde hay más espacio */}
+        {/* Descripción corta */}
         {producto.descripcion && (
-          <p className="mt-0.5 text-xs text-slate-400 dark:text-white/35 line-clamp-2 sm:hidden">
+          <p className="mt-0.5 text-xs text-slate-400 dark:text-white/35 line-clamp-2 sm:hidden"
+            style={{ minHeight: "2rem" }} // ✅ siempre 2 líneas reservadas
+          >
             {producto.descripcion}
           </p>
         )}
