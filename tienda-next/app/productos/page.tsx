@@ -383,6 +383,7 @@ export default function ProductosPage() {
                   producto={p}
                   showCart
                   showEye
+                  index={index}
                   showFav={isAuthenticated}
                   onClick={() => {}}
                   onAddCart={() => {}}
