@@ -18,6 +18,7 @@ function ProductoCard({
   onEye,
   showFav = false,
   isCompact = true,
+  index = 0 // ✅ nuevo
 }: {
   producto?: any;
   onClick?: any;
@@ -26,6 +27,7 @@ function ProductoCard({
   onAddCart?: any;
   onEye?: any;
   showFav?: boolean;
+  index?: number;
   isCompact?: boolean;
 } = {}): JSX.Element | null {
   // Validar que producto existe y tiene id
@@ -61,6 +63,21 @@ function ProductoCard({
   const sinStock = totalStock === 0;
 
   const { basePrice, discount, hasDiscount, fakeOldPrice, finalPrice } = getCatalogPricing(producto);
+
+
+  const style = `
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  `;
+
 
   const getDetailUrl = () => {
     let detailUrl = `/product-detail?id=${producto.id}`;
@@ -130,7 +147,10 @@ function ProductoCard({
   const detailUrl = getDetailUrl();
 
   return (
-    <Link href={detailUrl} className={`block h-full w-full`}>
+    <>
+    <style>{style}</style>
+    <Link href={detailUrl} className={`block h-full w-full`}   style={{opacity: 0, animation: "fadeSlideIn 0.4s ease forwards", animationDelay: `${index * 80}ms`, // ✅ 80ms entre cada card
+  }}>
       <div
         onClick={onClick || goToDetail}
         className="
@@ -334,6 +354,7 @@ function ProductoCard({
       </div>
       </div>
     </Link>
+    </>
   );
 }
 
