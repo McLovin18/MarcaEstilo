@@ -9,7 +9,7 @@ const WhatsAppFloatingButton: React.FC = () => {
         .wa-float {
           position: fixed;
           bottom: 5.25rem;
-          left: 1.25rem;
+          right: 1.25rem;
           z-index: 50;
 
         }
@@ -17,7 +17,7 @@ const WhatsAppFloatingButton: React.FC = () => {
         @media (min-width: 768px) {
           .wa-float {
             bottom: 1.75rem;
-            left: 1.75rem;
+            right: 1.75rem;
           }
         }
 
@@ -100,7 +100,7 @@ const WhatsAppFloatingButton: React.FC = () => {
 
         .wa-tooltip {
           position: absolute;
-          left: calc(100% + 12px);
+          right: calc(100% + 12px);
           top: 50%;
           transform: translateY(-50%) translateX(-4px);
           background: #111827;
@@ -120,11 +120,11 @@ const WhatsAppFloatingButton: React.FC = () => {
         .wa-tooltip::before {
           content: '';
           position: absolute;
-          right: 100%;
+          left: 100%;
           top: 50%;
           transform: translateY(-50%);
           border: 5px solid transparent;
-          border-right-color: #111827;
+          border-left-color: #111827;
         }
 
         .wa-wrap:hover .wa-tooltip {
