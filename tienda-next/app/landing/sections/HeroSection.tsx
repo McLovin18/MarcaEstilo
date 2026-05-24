@@ -421,6 +421,7 @@ const [galleryAspectRatio, setGalleryAspectRatio] = React.useState(() => {
   const hasGallery = galleryImages.length > 1;
   const hasSingleImage = galleryImages.length === 1;
   const hasVideo = !!current.videoUrl && !hasGallery && !hasSingleImage;
+  const mobileSingleImageLayout = !isDesktop && hasSingleImage;
   const shouldRenderDefaultOverlay = !hasPositionedHeroElements && (!hasGallery || current.title || current.subtitle || current.badge || current.buttonText);
 
 const innerStyle: React.CSSProperties = ((): React.CSSProperties => {
@@ -441,6 +442,72 @@ const innerStyle: React.CSSProperties = ((): React.CSSProperties => {
     minHeight: "300px",
   };
 })();
+
+  if (mobileSingleImageLayout) {
+    return (
+      <>
+        <section style={containerStyle} className="m-0">
+          <div className="w-full max-w-full bg-black overflow-hidden">
+            {current.image ? (
+              <img
+                src={current.image}
+                alt={current.title || "Hero"}
+                className="w-full h-auto block object-cover"
+                style={{ objectPosition: "center 15%" }}
+                draggable={false}
+              />
+            ) : null}
+          </div>
+
+          <div className="bg-black text-center px-4 py-8 sm:py-10">
+            <div className="mx-auto flex flex-col items-center gap-3 max-w-3xl">
+              {current.badge && (
+                <span
+                  className="inline-block px-3 py-1 text-[10px] sm:text-xs font-bold tracking-widest uppercase bg-white/90 text-black dark:bg-slate-900/90 dark:text-white rounded-full shadow"
+                  style={{ ...defaultBadgeInlineStyle, ...badgeStyle }}
+                >
+                  {current.badge}
+                </span>
+              )}
+              {current.title && (
+                <h2
+                  className="text-2xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight drop-shadow-lg"
+                  style={{ ...defaultTitleInlineStyle, ...titleStyle }}
+                >
+                  {current.title}
+                </h2>
+              )}
+              {current.subtitle && (
+                <p
+                  className="text-white/85 text-sm sm:text-lg max-w-[90vw] sm:max-w-2xl drop-shadow"
+                  style={{ ...defaultSubtitleInlineStyle, ...subtitleStyle }}
+                >
+                  {current.subtitle}
+                </p>
+              )}
+              {current.buttonText && (
+                <a
+                  href={current.buttonLink || "/products-by-category"}
+                  className="inline-flex items-center gap-2 font-bold text-xs sm:text-lg px-4 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
+                  style={{
+                    backgroundColor: buttonTextStyle.backgroundColor ?? "white",
+                    color: buttonTextStyle.color ?? "black",
+                    border: buttonTextStyle.border ?? "none",
+                    backdropFilter: (buttonTextStyle as any).backdropFilter,
+                    ...defaultButtonInlineStyle,
+                    ...buttonTextStyle,
+                    ...buttonCustomStyle,
+                  }}
+                >
+                  <span>{current.buttonText}</span>
+                </a>
+              )}
+            </div>
+          </div>
+        </section>
+      </>
+    );
+  }
 
   return (
     <>
