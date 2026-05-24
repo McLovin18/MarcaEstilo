@@ -220,7 +220,7 @@ export default function FeaturedProductsSection({
           <div className="flex justify-center mt-7 md:mt-8 w-full">
             <Link
               href="/productos"
-              className="px-3 py-2 rounded-xl bg-linear-to-r from-[#E0A11A] to-[#c88c0a] hover:from-[#c88c0a] hover:to-[#a86f08] text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              className="mt-2 inline-flex items-center gap-2 bg-white border border-slate-300 text-slate-900 hover:border-black/60 hover:shadow-md font-semibold px-6 py-2.5 rounded-xl transition-colors shadow"
             >
               Ver todos los productos
             </Link>

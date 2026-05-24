@@ -226,14 +226,13 @@ const [galleryAspectRatio, setGalleryAspectRatio] = React.useState(() => {
       generalMessage,
     };
 
-    const collectedImages = Array.from(
-      new Set(
-        sourceItems
-          .flatMap((item) => Array.isArray(item.images) ? item.images : [])
-          .concat(sourceItems.map((item) => item.image || null))
-          .filter((url): url is string => !!url)
-      )
-    );
+    const imgsFromArrays = sourceItems.flatMap((item) =>
+      Array.isArray(item.images) ? item.images : []
+    ).filter((u): u is string => !!u);
+    const imgsFromSingle = sourceItems
+      .map((item) => item.image)
+      .filter((u): u is string => !!u);
+    const collectedImages = Array.from(new Set([...imgsFromArrays, ...imgsFromSingle]));
 
     const singleHero = {
       ...baseItem,
@@ -340,6 +339,79 @@ const [galleryAspectRatio, setGalleryAspectRatio] = React.useState(() => {
       ? [current.image]
       : [];
 
+  const mobileParallaxRef = React.useRef<HTMLImageElement | null>(null);
+
+  React.useEffect(() => {
+    if (!isLast) return;
+    if (typeof window === "undefined") return;
+    // only enable on narrow viewports (mobile)
+    if (window.innerWidth >= 768) return;
+
+    let rafId = 0;
+    const speed = 0.28; // parallax factor (increased for faster flow)
+    let attachedImg: HTMLImageElement | null = null;
+    let checkInterval: number | null = null;
+
+    const attachToImg = (img: HTMLImageElement) => {
+      attachedImg = img;
+      const onScroll = () => {
+        if (!attachedImg) return;
+        // Use page scroll position to emulate background-attachment: fixed
+        const pageY = window.scrollY || window.pageYOffset;
+        const offsetTop = attachedImg.offsetTop || 0;
+        const translate = Math.round((pageY - offsetTop) * speed);
+        const clamped = Math.max(Math.min(translate, 120), -120);
+        attachedImg.style.transform = `translateY(${clamped}px)`;
+      };
+
+      const handler = () => {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(onScroll);
+      };
+
+      window.addEventListener("scroll", handler, { passive: true });
+      handler();
+
+      return () => {
+        window.removeEventListener("scroll", handler);
+        if (rafId) cancelAnimationFrame(rafId);
+        if (attachedImg) attachedImg.style.transform = "";
+      };
+    };
+
+    // try to find the image element; if not found, retry shortly up to 1s
+    const findAndAttach = () => {
+      const found = document.querySelector('img[data-hero-parallax]') as HTMLImageElement | null;
+      if (found) {
+        if (checkInterval) {
+          clearInterval(checkInterval);
+          checkInterval = null;
+        }
+        const cleanup = attachToImg(found);
+        // store cleanup for return
+        (attachToImg as any)._cleanup = cleanup;
+      }
+    };
+
+    findAndAttach();
+    if (!(document.querySelector('img[data-hero-parallax]') as HTMLImageElement | null)) {
+      let attempts = 0;
+      checkInterval = window.setInterval(() => {
+        attempts += 1;
+        findAndAttach();
+        if (attempts > 10) {
+          if (checkInterval) { clearInterval(checkInterval); checkInterval = null; }
+        }
+      }, 100) as unknown as number;
+    }
+
+    return () => {
+      if (checkInterval) { clearInterval(checkInterval); checkInterval = null; }
+      const cleanup = (attachToImg as any)._cleanup;
+      if (cleanup) cleanup();
+    };
+  }, [isLast, isDesktop]);
+
   const hasPositionedHeroElements =
     !!fieldPositions?.title ||
     !!fieldPositions?.buttonText ||
@@ -351,13 +423,24 @@ const [galleryAspectRatio, setGalleryAspectRatio] = React.useState(() => {
   const hasVideo = !!current.videoUrl && !hasGallery && !hasSingleImage;
   const shouldRenderDefaultOverlay = !hasPositionedHeroElements && (!hasGallery || current.title || current.subtitle || current.badge || current.buttonText);
 
-const innerStyle: React.CSSProperties = {
-  borderRadius: hasGallery ? "0" : borderRadius,
-  aspectRatio: hasGallery ? "2400 / 1800" : "2400 / 1000",
-  overflow: "hidden",
-  position: "relative",
-  minHeight: "300px", // ✅ evita el colapso inicial
-};
+const innerStyle: React.CSSProperties = ((): React.CSSProperties => {
+  if (hasGallery && !isDesktop) {
+    // Mobile stacked gallery: let content determine height
+    return {
+      borderRadius: "0",
+      overflow: "visible",
+      position: "relative",
+      minHeight: "auto",
+    };
+  }
+  return {
+    borderRadius: hasGallery ? "0" : borderRadius,
+    aspectRatio: hasGallery ? "2400 / 1800" : "2400 / 1000",
+    overflow: "hidden",
+    position: "relative",
+    minHeight: "300px",
+  };
+})();
 
   return (
     <>
@@ -367,30 +450,67 @@ const innerStyle: React.CSSProperties = {
         style={{ ...innerStyle, willChange: "contents"}}
       >
 {hasGallery ? (
-  <div
-    className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-0"
-    style={imagePositionStyle}
-  >
-{galleryImages.slice(0, 4).map((src, index) => (
-  <div key={`${src}-${index}`} className="relative overflow-hidden">
-    <img
-      src={src}
-      alt={current.title || `Hero ${index + 1}`}  // ✅ valor real
-      className="absolute inset-0 w-full h-full block"
-      style={{
-        objectFit: "cover",
-        filter: "brightness(0.6)",
-        opacity: 0,
-        transition: "opacity 0.6s ease",
-      }}
-      onLoad={(e) => {
-        (e.currentTarget as HTMLImageElement).style.opacity = "1";
-      }}
-      draggable={false}
-    />
-  </div>
-))}
-  </div>
+  isDesktop ? (
+    <div
+      className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-0"
+      style={imagePositionStyle}
+    >
+      {galleryImages.slice(0, 4).map((src, index) => (
+        <div key={`${src}-${index}`} className="relative overflow-hidden">
+          <img
+            src={src}
+            alt={current.title || `Hero ${index + 1}`}
+            className="absolute inset-0 w-full h-full block"
+            style={{
+              objectFit: "cover",
+              filter: "brightness(0.6)",
+              opacity: 0,
+              transition: "opacity 0.6s ease",
+            }}
+            onLoad={(e) => {
+              (e.currentTarget as HTMLImageElement).style.opacity = "1";
+            }}
+            draggable={false}
+          />
+        </div>
+      ))}
+    </div>
+  ) : (
+    // Mobile: stacked images, button centered on first image
+    <div className="w-full flex flex-col gap-4">
+      {galleryImages.map((src, index) => (
+        <div key={`${src}-${index}`} className="relative w-full overflow-hidden">
+          <img
+            src={src}
+            alt={current.title || `Hero ${index + 1}`}
+            className="w-full h-64 sm:h-80 object-cover block"
+            style={{ filter: "brightness(0.6)", transition: "opacity 0.5s ease" }}
+            draggable={false}
+          />
+
+          {index === 0 && current.buttonText && (
+            <a
+              href={current.buttonLink || "/products-by-category"}
+              className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 inline-flex items-center gap-2 font-bold text-sm px-4 py-2 rounded-2xl shadow-lg transition-all hover:scale-105"
+              style={{
+                backgroundColor: buttonTextStyle.backgroundColor ?? "white",
+                color: buttonTextStyle.color ?? "black",
+                border: buttonTextStyle.border ?? "none",
+                backdropFilter: (buttonTextStyle as any).backdropFilter,
+                zIndex: 30,
+                pointerEvents: "auto",
+                ...defaultButtonInlineStyle,
+                ...buttonTextStyle,
+                ...buttonCustomStyle,
+              }}
+            >
+              <span>{current.buttonText}</span>
+            </a>
+          )}
+        </div>
+      ))}
+    </div>
+  )
 ) : hasSingleImage ? (
   <img
     src={galleryImages[0]}
@@ -504,7 +624,7 @@ const innerStyle: React.CSSProperties = {
           </p>
         )}
 
-        {fieldPositions?.buttonText && current.buttonText && (
+        {fieldPositions?.buttonText && current.buttonText && !(hasGallery && !isDesktop) && (
           <a
             href={current.buttonLink || "/products-by-category"}
             className="absolute inline-flex items-center gap-1 sm:gap-2 font-bold text-[9px] sm:text-2xl px-3 py-1.5 sm:px-4 sm:py-3 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
@@ -549,7 +669,7 @@ const innerStyle: React.CSSProperties = {
                   {current.subtitle}
                 </p>
               )}
-              {current.buttonText && (
+              {current.buttonText && !(hasGallery && !isDesktop) && (
                 <a
                   href={current.buttonLink || "/products-by-category"}
                   className="inline-flex items-center gap-2 font-bold text-xs sm:text-lg px-4 py-2 sm:px-6 sm:py-3 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
@@ -573,35 +693,60 @@ const innerStyle: React.CSSProperties = {
     </section>
 
     {isLast && (
-  <section
-    className="relative w-full overflow-hidden"
-    style={{ minHeight: "500px", height: "60vh" }}
-  >
-    {/* Imagen con efecto parallax */}
-    <div
-      className="absolute inset-0"
-      style={{
-        backgroundImage: `url(https://marcaestilo593.com/cdn/shop/files/WhatsApp_Image_2025-04-10_at_14.38.14.jpg?v=1744313930&width=1500)`,
-        backgroundAttachment: "fixed",   // ✅ parallax
-        backgroundSize: "cover",
-        backgroundPosition: "center center",
-      }}
-    />
+      isDesktop ? (
+        <section
+          className="relative w-full overflow-hidden"
+          style={{ minHeight: "500px", height: "60vh" }}
+        >
+          {/* Imagen con efecto parallax */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(https://marcaestilo593.com/cdn/shop/files/WhatsApp_Image_2025-04-10_at_14.38.14.jpg?v=1744313930&width=1500)`,
+              backgroundAttachment: "fixed",
+              backgroundSize: "cover",
+              backgroundPosition: "center center",
+            }}
+          />
 
-    {/* Overlay oscuro */}
-    <div className="absolute inset-0 bg-black/40" />
+          {/* Overlay oscuro */}
+          <div className="absolute inset-0 bg-black/40" />
 
-    {/* Texto abajo centrado */}
-    <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-8 sm:pb-12">
-      <p
-        className="text-white text-center italic text-sm sm:text-xl lg:text-2xl drop-shadow-lg px-6"
-        style={{ fontFamily: "Georgia, serif" }}
-      >
-        Exclusividad que viste, Viste la diferencia, Marca tu Estilo
-      </p>
-    </div>
-  </section>
-)}
+          {/* Texto abajo centrado */}
+          <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-8 sm:pb-12">
+            <p
+              className="text-white text-center italic text-sm sm:text-2xl lg:text-2xl drop-shadow-lg px-6"
+              style={{ fontFamily: "Georgia, serif" }}
+            >
+              Exclusividad que viste, Viste la diferencia, Marca tu Estilo
+            </p>
+          </div>
+        </section>
+      ) : (
+        // Mobile: image without opacity and text below the image
+        <section className="w-full">
+          <div className="w-full overflow-hidden">
+            <img
+              ref={mobileParallaxRef}
+              data-hero-parallax="true"
+              src="https://marcaestilo593.com/cdn/shop/files/WhatsApp_Image_2025-04-10_at_14.38.14.jpg?v=1744313930&width=1500"
+              alt="Marca Estilo"
+              className="w-full h-auto object-cover block"
+              style={{ filter: "none", transition: "transform 0.12s linear", willChange: "transform" }}
+              draggable={false}
+            />
+          </div>
+          <div className="py-6 px-2">
+            <p
+              className="text-center italic text-2xl sm:text-2xl drop-shadow-lg text-white"
+              style={{ fontFamily: "Georgia, serif" }}
+            >
+              Exclusividad que viste, Viste la diferencia, Marca tu Estilo
+            </p>
+          </div>
+        </section>
+      )
+    )}
 
 
     </>

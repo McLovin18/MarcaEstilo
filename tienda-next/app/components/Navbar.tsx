@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import InfoSlider from "./InfoSlider";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import {
@@ -247,6 +248,11 @@ export const Navbar = () => {
     { href: "/blogs", label: "Blogs" },
   ];
 
+  const infoSliderItems = [
+    { text: "¡Haz clic y obtén 15% de descuento en prendas seleccionadas! →", href: "https://marca-estilo-41im.vercel.app/ofertas" },
+    "🚛 Envíos a todo el Ecuador incluyendo las Islas Galápagos",
+  ];
+
   const handleSearch = () => {
     if (!searchValue.trim()) return;
     let target = `/search-results?query=${encodeURIComponent(searchValue.trim())}`;
@@ -258,14 +264,8 @@ export const Navbar = () => {
 
   return (
     <>
-      {/* ══════════════════ BANNER DE ENVIOS ══════════════════ */}
-      <div 
-        className="w-full text-center py-2 text-xs font-medium text-body"
-        style={{ background: "#111827", backgroundColor: "black", borderColor: "rgba(255,255,255,0.08)", color:"#ffffff"}}
-        
-      >
-        🚛 Envíos a todo el Ecuador incluyendo las Islas Galápagos
-      </div>
+      {/* ══════════════════ INFORMATIVE SLIDER ══════════════════ */}
+      <InfoSlider items={infoSliderItems} />
 
       {/* ══════════════════ NAVBAR ══════════════════ */}
       <nav
