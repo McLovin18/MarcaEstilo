@@ -66,6 +66,25 @@ export function SectionRenderer({
 
   const { props = {}, styles, fieldStyles, fieldPositions } = section;
   let parsedProps = { ...props };
+  const deviceForStyles = (parsedProps as any)?.device === "mobile" ? "mobile" : "desktop";
+
+  const resolvedFieldStyles = Object.fromEntries(
+    Object.entries(fieldStyles || {}).map(([fieldName, styleValue]) => {
+      const responsiveStyle = styleValue as any;
+      const hasResponsiveShape =
+        responsiveStyle &&
+        (responsiveStyle.desktop !== undefined || responsiveStyle.mobile !== undefined);
+
+      if (!hasResponsiveShape) {
+        return [fieldName, styleValue || {}];
+      }
+
+      return [
+        fieldName,
+        responsiveStyle[deviceForStyles] || responsiveStyle.desktop || responsiveStyle.mobile || {},
+      ];
+    })
+  );
   
   if (section.type === "googleComments" && typeof props.comments === "string") {
     try {
@@ -79,7 +98,7 @@ export function SectionRenderer({
     <Component 
       {...parsedProps} 
       styles={styles} 
-      fieldStyles={fieldStyles} 
+      fieldStyles={resolvedFieldStyles} 
       fieldPositions={fieldPositions}
       isLast={isLastHero} // ✅
     />

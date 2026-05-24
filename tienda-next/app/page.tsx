@@ -6,6 +6,7 @@ import BottomBarPublic from "./components/BottomBarPublic";
 import WhatsAppFloatingButton from "./components/WhatsAppFloatingButton";
 import { SectionRenderer } from "./landing/sectionRegistry";
 import { getLandingPage } from "./lib/landing-db";
+import { obtenerProductos } from "./lib/productos-db";
 import type { LandingSection } from "./lib/landing-types";
 import { useUser } from "./context/UserContext";
 
@@ -14,7 +15,9 @@ export default function Home() {
   const [landing, setLanding] = useState<{
     hero?: Record<string, any> | null;
     sections?: LandingSection[];
+    featuredProducts?: string[];
   } | null>(null);
+  const [featuredProductsResolved, setFeaturedProductsResolved] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,14 +25,35 @@ export default function Home() {
 
     const loadLanding = async () => {
       try {
-        const data = await getLandingPage();
+        const [data, products] = await Promise.all([
+          getLandingPage(),
+          obtenerProductos(),
+        ]);
+
+        const highlighted = (products || []).filter((p: any) => Boolean(p?.destacado));
+        const highlightedById = new Map(
+          highlighted
+            .filter((p: any) => p?.id)
+            .map((p: any) => [String(p.id), p])
+        );
+
+        const orderedIds = (data?.featuredProducts || []).map((id: any) => String(id));
+        const ordered = orderedIds
+          .map((id: string) => highlightedById.get(id))
+          .filter(Boolean);
+
+        const orderedSet = new Set(ordered.map((p: any) => String(p.id)));
+        const missing = highlighted.filter((p: any) => !orderedSet.has(String(p.id)));
+
         if (mounted) {
           setLanding(data);
+          setFeaturedProductsResolved([...ordered, ...missing]);
         }
       } catch (error) {
         console.error("Error cargando landing publicada:", error);
         if (mounted) {
           setLanding(null);
+          setFeaturedProductsResolved([]);
         }
       } finally {
         if (mounted) {
@@ -68,6 +92,59 @@ export default function Home() {
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   }, [landing]);
 
+  const renderedSections = useMemo(() => {
+    const featuredCategoryItemsFromProducts = featuredProductsResolved
+      .map((product: any) => {
+        const catId = String(product?.categoria || "").trim();
+        if (!catId) return null;
+
+        return {
+          id: catId,
+          title: catId,
+          image: product?.imagenes?.[0] || product?.imagen || null,
+          link: `/products-by-category?cat=${encodeURIComponent(catId)}`,
+        };
+      })
+      .filter(Boolean)
+      .filter(
+        (item: any, index: number, arr: any[]) =>
+          arr.findIndex((x: any) => x.id === item.id) === index
+      );
+
+    return landingSections.map((section) => {
+      if (section.type === "featuredProducts") {
+        return {
+          ...section,
+          props: {
+            ...(section.props || {}),
+            products: featuredProductsResolved,
+          },
+        } as LandingSection;
+      }
+
+      if (section.type === "featuredCategories") {
+        const existingItems = Array.isArray((section.props as any)?.items)
+          ? (section.props as any).items
+          : [];
+
+        const finalItems =
+          existingItems.length > 0
+            ? existingItems
+            : featuredCategoryItemsFromProducts;
+
+        return {
+          ...section,
+          props: {
+            ...(section.props || {}),
+            items: finalItems,
+          },
+        } as LandingSection;
+      }
+
+      return section;
+    });
+  }, [landingSections, featuredProductsResolved]);
+
 
     // Detecta el índice del último hero
 const lastHeroIndex = useMemo(() => {
@@ -81,7 +158,7 @@ const lastHeroIndex = useMemo(() => {
   return (
     <>
       <WhatsAppFloatingButton />
-      <main className="min-h-screen w-full bg-white text-slate-900 dark:bg-slate-950 dark:text-white">
+      <main className="min-h-screen w-full bg-black text-slate-900 dark:bg-slate-950 dark:text-white">
         {loading ? (
         <div
             className="w-full bg-slate-950 relative overflow-hidden"
@@ -103,9 +180,9 @@ const lastHeroIndex = useMemo(() => {
             }
             `}</style>
         </div>
-        ) : landingSections.length > 0 ? (
+        ) : renderedSections.length > 0 ? (
           <div className="flex flex-col">
-            {landingSections.map((section, index) => (
+            {renderedSections.map((section, index) => (
             <SectionRenderer 
                 key={section.id} 
                 section={section}

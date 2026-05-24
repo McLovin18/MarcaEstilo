@@ -1,6 +1,6 @@
 "use client";
 import { Loading3DIcon } from "@/app/components/Loading3DIcon";
-import { useEffect, useState, ChangeEvent, useRef, useCallback } from "react";
+import { useEffect, useState, ChangeEvent, useRef, useCallback, useMemo } from "react";
 import {
   DragDropContext,
   Droppable,
@@ -274,17 +274,28 @@ export default function LandingEditor() {
         setProductos(prods ?? []);
         setAllProductos(prods ?? []);
 
-        // Resolver productos destacados del borrador (IDs -> objetos)
+        // Resolver productos destacados desde inventario + orden guardado en landing.
+        // 1) Solo productos con destacado=true
+        // 2) Respetar el orden guardado en landing
+        // 3) Agregar al final los nuevos destacados aún no ordenados
         const allProds = prods ?? [];
-        const featuredIds: string[] = landingData?.featuredProducts || [];
+        const highlighted = allProds.filter((p: any) => Boolean(p?.destacado));
+        const highlightedById = new Map(
+          highlighted
+            .filter((p: any) => p?.id)
+            .map((p: any) => [String(p.id), p])
+        );
 
-        // Solo cargar los productos seleccionados expl+�citamente en la landing
-        // (NO agregar autom+�ticamente los productos marcados como destacados en inventario)
-        const explicitFeatured: any[] = featuredIds
-          .map((id) => allProds.find((p) => p.id === id))
+        const savedFeaturedIds: string[] = landingData?.featuredProducts || [];
+        const orderedFromSaved: any[] = savedFeaturedIds
+          .map((id) => highlightedById.get(String(id)))
           .filter(Boolean);
 
-        setFeaturedProducts(explicitFeatured);
+        const missingHighlighted = highlighted.filter(
+          (p: any) => !savedFeaturedIds.includes(String(p.id))
+        );
+
+        setFeaturedProducts([...orderedFromSaved, ...missingHighlighted]);
 
         // Migramos secciones antiguas (no JSON) al nuevo formato en memoria
         const rawSections: any[] = landingData?.sections ?? [];
@@ -376,27 +387,43 @@ export default function LandingEditor() {
     alert("Hero actualizado");
   };
 
-  // Productos destacados seleccionables y reordenables
-  const destacadosDisponibles = allProductos.filter((p) => p.destacado);
-    // Drag & drop para destacados
-    const onDragEndFeatured = (result: DropResult) => {
-      if (!result.destination) return;
-      const updated = Array.from(featuredProducts);
-      const [removed] = updated.splice(result.source.index, 1);
-      updated.splice(result.destination.index, 0, removed);
-      setFeaturedProducts(updated);
-    };
-
-    // Quitar producto de destacados
-    const quitarDestacado = (id: string) => {
-      setFeaturedProducts(featuredProducts.filter((p) => (p.id || p) !== id));
-    };
-  // Agregar producto a destacados
-  const agregarDestacado = (prod: any) => {
-    if (!featuredProducts.some((p) => (p.id || p) === (prod.id || prod))) {
-      setFeaturedProducts([...featuredProducts, prod]);
-    }
+  // Productos destacados ordenables (la selección se hace en Inventario)
+  const destacadosDisponibles = useMemo(
+    () => allProductos.filter((p) => p.destacado),
+    [allProductos]
+  );
+  const onDragEndFeatured = (result: DropResult) => {
+    if (!result.destination) return;
+    const updated = Array.from(featuredProducts);
+    const [removed] = updated.splice(result.source.index, 1);
+    updated.splice(result.destination.index, 0, removed);
+    setFeaturedProducts(updated);
   };
+
+  // Sincroniza lista ordenable cuando cambian los destacados en inventario.
+  // Conserva el orden actual y agrega nuevos destacados al final.
+  useEffect(() => {
+    setFeaturedProducts((prev) => {
+      const availableById = new Map(
+        destacadosDisponibles
+          .filter((p: any) => p?.id)
+          .map((p: any) => [String(p.id), p])
+      );
+
+      const orderedCurrent = prev
+        .map((p: any) => availableById.get(String(p?.id || p)))
+        .filter(Boolean);
+
+      const currentIds = new Set(
+        orderedCurrent.map((p: any) => String(p.id))
+      );
+      const newOnes = destacadosDisponibles.filter(
+        (p: any) => !currentIds.has(String(p.id))
+      );
+
+      return [...orderedCurrent, ...newOnes];
+    });
+  }, [destacadosDisponibles]);
 
 
   const handleSectionPropChange = async (
@@ -1033,29 +1060,16 @@ export default function LandingEditor() {
             <span className="material-icons-round text-purple-600">star</span>
             Productos destacados en landing
           </h2>
-          <p className="text-slate-600 dark:text-slate-300 mb-2 text-sm">Selecciona, reordena y publica los productos destacados que ver+�n los clientes en la landing principal.</p>
+          <p className="text-slate-600 dark:text-slate-300 mb-2 text-sm">La selección se hace en Inventario con el checkbox de destacado. Aquí solo defines el orden en que se mostrarán al publicar.</p>
           <div className="flex flex-col md:flex-row gap-6">
-            {/* Lista de seleccionables */}
-            <div className="flex-1">
-              <h3 className="font-semibold mb-2 text-sm">Seleccionar productos destacados</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {destacadosDisponibles.map((prod) => (
-                  <div key={prod.id} className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg p-2">
-                    <ProductoCard producto={prod} showCart={false} showEye={false} onClick={() => {}} onAddCart={() => {}} onEye={() => {}} />
-                    <button
-                      className="ml-2 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700"
-                      onClick={() => agregarDestacado(prod)}
-                      disabled={featuredProducts.some((p) => (p.id || p) === prod.id)}
-                    >
-                      Agregar
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
             {/* Lista de destacados actuales (drag & drop) */}
             <div className="flex-1">
               <h3 className="font-semibold mb-2 text-sm">Orden y publicaci+�n</h3>
+              {destacadosDisponibles.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-500">
+                  Aún no hay productos marcados como destacados en inventario.
+                </div>
+              ) : null}
               <DragDropContext onDragEnd={onDragEndFeatured}>
                 <div className="relative">
                   {featuredProducts.length > 3 && (
@@ -1110,10 +1124,11 @@ export default function LandingEditor() {
                                     drag_indicator
                                   </span>
                                   <button
-                                    className="text-xs px-2 py-0.5 bg-red-600 text-white rounded hover:bg-red-700"
-                                    onClick={() => quitarDestacado(prod.id || prod)}
+                                    className="text-xs px-2 py-0.5 bg-slate-300 text-slate-600 rounded cursor-not-allowed"
+                                    onClick={() => {}}
+                                    disabled
                                   >
-                                    Quitar
+                                    Inventario
                                   </button>
                                 </div>
                                 <div className="transform scale-90 origin-top">
@@ -2209,14 +2224,10 @@ export default function LandingEditor() {
                                               </div>
                                               <button
                                                 type="button"
-                                                className="absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-[10px] bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                                                onClick={() =>
-                                                  quitarDestacado(
-                                                    prod.id || (prod as any)
-                                                  )
-                                                }
+                                                className="absolute top-1 right-1 px-1.5 py-0.5 rounded-full text-[10px] bg-slate-300 text-slate-600 opacity-80"
+                                                disabled
                                               >
-                                                Quitar
+                                                Inventario
                                               </button>
                                             </div>
                                           ))}
@@ -3515,10 +3526,35 @@ export default function LandingEditor() {
                     .map((section) => {
                       // Build preview section; aplanar fieldStyles responsive
                       let previewSection = { ...section } as any;
+                      const featuredCategoryItemsFromProducts = featuredProducts
+                        .map((product: any) => {
+                          const catId = String(product?.categoria || "").trim();
+                          if (!catId) return null;
+
+                          return {
+                            id: catId,
+                            title: catId,
+                            image: product?.imagenes?.[0] || product?.imagen || null,
+                            link: `/products-by-category?cat=${encodeURIComponent(catId)}`,
+                          };
+                        })
+                        .filter(Boolean)
+                        .filter(
+                          (item: any, index: number, arr: any[]) =>
+                            arr.findIndex((x: any) => x.id === item.id) === index
+                        );
+
                       if (section.type === "featuredProducts") {
                         previewSection.props = { ...(section.props || {}), products: featuredProducts, device: previewDevice };
                       } else if (section.type === "featuredCategories") {
-                        previewSection.props = { ...(section.props || {}), device: previewDevice };
+                        const currentItems = Array.isArray((section.props as any)?.items)
+                          ? (section.props as any).items
+                          : [];
+                        previewSection.props = {
+                          ...(section.props || {}),
+                          items: currentItems.length > 0 ? currentItems : featuredCategoryItemsFromProducts,
+                          device: previewDevice,
+                        };
                       } else if (section.type === "hero") {
                         const normalized = buildHeroPreviewProps(section, previewDevice);
                         previewSection.props = normalized.props;

@@ -29,7 +29,7 @@ export default function FeaturedProductsSection({
   // ── Todos los hooks ANTES de cualquier return condicional ──
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const [itemsPerView, setItemsPerView] = useState(4);
+  const [itemsPerView, setItemsPerView] = useState(5);
   const [animDir, setAnimDir] = useState<"left" | "right">("right");
   const [isAnimating, setIsAnimating] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -37,16 +37,15 @@ export default function FeaturedProductsSection({
 
   useEffect(() => {
     if (device === "mobile") {
-      // show 2 on mobile if desired elsewhere; here keep 1 for compatibility
-      setItemsPerView(1);
+      setItemsPerView(2);
       return;
     }
     const updateItemsPerView = () => {
       if (typeof window === "undefined") return;
       const width = window.innerWidth;
-      if (width < 640) setItemsPerView(1);
+      if (width < 640) setItemsPerView(2);
       else if (width < 1024) setItemsPerView(3);
-      else setItemsPerView(4);
+      else setItemsPerView(5);
     };
     updateItemsPerView();
     window.addEventListener("resize", updateItemsPerView);
@@ -69,6 +68,11 @@ export default function FeaturedProductsSection({
 
   const effectiveItemsPerView = Math.min(itemsPerView, products.length);
   const hasCarousel = products.length > effectiveItemsPerView;
+
+  useEffect(() => {
+    // When admin changes featured order, always start showing from the first item.
+    setCurrentIndex(0);
+  }, [products.map((prod: any) => String(prod?.id || "")).join("|")]);
 
   useEffect(() => {
     if (!hasCarousel || isHovered || !isVisible) return;
@@ -125,6 +129,7 @@ export default function FeaturedProductsSection({
 
   return (
     <section
+      ref={containerRef}
       style={{ paddingTop, paddingBottom }}
       className="w-full max-w-full px-2 md:px-2 flex flex-col items-center m-0 overflow-x-hidden"
     >
@@ -215,7 +220,7 @@ export default function FeaturedProductsSection({
           <div className="flex justify-center mt-7 md:mt-8 w-full">
             <Link
               href="/productos"
-              className="px-3 py-2 rounded-xl bg-gradient-to-r from-[#E0A11A] to-[#c88c0a] hover:from-[#c88c0a] hover:to-[#a86f08] text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              className="px-3 py-2 rounded-xl bg-linear-to-r from-[#E0A11A] to-[#c88c0a] hover:from-[#c88c0a] hover:to-[#a86f08] text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
             >
               Ver todos los productos
             </Link>

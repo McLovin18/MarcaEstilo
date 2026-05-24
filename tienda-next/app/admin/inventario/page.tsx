@@ -308,56 +308,81 @@ export default function AdminInventario() {
             {/* LISTA DE PRODUCTOS (estilo inventario) */}
             <div className="bg-white rounded-2xl shadow border overflow-hidden">
               <div className="max-h-[65vh] overflow-auto">
-                <div className="hidden sm:grid grid-cols-[minmax(0,1.7fr)_minmax(160px,0.7fr)_minmax(130px,0.5fr)_minmax(130px,0.5fr)] gap-4 px-6 py-4 border-b bg-slate-50 text-slate-700 font-semibold">
-                  <div>Producto</div>
-                  <div>Fecha actualización</div>
-                  <div className="text-right">Precio</div>
-                  <div className="text-right">Existencias</div>
-                </div>
-
                 {loading ? (
                   <div className="p-6 text-center">Cargando productos...</div>
                 ) : productosFiltrados.length === 0 ? (
                   <div className="p-6 text-center">No hay productos</div>
                 ) : (
-                  productosFiltrados.map((p) => {
-                    const thumb = p.imagenes?.[0] || p.imagen || "/no-image.png";
-                    const fecha = p.createdAt ? new Date(p.createdAt).toLocaleString() : "-";
-                    const stockTotal = getStockTotal(p);
-                    return (
-                      <div key={p.id} className="grid grid-cols-1 sm:grid-cols-[minmax(0,1.7fr)_minmax(160px,0.7fr)_minmax(130px,0.5fr)_minmax(130px,0.5fr)] gap-4 px-6 py-4 border-b last:border-b-0 items-start sm:items-center">
-                        <div className="flex items-center gap-4 min-w-0">
-                          <div className="w-20 h-20 bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
-                            <img src={thumb} alt={p.nombre} className="object-contain w-full h-full" />
-                          </div>
+                  <table className="w-full min-w-245 table-fixed">
+                    <thead className="bg-slate-50 text-slate-700 border-b">
+                      <tr>
+                        <th className="text-left font-semibold px-6 py-4 w-[48%]">Producto</th>
+                        <th className="text-left font-semibold px-4 py-4 w-[24%]">Fecha actualización</th>
+                        <th className="text-center font-semibold px-4 py-4 w-[10%]">Destacado</th>
+                        <th className="text-right font-semibold px-4 py-4 w-[9%]">Precio</th>
+                        <th className="text-right font-semibold px-6 py-4 w-[9%]">Existencias</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {productosFiltrados.map((p) => {
+                        const thumb = p.imagenes?.[0] || p.imagen || "/no-image.png";
+                        const fecha = p.createdAt ? new Date(p.createdAt).toLocaleString() : "-";
+                        const stockTotal = getStockTotal(p);
 
-                          <div className="min-w-0">
-                            <div className="font-semibold text-slate-800 truncate">{p.nombre}</div>
-                            <div className="text-xs text-slate-500 mt-1">SKU: {p.sku || p.id}</div>
-                            <div className="mt-3 flex items-center gap-4 text-sm">
-                              <button className="text-rose-600 font-medium" onClick={() => { setEditData(p); setShowForm(true); }}>Editar</button>
-                              <button className="text-slate-600 hover:text-slate-900" onClick={async () => { if (confirm("¿Eliminar producto?")) { await eliminarProducto(p.id); const prods = await obtenerProductos({ incluirSinStock: true }); setProductos(prods); } }}>Eliminar</button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="sm:text-left text-slate-800">
-                          <div className="text-slate-500 text-sm sm:hidden">Actualizado</div>
-                          <div className="font-medium">{fecha}</div>
-                        </div>
-
-                        <div className="sm:text-right">
-                          <div className="text-slate-500 text-sm sm:hidden">Precio</div>
-                          <div className="font-bold text-amber-600">${Number(p.precio || 0).toFixed(2)}</div>
-                        </div>
-
-                        <div className="sm:text-right">
-                          <div className="text-slate-500 text-sm sm:hidden">Existencias</div>
-                          <div className="font-bold">{stockTotal}</div>
-                        </div>
-                      </div>
-                    );
-                  })
+                        return (
+                          <tr key={p.id} className="border-b last:border-b-0 hover:bg-slate-50/60 transition-colors align-middle">
+                            <td className="px-6 py-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center shrink-0 border border-slate-200">
+                                  <img src={thumb} alt={p.nombre} className="object-contain w-full h-full" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-semibold text-slate-800 truncate">{p.nombre}</div>
+                                  <div className="text-xs text-slate-500 truncate">SKU: {p.sku || p.id}</div>
+                                  <div className="mt-1 flex items-center gap-2 text-xs whitespace-nowrap">
+                                    <button className="text-rose-600 font-medium" onClick={() => { setEditData(p); setShowForm(true); }}>Editar</button>
+                                    <span className="text-slate-300">|</span>
+                                    <button className="text-slate-600 hover:text-slate-900" onClick={async () => { if (confirm("¿Eliminar producto?")) { await eliminarProducto(p.id); const prods = await obtenerProductos({ incluirSinStock: true }); setProductos(prods); } }}>Eliminar</button>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-slate-800 whitespace-nowrap">{fecha}</td>
+                            <td className="px-4 py-3 text-center">
+                              <label className="inline-flex items-center justify-center">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(p.destacado)}
+                                  className="h-5 w-5 accent-purple-600 cursor-pointer"
+                                  onChange={async (e) => {
+                                    const isChecked = e.target.checked;
+                                    setProductos((prev) =>
+                                      prev.map((item) =>
+                                        item.id === p.id ? { ...item, destacado: isChecked } : item
+                                      )
+                                    );
+                                    try {
+                                      await actualizarProducto(p.id, { destacado: isChecked });
+                                    } catch (error) {
+                                      console.error("Error actualizando destacado:", error);
+                                      setProductos((prev) =>
+                                        prev.map((item) =>
+                                          item.id === p.id ? { ...item, destacado: !isChecked } : item
+                                        )
+                                      );
+                                    }
+                                  }}
+                                  aria-label={`Marcar ${p.nombre || "producto"} como destacado`}
+                                />
+                              </label>
+                            </td>
+                            <td className="px-4 py-3 text-right font-bold text-amber-600 whitespace-nowrap">${Number(p.precio || 0).toFixed(2)}</td>
+                            <td className="px-6 py-3 text-right font-bold whitespace-nowrap">{stockTotal}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 )}
               </div>
             </div>
