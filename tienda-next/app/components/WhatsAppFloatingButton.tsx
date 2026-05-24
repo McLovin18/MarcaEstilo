@@ -73,31 +73,6 @@ const WhatsAppFloatingButton: React.FC = () => {
           }
         }
 
-        .wa-ring {
-          position: absolute;
-          inset: -4px;
-          border-radius: 50%;
-          border: 2px solid #25D366;
-          opacity: 0;
-          animation: wa-pulse 2.4s ease-out infinite;
-          pointer-events: none;
-        }
-
-        .wa-ring-2 {
-          position: absolute;
-          inset: -4px;
-          border-radius: 50%;
-          border: 2px solid #25D366;
-          opacity: 0;
-          animation: wa-pulse 2.4s ease-out infinite 0.85s;
-          pointer-events: none;
-        }
-
-        @keyframes wa-pulse {
-          0%   { inset: -3px; opacity: 0.65; }
-          100% { inset: -22px; opacity: 0; }
-        }
-
         .wa-tooltip {
           position: absolute;
           right: calc(100% + 12px);
@@ -144,9 +119,6 @@ const WhatsAppFloatingButton: React.FC = () => {
           <span className="wa-tooltip">Chatea con nosotros</span>
 
           <div className="wa-btn">
-            <div className="wa-ring" />
-            <div className="wa-ring-2" />
-
             <svg
               viewBox="0 0 32 32"
               xmlns="http://www.w3.org/2000/svg"
