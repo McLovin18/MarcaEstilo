@@ -26,19 +26,19 @@ const sourceSerif4 = Source_Serif_4({
 
 export const metadata: Metadata = {
   title: {
-    default: "Marca Estilo - Ropa Streetwear Exclusiva para Hombres",
+    default: "Marca Estilo - Camisetas Exclusivas para Hombre",
     template: "%s | Marca Estilo",
   },
   description:
-    "Tienda de streetwear exclusivo para hombres. Piezas limitadas que se agotan rápido. Envíos a todo Ecuador. 💎 MARCA TU ESTILO",
+    "Tienda online de camisetas para hombre. Diseños exclusivos, drops limitados y envíos a todo Ecuador.",
   keywords: [
-    "ropa hombres",
-    "streetwear",
+    "camisetas hombre",
+    "camisetas Ecuador",
+    "camisetas exclusivas",
     "moda masculina",
-    "ropa exclusiva",
-    "piezas limitadas",
+    "ropa urbana",
     "Ecuador",
-    "tienda online ropa",
+    "Marca Estilo",
   ],
   creator: "Marca Estilo",
   metadataBase: new URL(SITE_URL),
@@ -55,9 +55,9 @@ export const metadata: Metadata = {
     locale: "es_ES",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: "TecnoThings - PC Gamer y Componentes",
+    title: "Marca Estilo - Camisetas Exclusivas para Hombre",
     description:
-      "Compra PC Gamer y componentes gaming de calidad. Garantía, envíos rápidos a Ecuador.",
+      "Compra camisetas exclusivas para hombre. Moda urbana, drops limitados y envíos a todo Ecuador.",
     images: [
       {
         url: `${SITE_URL}/og-image.jpg`,
@@ -72,11 +72,9 @@ export const metadata: Metadata = {
   // Twitter Card
   twitter: {
     card: "summary_large_image",
-    site: "@marcaestilo",
-    creator: "@marcaestilo",
-    title: "Marca Estilo - Ropa Streetwear para Hombres",
+    title: "Marca Estilo - Camisetas Exclusivas para Hombre",
     description:
-      "Compra PC Gamer y componentes gaming. Envíos a todo Ecuador.",
+      "Compra camisetas exclusivas para hombre. Envíos a todo Ecuador.",
     images: [`${SITE_URL}/twitter-image.jpg`],
   },
 

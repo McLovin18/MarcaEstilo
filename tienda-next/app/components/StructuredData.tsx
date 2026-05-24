@@ -4,17 +4,18 @@
  */
 
 export function StructuredData() {
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://marcaestilo.com";
+
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "TecnoThings",
-    url: "https://tecnothings.ec",
-    logo: "https://tecnothings.ec/logo.png",
-    description: "Tienda online especializada en PC Gamer y componentes",
+    name: "Marca Estilo",
+    url: SITE_URL,
+    logo: `${SITE_URL}/logo.png`,
+    description: "Tienda online de camisetas para hombre en Ecuador",
     sameAs: [
-      "https://www.facebook.com/tecnothings",
-      "https://www.instagram.com/tecnothings",
-      "https://www.youtube.com/tecnothings",
+      "https://www.instagram.com/marcaestilo593/",
+      "https://www.tiktok.com/@marcaestilomen",
     ],
     address: {
       "@type": "PostalAddress",
@@ -27,20 +28,19 @@ export function StructuredData() {
       "@type": "ContactPoint",
       contactType: "Customer Service",
       telephone: "+593-XXX-XXXX", // Actualiza
-      email: "soporte@tecnothings.ec",
     },
   };
 
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "TecnoThings",
-    url: "https://tecnothings.ec",
+    name: "Marca Estilo",
+    url: SITE_URL,
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: "https://tecnothings.ec/products-by-category?search={search_term_string}",
+        urlTemplate: `${SITE_URL}/products-by-category?search={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     },
@@ -48,11 +48,11 @@ export function StructuredData() {
 
   const localBusinessSchema = {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: "TecnoThings",
-    image: "https://tecnothings.ec/logo.png",
+    "@type": "ClothingStore",
+    name: "Marca Estilo",
+    image: `${SITE_URL}/logo.png`,
     description:
-      "Tienda online de PC Gamer y componentes gaming con envíos a Ecuador",
+      "Tienda online de camisetas para hombre con envíos a todo Ecuador",
     address: {
       "@type": "PostalAddress",
       streetAddress: "Tu dirección aquí",
@@ -62,7 +62,6 @@ export function StructuredData() {
       addressCountry: "EC",
     },
     telephone: "+593-XXX-XXXX",
-    email: "soporte@tecnothings.ec",
     openingHoursSpecification: {
       "@type": "OpeningHoursSpecification",
       dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],

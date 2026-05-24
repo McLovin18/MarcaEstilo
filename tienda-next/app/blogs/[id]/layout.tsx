@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: `${blog.title} | Marca Estilo`,
       description: description,
-      keywords: blog.tags || ["tecnología", "PC Gamer"],
+      keywords: blog.tags || ["camisetas", "moda masculina", "Marca Estilo"],
       openGraph: {
         type: "article",
         url: `${SITE_URL}/blogs/${id}`,

@@ -18,8 +18,8 @@ import {
 // Estructura por defecto de la landing page
 export const DEFAULT_LANDING = {
   hero: {
-    title: "Bienvenido a TecnoThings",
-    subtitle: "Tecnología de calidad para tu negocio",
+    title: "Bienvenido a Marca Estilo",
+    subtitle: "Camisetas exclusivas para marcar tu estilo",
     image: null,
     buttonText: "Explorar productos",
     buttonLink: "/tienda"
@@ -74,7 +74,7 @@ const getLandingByVersion = async (version: "draft" | "published") => {
     let hero: any = base[heroKey] || base.hero || null;
 
     // En el editor (draft) no queremos que aparezca el hero
-    // por defecto "Bienvenido a TecnoThings" como si fuera
+    // por defecto "Bienvenido a Marca Estilo" como si fuera
     // una sección creada por el usuario. Si no hay heroDraft
     // y el hero almacenado coincide con el DEFAULT_LANDING.hero,
     // devolvemos null para que el preview no lo pinte.

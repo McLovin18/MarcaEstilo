@@ -11,7 +11,7 @@ interface Step {
 // Define los pasos aquí o recíbelos por props si lo prefieres
 const steps: Step[] = [
 	{
-		title: "¡Bienvenido a TecnoThings!",
+		title: "¡Bienvenido a Marca Estilo!",
 		description: "Aquí podrás gestionar tus pedidos, productos y mucho más. Te mostraremos las funciones principales.",
 	},
 	{
