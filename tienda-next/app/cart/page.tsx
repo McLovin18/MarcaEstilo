@@ -181,6 +181,7 @@ export default function CartPage() {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<"cart" | "proforma">("cart");
   const [ordenCreada, setOrdenCreada] = useState<any>(null);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const router = useRouter();
   const { isLogged } = useUser();
   const [atributos, setAtributos] = useState<any[]>([]);
@@ -300,6 +301,12 @@ export default function CartPage() {
     const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "0962873167";
     const message = await generateWhatsAppMessage();
     window.open(`https://wa.me/${whatsappNumber}?text=${message}`, "_blank");
+  };
+
+  const handlePagoSimulado = () => {
+    if (!privacyAccepted) return;
+    setError("");
+    window.alert("Pago simulado activado. Aquí conectaremos la pasarela real más adelante.");
   };
 
   const handleCantidad = (id: string, cantidad: number) => {
@@ -531,9 +538,31 @@ export default function CartPage() {
                     </p>
                   </div>
 
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 text-xs text-blue-800 dark:text-blue-300">
-                    <p className="font-semibold mb-1">ℹ️ Proceso simple:</p>
-                    <p>Click en el botón → WhatsApp abre → Confirmamos tu pedido y disponibilidad</p>
+                  <div>
+                    <button
+                      onClick={handlePagoSimulado}
+                      disabled={!privacyAccepted}
+                      className={`w-full flex items-center justify-center gap-2 py-3.5 px-6 font-bold text-sm rounded-xl transition-colors shadow-md border ${
+                        privacyAccepted
+                          ? "bg-[#E0A11A] border-[#c88c0a] text-white hover:bg-[#c88c0a] hover:shadow-lg"
+                          : "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
+                      }`}
+                      title="Pago simulado"
+                    >
+                      Pagar ahora
+                    </button>
+
+                    <label className="mt-3 flex items-start gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={privacyAccepted}
+                        onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#E0A11A] focus:ring-[#E0A11A]"
+                      />
+                      <span>
+                        Confirmo que he leído y acepto la <a href="/politicas/privacidad" className="underline text-slate-700 dark:text-slate-200">Política de Privacidad</a>.
+                      </span>
+                    </label>
                   </div>
                 </div>
               </div>

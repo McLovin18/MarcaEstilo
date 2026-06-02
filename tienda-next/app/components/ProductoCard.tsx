@@ -9,6 +9,282 @@ import { useTracking } from "../lib/useAnalytics";
 import { useToast } from "../context/ToastContext";
 import { getCatalogPricing } from "../lib/pricing";
 
+const cardStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Barlow:wght@400;500;600;700&display=swap');
+
+  @keyframes pc-fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── wrapper ── */
+  .pc-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+  }
+
+  /* ── card ── */
+  .pc-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background: #ffff;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+
+  .pc-card:hover {
+    border-color: #d4af37;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+  }
+
+  /* ── imagen ── */
+  .pc-img-wrap {
+    position: relative;
+    width: 100%;
+    /* aspect-ratio cuadrado en mobile, más alto en desktop */
+    aspect-ratio: 1 / 1.05;
+    background: #fffff;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  @media (min-width: 640px) {
+    .pc-img-wrap {
+      aspect-ratio: 3 / 3.8;
+    }
+  }
+
+  .pc-img-wrap img {
+    object-fit: contain !important;
+    padding: 8% !important;
+    transition: transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94) !important;
+  }
+
+  .pc-card:hover .pc-img-wrap img {
+    transform: scale(1.06) !important;
+  }
+
+  /* ── badge descuento ── */
+  .pc-badge-discount {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    background: #e63946;
+    color: #fff;
+    font-family: 'Barlow', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+
+  /* ── sin stock overlay ── */
+  .pc-no-stock {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    background: rgba(245,245,243,0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pc-no-stock span {
+    font-family: 'Barlow', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #888;
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 5px 12px;
+    border-radius: 2px;
+  }
+
+  /* ── fav btn ── */
+  .pc-fav {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 20;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.2s, transform 0.2s, background 0.2s;
+    backdrop-filter: blur(4px);
+  }
+
+  .pc-fav.is-fav {
+    opacity: 1;
+    transform: scale(1);
+    background: #e63946;
+    color: #fff;
+  }
+
+  .pc-card:hover .pc-fav {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* ── barra info inferior — estilo imagen: negro total ── */
+  .pc-info {
+    background: #0a0a0a;
+    color: #fff;
+    padding: 10px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+  }
+
+  @media (min-width: 640px) {
+    .pc-info {
+      padding: 14px 16px 16px;
+    }
+  }
+
+  /* nombre — cursiva serif como en la imagen */
+  .pc-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1.25;
+    color: #ffffff;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+    text-decoration-color: rgba(255,255,255,0.35);
+  }
+
+  @media (min-width: 640px) {
+    .pc-name {
+      font-size: 15px;
+    }
+  }
+
+  /* precio */
+  .pc-prices {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 2px;
+    flex-wrap: wrap;
+  }
+
+  .pc-price-final {
+    font-family: 'Barlow', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: #ffffff;
+    letter-spacing: 0.02em;
+  }
+
+  @media (min-width: 640px) {
+    .pc-price-final {
+      font-size: 15px;
+    }
+  }
+
+  .pc-price-old {
+    font-family: 'Barlow', sans-serif;
+    font-weight: 400;
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    text-decoration: line-through;
+  }
+
+  .pc-price-currency {
+    font-size: 0.8em;
+    font-weight: 400;
+    opacity: 0.6;
+  }
+
+  /* ── botones acción — mini row en fondo negro ── */
+  .pc-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .pc-btn-cart {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 30px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: #fff;
+    font-family: 'Barlow', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .pc-btn-cart:hover:not(:disabled) {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.5);
+  }
+
+  .pc-btn-cart:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .pc-btn-cart.in-cart {
+    border-color: #d4af37;
+    color: #d4af37;
+  }
+
+  .pc-btn-eye {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: #fff;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .pc-btn-eye:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.5);
+  }
+`;
+
 function ProductoCard({
   producto,
   onClick,
@@ -18,7 +294,7 @@ function ProductoCard({
   onEye,
   showFav = false,
   isCompact = true,
-  index = 0 // ✅ nuevo
+  index = 0,
 }: {
   producto?: any;
   onClick?: any;
@@ -30,10 +306,7 @@ function ProductoCard({
   index?: number;
   isCompact?: boolean;
 } = {}): JSX.Element | null {
-  // Validar que producto existe y tiene id
-  if (!producto || !producto.id) {
-    return null;
-  }
+  if (!producto || !producto.id) return null;
 
   const {
     isLogged,
@@ -51,33 +324,19 @@ function ProductoCard({
 
   const isFav = favoritos?.some((p) => p.id === producto.id);
   const inCart = carrito?.some((p) => p.id === producto.id);
-  
-  // Manejo de stock y variaciones
-  const hasVariations = producto?.hasVariations || producto?.isCamiseta || false;
+
+  const hasVariations =
+    producto?.hasVariations || producto?.isCamiseta || false;
   const variationAttributeIds = producto?.variationAttributeIds || [];
   const stockVariants = producto?.stockVariants || [];
-  
-  const totalStock = hasVariations 
-    ? (stockVariants.reduce((sum: number, v: any) => sum + (v?.cantidad || 0), 0) || 0)
-    : (producto?.stock || 0);
+
+  const totalStock = hasVariations
+    ? stockVariants.reduce((sum: number, v: any) => sum + (v?.cantidad || 0), 0) || 0
+    : producto?.stock || 0;
   const sinStock = totalStock === 0;
 
-  const { basePrice, discount, hasDiscount, fakeOldPrice, finalPrice } = getCatalogPricing(producto);
-
-
-  const style = `
-    @keyframes fadeSlideIn {
-      from {
-        opacity: 0;
-        transform: translateY(16px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-  `;
-
+  const { basePrice, discount, hasDiscount, fakeOldPrice, finalPrice } =
+    getCatalogPricing(producto);
 
   const getDetailUrl = () => {
     let detailUrl = `/product-detail?id=${producto.id}`;
@@ -93,10 +352,12 @@ function ProductoCard({
     return detailUrl;
   };
 
+  const detailUrl = getDetailUrl();
+
   const goToDetail = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     trackProductClick().catch(console.error);
-    router.push(getDetailUrl());
+    router.push(detailUrl);
   };
 
   const handleFav = (e: React.MouseEvent) => {
@@ -109,26 +370,24 @@ function ProductoCard({
     e.preventDefault();
     e.stopPropagation();
     if (sinStock) return;
-    
-    // Si tiene variaciones dinámicas, redirigir a detalle para seleccionar
+
     if (hasVariations && variationAttributeIds.length > 0) {
       showToast("Selecciona las opciones en el detalle del producto", "info");
       router.push(detailUrl);
       return;
     }
-    
-    // Si solo tiene stock sin variaciones
-    if (onAddCart) { 
+
+    if (onAddCart) {
       onAddCart({
         ...producto,
         precioBase: basePrice,
         precioUnitario: finalPrice,
         descuento: hasDiscount ? discount : 0,
-      }); 
+      });
       showToast("Añadido al carrito", "success");
-      return; 
+      return;
     }
-    
+
     if (inCart) {
       removeCarrito(producto.id);
       showToast("Eliminado del carrito", "info");
@@ -144,224 +403,123 @@ function ProductoCard({
     }
   };
 
-  const detailUrl = getDetailUrl();
-
   return (
     <>
-    <style>{style}</style>
-    <Link href={detailUrl} className={`block h-full w-full`}   style={{opacity: 0, animation: "fadeSlideIn 0.4s ease forwards", animationDelay: `${index * 80}ms`, // ✅ 80ms entre cada card
-  }}>
-      <div
-        onClick={onClick || goToDetail}
-        className="
-          group cursor-pointer
-          bg-white dark:bg-white/4
-          border border-slate-100 dark:border-white/10
-           overflow-hidden
-          shadow-sm
-          hover:shadow-xl dark:hover:shadow-purple-950/60
-          hover:border-[#E0A11A] dark:hover:border-[#E0A11A]
-          transition-all duration-300
-          md:h-full
-
-          /* ── VERTICAL en todas las vistas ── */
-          flex flex-col
-        "
-      >
-      <div
-        className="
-          relative shrink-0 overflow-hidden
-          bg-white dark:bg-white/3
-
-          /* ── VERTICAL: imagen cuadrada/rectangular arriba ── */
-          w-full h-32 sm:h-48
-        "
-      >
-      <Image
-        src={producto.imagenes?.[0] || "/no-image.png"}
-        alt={producto.nombre}
-        fill
-        sizes="(max-width: 640px) 140px, (max-width: 768px) 100vw, 400px"
-        className="
-          object-contain
-          p-3 sm:p-5
-          group-hover:scale-105
-          transition-transform duration-500
-        "
+      <style>{cardStyles}</style>
+      <Link
+        href={detailUrl}
+        className="pc-link"
         style={{
           opacity: 0,
-          transition: "opacity 0.5s ease, transform 0.5s", // ✅ combina con el scale del hover
+          animation: "pc-fadeIn 0.4s ease forwards",
+          animationDelay: `${index * 80}ms`,
         }}
-        onLoad={(e) => {
-          (e.currentTarget as HTMLImageElement).style.opacity = "1";
-        }}
-        priority={false}
-        loading="lazy"
-      />
-        {/* Badge descuento */}
-        {hasDiscount && (
-          <span className="
-            absolute top-1 left-1 z-10
-            bg-red-500 text-white
-            text-[8px] sm:text-xs font-bold
-            px-1 sm:px-2 py-0.5 sm:py-1
-            rounded-full shadow
-          ">
-            -{discount}%
-          </span>
-        )}
+      >
+        <div className="pc-card" onClick={onClick || goToDetail}>
+          {/* ── IMAGEN ── */}
+          <div className="pc-img-wrap">
+            <Image
+              src={producto.imagenes?.[0] || "/no-image.png"}
+              alt={producto.nombre}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-contain"
+              style={{
+                opacity: 0,
+                transition: "opacity 0.4s ease",
+              }}
+              onLoad={(e) => {
+                (e.currentTarget as HTMLImageElement).style.opacity = "1";
+              }}
+              priority={index < 4}
+              loading={index < 4 ? "eager" : "lazy"}
+            />
 
-        {/* Overlay sin stock */}
-        {sinStock && (
-          <div className="absolute inset-0 bg-white/60 dark:bg-black/50 flex items-center justify-center z-10">
-            <span className="
-              text-[8px] sm:text-xs font-bold
-              text-slate-500 dark:text-white/60
-              bg-white dark:bg-slate-900
-              px-1.5 py-0.5 rounded-full
-              border border-slate-200 dark:border-white/10
-            ">
-              Sin stock
-            </span>
+            {/* Badge descuento */}
+            {hasDiscount && (
+              <div className="pc-badge-discount">-{discount}%</div>
+            )}
+
+            {/* Sin stock */}
+            {sinStock && (
+              <div className="pc-no-stock">
+                <span>Sin stock</span>
+              </div>
+            )}
+
+            {/* Favorito */}
+            {isLogged && (
+              <button
+                onClick={handleFav}
+                className={`pc-fav${isFav ? " is-fav" : ""}`}
+                title={isFav ? "Quitar de favoritos" : "Añadir a favoritos"}
+              >
+                <span className="material-icons-round" style={{ fontSize: 15 }}>
+                  {isFav ? "favorite" : "favorite_border"}
+                </span>
+              </button>
+            )}
           </div>
-        )}
 
-        {/* Botón favorito — solo si el usuario está logueado */}
-        {isLogged && (
-          <button
-            onClick={handleFav}
-            className={`
-              absolute top-1 right-1 z-20
-              w-6 h-6 sm:w-8 sm:h-8 rounded-full
-              flex items-center justify-center
-              transition-all duration-200 shadow-sm
-              ${isFav
-                ? "bg-pink-500 text-white scale-100"
-                : "bg-white/80 dark:bg-slate-900/80 text-slate-400 dark:text-white/40 opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100"
-              }
-            `}
-            title={isFav ? "Quitar de favoritos" : "Añadir a favoritos"}
-          >
-            <span className="material-icons-round text-[12px] sm:text-[16px]">
-              {isFav ? "favorite" : "favorite_border"}
-            </span>
-          </button>
-        )}
-      </div>
+          {/* ── INFO BARRA NEGRA ── */}
+          <div className="pc-info">
+            <p className="pc-name">{producto.nombre}</p>
 
-      {/* ══ INFO ════════════════════════════════════════════════ */}
-      <div className="
-        flex flex-col flex-1 min-w-0
-        p-1.5 sm:p-4
-        md:justify-between
-        md:h-full
-      ">
-        {/* Nombre */}
-        <p className="
-          font-semibold leading-tight
-          text-slate-800 dark:text-white
-          text-xs sm:text-sm
-          line-clamp-2
-        "
-        style={{ minHeight: "2.5rem" }} // ✅ siempre 2 líneas reservadas
-        >
-          {producto.nombre}
-        </p>
+            <div className="pc-prices">
+              {hasDiscount && (
+                <span className="pc-price-old">
+                  ${fakeOldPrice.toFixed(2)}
+                </span>
+              )}
+              <span className="pc-price-final">
+                ${finalPrice.toFixed(2)}{" "}
+                <span className="pc-price-currency">USD</span>
+              </span>
+            </div>
 
-        {/* Descripción corta */}
-        {producto.descripcion && (
-          <p className="mt-0.5 text-xs text-slate-400 dark:text-white/35 line-clamp-2 sm:hidden"
-            style={{ minHeight: "2rem" }} // ✅ siempre 2 líneas reservadas
-          >
-            {producto.descripcion}
-          </p>
-        )}
-
-        {/* Precios */}
-        <div className="mt-1 md:mt-auto md:mb-3 flex items-baseline gap-1.5 flex-wrap">
-          {hasDiscount && (
-            <span className="text-[10px] sm:text-sm text-slate-500 dark:text-white/30 line-through">
-              ${fakeOldPrice.toFixed(2)}
-            </span>
-          )}
-          <span className="
-            text-base sm:text-lg font-extrabold
-              text-black dark:text-white
-          ">
-            ${finalPrice.toFixed(2)}
-          </span>
+            {(showCart || showEye) && (
+              <div className="pc-actions">
+                {showCart && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!sinStock) handleCart(e);
+                    }}
+                    disabled={sinStock}
+                    className={`pc-btn-cart${inCart ? " in-cart" : ""}`}
+                  >
+                    <span className="material-icons-round" style={{ fontSize: 13 }}>
+                      {inCart ? "remove_shopping_cart" : "add_shopping_cart"}
+                    </span>
+                    {inCart ? "Quitar" : "Añadir"}
+                  </button>
+                )}
+                {showEye && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onEye ? onEye(producto) : goToDetail(e);
+                    }}
+                    className="pc-btn-eye"
+                    title="Ver detalle"
+                  >
+                    <span className="material-icons-round" style={{ fontSize: 15 }}>
+                      visibility
+                    </span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-
-        {/* Acciones */}
-        {(showCart || showEye) && (
-          <div className="mt-1.5 sm:mt-3 flex gap-1.5 sm:gap-2">
-            {showCart &&(
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-
-                  if (sinStock) return;
-
-                  handleCart(e);
-                }}
-                disabled={sinStock}
-                className={`
-                  flex-1 flex items-center justify-center gap-1
-                  py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold
-                  border border-slate-300 bg-white text-slate-900
-                  shadow-sm transition-all duration-200
-                  ${
-                    sinStock
-                      ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-50 shadow-none"
-                      : inCart
-                        ? "border-black/40 bg-white text-black hover:border-black/60 hover:shadow-md active:scale-95"
-                        : "hover:border-black/70 hover:text-black hover:shadow-md active:scale-95"
-                  }
-                `}
-              >
-
-                <span className="material-icons-round text-[14px] sm:text-[16px]">
-                  {inCart ? "remove_shopping_cart" : "add_shopping_cart"}
-                </span>
-                <span className="hidden xs:inline sm:hidden lg:inline">
-                  {inCart ? "Quitar" : "Añadir"}
-                </span>
-              </button>
-            )}
-
-            {showEye && (
-              <button
-                onClick={(e) => { 
-                  e.preventDefault();
-                  e.stopPropagation(); 
-                  onEye ? onEye(producto) : goToDetail(e); 
-                }}
-                className="
-                  flex items-center justify-center
-                  w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl shrink-0
-                  border border-slate-300 bg-white text-slate-700
-                  hover:border-black/40 hover:text-black hover:shadow-sm
-                  transition-all duration-200
-                "
-                title="Ver detalle"
-              >
-                <span className="material-icons-round text-[14px] sm:text-[18px]">visibility</span>
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-      </div>
-    </Link>
+      </Link>
     </>
   );
 }
 
-// Memoizar para evitar re-renders innecesarios cuando aparece en listas
 export default React.memo(ProductoCard, (prevProps, nextProps) => {
-  // El componente se re-renderiza si el ID del producto cambió
-  // O si las props de visibilidad cambiaron
   return (
     prevProps.producto.id === nextProps.producto.id &&
     prevProps.showCart === nextProps.showCart &&
@@ -369,4 +527,3 @@ export default React.memo(ProductoCard, (prevProps, nextProps) => {
     prevProps.showFav === nextProps.showFav
   );
 });
-

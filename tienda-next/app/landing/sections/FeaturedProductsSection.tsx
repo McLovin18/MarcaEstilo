@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React from "react";
 import Link from "next/link";
 import type {
   LandingSectionStyles,
@@ -21,115 +21,15 @@ export default function FeaturedProductsSection({
   products = [],
   styles,
   fieldStyles,
-  device,
 }: FeaturedProductsSectionProps) {
   const paddingTop = styles?.paddingTop || (typeof window !== "undefined" && window.innerWidth < 768 ? "0.5rem" : "2rem");
   const paddingBottom = styles?.paddingBottom || (typeof window !== "undefined" && window.innerWidth < 768 ? "0.5rem" : "0.5rem");
 
-  // ── Todos los hooks ANTES de cualquier return condicional ──
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const [itemsPerView, setItemsPerView] = useState(5);
-  const [animDir, setAnimDir] = useState<"left" | "right">("right");
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (device === "mobile") {
-      setItemsPerView(2);
-      return;
-    }
-    const updateItemsPerView = () => {
-      if (typeof window === "undefined") return;
-      const width = window.innerWidth;
-      if (width < 640) setItemsPerView(2);
-      else if (width < 1024) setItemsPerView(3);
-      else setItemsPerView(5);
-    };
-    updateItemsPerView();
-    window.addEventListener("resize", updateItemsPerView);
-    return () => window.removeEventListener("resize", updateItemsPerView);
-  }, [device]);
-
-  // IntersectionObserver: track if section is visible in viewport so autoplay restarts when user returns
-  useEffect(() => {
-    if (typeof window === "undefined" || !containerRef.current) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        const e = entries[0];
-        setIsVisible(e.isIntersecting);
-      },
-      { threshold: 0.25 }
-    );
-    obs.observe(containerRef.current);
-    return () => obs.disconnect();
-  }, [containerRef.current]);
-
-  const effectiveItemsPerView = Math.min(itemsPerView, products.length);
-  const hasCarousel = products.length > effectiveItemsPerView;
-
-  useEffect(() => {
-    // When admin changes featured order, always start showing from the first item.
-    setCurrentIndex(0);
-  }, [products.map((prod: any) => String(prod?.id || "")).join("|")]);
-
-  useEffect(() => {
-    if (!hasCarousel || isHovered || !isVisible) return;
-    const id = setInterval(() => {
-      setAnimDir("right");
-      setIsAnimating(true);
-      setCurrentIndex((prev) => (prev + 1) % products.length);
-      setTimeout(() => setIsAnimating(false), 300);
-    }, 4000);
-    return () => clearInterval(id);
-  }, [hasCarousel, isHovered, products.length]);
-
   // ── Return condicional DESPUÉS de todos los hooks ──
   if (!products.length) return null;
 
-  const getVisibleProducts = () => {
-    const count = hasCarousel ? effectiveItemsPerView : products.length;
-    const slice: any[] = [];
-    for (let i = 0; i < count; i++) {
-      const idx = (currentIndex + i) % products.length;
-      slice.push(products[idx]);
-    }
-    return slice;
-  };
-
-  const visibleProducts = getVisibleProducts();
-  const isSingleVisible = effectiveItemsPerView === 1;
-
-  const handlePrev = () => {
-    if (!hasCarousel || isAnimating) return;
-    setAnimDir("left");
-    setIsAnimating(true);
-    setCurrentIndex((prev) => (prev - 1 + products.length) % products.length);
-    setTimeout(() => setIsAnimating(false), 300);
-  };
-
-  const handleNext = () => {
-    if (!hasCarousel || isAnimating) return;
-    setAnimDir("right");
-    setIsAnimating(true);
-    setCurrentIndex((prev) => (prev + 1) % products.length);
-    setTimeout(() => setIsAnimating(false), 300);
-  };
-
-  // Forzar 4 columnas en desktop para que solo se vean 4 productos por vista
-  const gridCols =
-    effectiveItemsPerView === 1
-      ? "grid-cols-1"
-      : effectiveItemsPerView === 2
-      ? "grid-cols-2"
-      : effectiveItemsPerView === 3
-      ? "grid-cols-3"
-      : "grid-cols-4";
-
   return (
     <section
-      ref={containerRef}
       style={{ paddingTop, paddingBottom }}
       className="w-full max-w-full px-2 md:px-2 flex flex-col items-center m-0 overflow-x-hidden"
     >
@@ -143,102 +43,31 @@ export default function FeaturedProductsSection({
         </h2>
       )}
 
-      {/* Wrapper móvil con flechas ARRIBA */}
-      <div className="w-full">
-        {/* Contenedor carrusel - Responsive con flechas laterales centradas */}
-        <div
-          className="w-full max-w-7xl mx-auto relative px-2 sm:px-6 md:px-12"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          {/* Flecha izquierda - Móvil y Desktop */}
-          {hasCarousel && (
-            <button
-              type="button"
-              onClick={handlePrev}
-              aria-label="Anterior"
-              className="absolute left-0 md:left-2 top-[35%] -translate-y-1/2 z-20 h-9 w-9 md:h-10 md:w-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 shadow-md hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:border-[#E0A11A] hover:scale-105 transition-all"
-            >
-              <span className="material-icons-round text-[18px] md:text-[20px]">chevron_left</span>
-            </button>
-          )}
-
-          {/* Flecha derecha - Móvil y Desktop */}
-          {hasCarousel && (
-            <button
-              type="button"
-              onClick={handleNext}
-              aria-label="Siguiente"
-              className="absolute right-0 md:right-2 top-[35%] -translate-y-1/2 z-20 h-9 w-9 md:h-10 md:w-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 shadow-md hover:bg-amber-50 dark:hover:bg-amber-900/40 hover:border-[#E0A11A] hover:scale-105 transition-all"
-            >
-              <span className="material-icons-round text-[18px] md:text-[20px]">chevron_right</span>
-            </button>
-          )}
-
-          {/* Grid de productos - Full width en móvil */}
-          <div
-            className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-            style={{
-              minWidth: 0,
-              animation: isAnimating
-                ? `slideIn${animDir === "right" ? "Right" : "Left"} 0.28s ease`
-                : undefined,
-            }}
-          >
-            {visibleProducts
-              .filter((prod: any) => prod && prod.id)
-              .map((prod: any, idx: number) => (
+      <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 md:px-12">
+        <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {products
+            .filter((prod: any) => prod && prod.id)
+            .map((prod: any, idx: number) => (
               <div
-                key={`${prod.id}-${currentIndex}-${idx}`}
+                key={prod.id}
                 className="transition-all duration-300 flex flex-col items-stretch justify-stretch h-full w-full"
                 style={{ minWidth: 0 }}
               >
-                <ProductoCard producto={prod} />
+                <ProductoCard producto={prod} index={idx} />
               </div>
             ))}
-          </div>
+        </div>
 
-          {/* Dots indicadores */}
-          {hasCarousel && products.length > 1 && (
-            <div className="flex justify-center gap-1.5 mt-6">
-              {Array.from({ length: products.length }).map((_, i) => (
-                <button
-                  key={i}
-                  aria-label={`Ir a producto ${i + 1}`}
-                  onClick={() => setCurrentIndex(i)}
-                  className={`rounded-full transition-all duration-300 ${
-                    i === currentIndex
-                      ? "w-6 h-2 bg-purple-600 dark:bg-purple-400"
-                      : "w-2 h-2 bg-white dark:bg-slate-600 hover:bg-purple-300 dark:hover:bg-purple-600"
-                  }`}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Botón Ver todos los productos */}
-          <div className="flex justify-center mt-7 md:mt-8 w-full">
-            <Link
-              href="/productos"
-              className="mt-2 inline-flex items-center gap-2 bg-white border border-slate-300 text-slate-900 hover:border-black/60 hover:shadow-md font-semibold px-6 py-2.5 rounded-xl transition-colors shadow"
-            >
-              Ver todos los productos
-            </Link>
-          </div>
+        {/* Botón Ver todos los productos */}
+        <div className="flex justify-center mt-7 md:mt-8 w-full">
+          <Link
+            href="/productos"
+            className="mt-2 inline-flex items-center gap-2 bg-white border border-slate-300 text-slate-900 hover:border-black/60 hover:shadow-md font-semibold px-6 py-2.5 rounded-xl transition-colors shadow"
+          >
+            Ver todos los productos
+          </Link>
         </div>
       </div>
-
-      {/* Keyframes for slide animation */}
-      <style>{`
-        @keyframes slideInRight {
-          from { opacity: 0; transform: translateX(24px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes slideInLeft {
-          from { opacity: 0; transform: translateX(-24px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-      `}</style>
     </section>
   );
 }
