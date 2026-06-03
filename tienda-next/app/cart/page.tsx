@@ -560,7 +560,7 @@ export default function CartPage() {
                         className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#E0A11A] focus:ring-[#E0A11A]"
                       />
                       <span>
-                        Confirmo que he leído y acepto la <a href="/politicas/privacidad" className="underline text-slate-700 dark:text-slate-200">Política de Privacidad</a>.
+                        Confirmo que he leído y acepto la <a href="/politicas/privacidad" className="underline text-slate-700 dark:text-slate-200">Política de Privacidad</a> y haber leído<a href="/politicas/terminos-y-condiciones" className="underline text-slate-700 dark:text-slate-200">términos y condiciones</a>.
                       </span>
                     </label>
                   </div>

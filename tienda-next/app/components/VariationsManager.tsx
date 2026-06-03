@@ -32,44 +32,35 @@ export default function VariationsManager({
 }: VariationsManagerProps) {
   // Calcular opciones disponibles para cada atributo
   const availableOptions = useMemo(() => {
-    const result: Record<string, Set<string>> = {};
+    const formatted: Record<string, string[]> = {};
 
-    // Inicializar con todas las opciones para cada atributo
-    variationAttributeIds.forEach((attrId) => {
-      result[attrId] = new Set<string>();
-    });
+    variationAttributeIds.forEach((targetAttrId) => {
+      const values = new Set<string>();
 
-    // Llenar opciones basadas en variantes compatibles y con stock disponible
-    stockVariants.forEach((variant) => {
-      // Solo considerar variantes con stock disponible
-      if (variant.cantidad <= 0) {
-        return;
-      }
+      stockVariants.forEach((variant) => {
+        if (variant.cantidad <= 0) {
+          return;
+        }
 
-      const attrs = variant.attributes || {};
-      let isCompatible = true;
+        const attrs = variant.attributes || {};
+        const isCompatibleWithOtherSelections = variationAttributeIds.every((attrId) => {
+          if (attrId === targetAttrId) {
+            return true;
+          }
 
-      // Verificar si esta variante es compatible con las selecciones actuales
-      variationAttributeIds.forEach((attrId) => {
-        if (selectedVariations[attrId] && attrs[attrId] !== selectedVariations[attrId]) {
-          isCompatible = false;
+          if (!selectedVariations[attrId]) {
+            return true;
+          }
+
+          return attrs[attrId] === selectedVariations[attrId];
+        });
+
+        if (isCompatibleWithOtherSelections && attrs[targetAttrId]) {
+          values.add(attrs[targetAttrId]);
         }
       });
 
-      if (isCompatible) {
-        // Agregar opciones de esta variante
-        variationAttributeIds.forEach((attrId) => {
-          if (attrs[attrId]) {
-            result[attrId].add(attrs[attrId]);
-          }
-        });
-      }
-    });
-
-    // Convertir a arrays y ordenar
-    const formatted: Record<string, string[]> = {};
-    Object.entries(result).forEach(([attrId, values]) => {
-      formatted[attrId] = Array.from(values).sort();
+      formatted[targetAttrId] = Array.from(values).sort();
     });
 
     return formatted;
@@ -87,14 +78,14 @@ export default function VariationsManager({
     }
 
     // Encontrar la variante que coincida
-    const matchingVariant = stockVariants.find((variant) => {
+    const matchingVariants = stockVariants.filter((variant) => {
       const attrs = variant.attributes || {};
       return variationAttributeIds.every(
         (attrId) => attrs[attrId] === selectedVariations[attrId]
       );
     });
 
-    return matchingVariant?.cantidad || 0;
+    return matchingVariants.reduce((sum, variant) => sum + (variant.cantidad || 0), 0);
   }, [stockVariants, variationAttributeIds, selectedVariations]);
 
   // Notificar cambio de stock

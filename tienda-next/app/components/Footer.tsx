@@ -54,9 +54,13 @@ const Footer: React.FC = () => {
               </ul>
             </div>
 
-            <div className="w-full flex justify-center">
+            <div className="w-full flex flex-col text-center justify-center">
               <Link href="/politicas/privacidad" className={styles.ftDevLink} onClick={() => trackLinkClick().catch(console.error)}>
                 Política de privacidad
+
+              </Link>
+              <Link href="/politicas/terminos-y-condiciones" className={styles.ftDevLink} onClick={() => trackLinkClick().catch(console.error)}>
+                Términos y condiciones
               </Link>
             </div>
 

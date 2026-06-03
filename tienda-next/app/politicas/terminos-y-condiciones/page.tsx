@@ -1,41 +1,71 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 const sections = [
   {
     number: "01",
-    title: "Uso Aceptable",
-    body: "El sitio web de MARCA ESTILO debe ser utilizado de manera legal, ética y responsable. Queda estrictamente prohibido el uso del mismo para actividades ilícitas, fraudulentas o que puedan resultar perjudiciales para terceros o para la empresa.",
+    title: "Datos de la Empresa",
+    body: "Razón social: MarcaEstilo, Tienda de ropa para hombre. Domicilio: Guayaquil, Ecuador. Correo: marcaestilo593@gmail.com — WhatsApp: +593 99 936 9105. Horario de atención: Lunes a Viernes de 9:00 a 18:00.",
   },
   {
     number: "02",
-    title: "Política de Privacidad",
-    body: "El uso de este sitio está sujeto a nuestra Política de Privacidad. Recomendamos revisar dicho documento para conocer cómo recopilamos, utilizamos y protegemos tu información personal. El acceso y permanencia en el sitio implica tu aceptación expresa de nuestras prácticas de manejo de datos.",
+    title: "Productos y Precios",
+    body: "MarcaEstilo comercializa ropa para hombre a través de su tienda online. Todos los precios están expresados en dólares americanos e incluyen IVA del 15% según ley vigente. Las fotos son referenciales; el color puede variar ligeramente según la configuración de tu pantalla. Nos reservamos el derecho de modificar precios sin previo aviso — el precio válido es el que aparece al momento de confirmar el pago.",
   },
   {
     number: "03",
-    title: "Modificaciones a los Términos",
-    body: "MARCA ESTILO se reserva el derecho de modificar los presentes términos y condiciones en cualquier momento. Las modificaciones entrarán en vigor de manera inmediata tras su publicación en el sitio web. Es responsabilidad del usuario revisar periódicamente esta sección para mantenerse informado sobre posibles actualizaciones.",
+    title: "Proceso de Compra",
+    body: "Selecciona tus productos, talla y color, agrega al carrito y procede al checkout. Completa tus datos de facturación y envío — eres responsable de que sean correctos. Acepta la Política de Privacidad y estos Términos. Realiza el pago a través de Datafast o coordina por WhatsApp. Recibirás un correo de confirmación con el detalle de tu pedido una vez aprobado el pago.",
   },
   {
     number: "04",
-    title: "Terminación del Uso",
-    body: "Nos reservamos el derecho de restringir, suspender o cancelar tu acceso a nuestro sitio web si consideramos que has incumplido estos términos y condiciones, o si tu comportamiento resulta perjudicial para otros usuarios o para la empresa.",
+    title: "Métodos de Pago",
+    body: "Aceptamos tarjetas Visa, Mastercard, Diners, Discover y American Express procesadas por Datafast S.A. También transferencia bancaria o depósito coordinado por WhatsApp. MarcaEstilo no almacena datos de tarjetas — todo pago es procesado directamente por Datafast bajo estándar PCI DSS. El pedido se procesa una vez confirmado el pago.",
   },
   {
     number: "05",
-    title: "Disponibilidad de Productos en Promoción",
-    body: "Ofrecemos productos en promoción por tiempo limitado, con el fin de brindarte oportunidades de compra exclusivas. No obstante, dichas promociones están sujetas a disponibilidad de stock. En caso de agotarse el inventario de un producto antes de la fecha de finalización de la promoción, no será posible extender la oferta para dicho artículo. Agradecemos tu comprensión, ya que esto nos permite mantener una política promocional justa y equitativa para todos nuestros clientes.",
+    title: "Envíos",
+    body: "Realizamos envíos a todo Ecuador continental a través de Servientrega u otros couriers. Tiempo de entrega: Guayaquil 1-2 días hábiles, otras ciudades 2-5 días hábiles desde la confirmación del pago. El costo de envío se calcula en el checkout según ciudad de destino y se muestra antes de pagar. Envío gratis aplica solo en promociones específicas detalladas en la web. MarcaEstilo no se responsabiliza por retrasos causados por el courier, fuerza mayor o dirección incorrecta proporcionada por el cliente.",
   },
   {
     number: "06",
-    title: "Tiempo Estimado de Entrega",
-    body: "El tiempo de procesamiento puede variar según el tipo de producto y la ubicación del destinatario. Generalmente, los pedidos se procesan en un plazo de 1 a 2 días hábiles. Ten en cuenta que estos plazos son estimaciones y podrían verse afectados por factores externos, como condiciones climáticas adversas o retrasos por parte de los servicios de transporte. Si tienes requerimientos especiales de entrega, no dudes en ponerte en contacto con nuestro equipo de atención al cliente.",
+    title: "Cambios y Devoluciones",
+    body: "Tienes 5 días calendario desde que recibes el producto para solicitar cambio por talla, color o modelo, según la Ley de Defensa del Consumidor. El producto debe estar sin uso, con etiquetas originales, en empaque original y sin olores. No aplica para ropa interior por higiene. El cliente asume el costo de envío por cambio, salvo que el error sea de MarcaEstilo. No se realizan devoluciones de dinero — solo cambios o nota de crédito. Si recibiste un producto defectuoso o diferente al pedido, asumimos todos los costos; repórtalo en máximo 48 horas desde la entrega.",
   },
   {
     number: "07",
+    title: "Garantía",
+    body: "Todas las prendas tienen garantía de 30 días por defectos de fabricación. La garantía no cubre desgaste por uso, mal lavado, o daños causados por el cliente. Para aplicar garantía, sigue el mismo proceso indicado en Cambios y Devoluciones.",
+  },
+  {
+    number: "08",
+    title: "Propiedad Intelectual",
+    body: "Todo el contenido de marcaestilo593.com — logos, textos, imágenes y diseños — es propiedad de MarcaEstilo. Queda prohibida su reproducción total o parcial sin autorización escrita.",
+  },
+  {
+    number: "09",
+    title: "Responsabilidad",
+    body: "MarcaEstilo no se hace responsable por el mal uso que el cliente dé a los productos. No garantizamos que el sitio esté libre de errores; si encuentras uno, repórtalo a marcaestilo593@gmail.com. No nos responsabilizamos por links a sitios de terceros.",
+  },
+  {
+    number: "10",
+    title: "Datos Personales",
+    body: "El tratamiento de tus datos se rige por nuestra Política de Privacidad, disponible en el footer del sitio. Al comprar, aceptas dicha política conforme a la Ley Orgánica de Protección de Datos Personales de Ecuador.",
+  },
+  {
+    number: "11",
+    title: "Legislación Aplicable",
+    body: "Estos Términos se rigen por las leyes de la República del Ecuador. Para cualquier controversia, las partes se someten a los jueces de la ciudad de Guayaquil y a los procedimientos de la Ley de Comercio Electrónico, Ley de Defensa del Consumidor y Ley Orgánica de Protección de Datos Personales.",
+  },
+  {
+    number: "12",
+    title: "Modificaciones",
+    body: "MarcaEstilo se reserva el derecho de modificar estos Términos y Condiciones en cualquier momento. Los cambios aplican desde su publicación en la web. Te recomendamos revisarlos antes de cada compra.",
+  },
+  {
+    number: "13",
     title: "Contacto",
     body: null,
     isContact: true,
@@ -44,6 +74,7 @@ const sections = [
 
 const TerminosCondiciones: React.FC = () => {
   const lineRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const handleScroll = () => {
@@ -51,10 +82,7 @@ const TerminosCondiciones: React.FC = () => {
       const el = lineRef.current;
       const rect = el.getBoundingClientRect();
       const windowH = window.innerHeight;
-      const progress = Math.min(
-        Math.max((windowH - rect.top) / (rect.height + windowH), 0),
-        1
-      );
+      const progress = Math.min(Math.max((windowH - rect.top) / (rect.height + windowH), 0), 1);
       el.style.setProperty("--progress", String(progress));
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -62,40 +90,151 @@ const TerminosCondiciones: React.FC = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    sections.forEach((_, i) => {
+      const el = document.getElementById(`tc-section-${i}`);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setVisible((prev) => new Set(prev).add(i)); },
+        { threshold: 0.1 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach((o) => o.disconnect());
+  }, []);
+
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&display=swap');
 
-        /* ── Animations ── */
-        @keyframes tc-fade-in {
-          from { opacity: 0; transform: translateY(16px); }
-          to   { opacity: 1; transform: translateY(0); }
+        * { box-sizing: border-box; }
+
+        body { background: #080808; }
+
+        .tc-root {
+          background: #080808;
+          color: #e8e4f0;
+          font-family: 'Outfit', sans-serif;
+          min-height: 100vh;
         }
 
-        .tc-section { animation: tc-fade-in 0.5s ease both; }
-        .tc-section:nth-child(1) { animation-delay: 0.05s; }
-        .tc-section:nth-child(2) { animation-delay: 0.10s; }
-        .tc-section:nth-child(3) { animation-delay: 0.15s; }
-        .tc-section:nth-child(4) { animation-delay: 0.20s; }
-        .tc-section:nth-child(5) { animation-delay: 0.25s; }
-        .tc-section:nth-child(6) { animation-delay: 0.30s; }
-        .tc-section:nth-child(7) { animation-delay: 0.35s; }
+        .tc-root::before {
+          content: '';
+          position: fixed;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+          pointer-events: none;
+          z-index: 0;
+        }
 
-        /* ── Timeline progress line ── */
+        /* ── HERO ── */
+        .tc-hero {
+          position: relative;
+          padding: 80px 24px 60px;
+          text-align: center;
+          overflow: hidden;
+        }
+
+        .tc-hero-glow {
+          position: absolute;
+          top: -120px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 700px;
+          height: 700px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(220,180,50,0.08) 0%, transparent 70%);
+          pointer-events: none;
+        }
+
+        .tc-hero-glow2 {
+          position: absolute;
+          top: -60px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 400px;
+          height: 300px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(220,180,50,0.12) 0%, transparent 65%);
+          pointer-events: none;
+        }
+
+        .tc-badge {
+          display: inline-block;
+          border: 1px solid rgba(220,180,50,0.4);
+          color: #dcb432;
+          font-family: 'Outfit', sans-serif;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.25em;
+          text-transform: uppercase;
+          padding: 5px 14px;
+          border-radius: 2px;
+          margin-bottom: 24px;
+        }
+
+        .tc-title {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: clamp(52px, 10vw, 100px);
+          letter-spacing: 0.04em;
+          line-height: 0.9;
+          color: #ffffff;
+          margin: 0 0 20px;
+        }
+
+        .tc-title span { color: #dcb432; }
+
+        .tc-subtitle {
+          color: #6b6480;
+          font-size: 14px;
+          font-weight: 300;
+          max-width: 480px;
+          margin: 0 auto 12px;
+          line-height: 1.6;
+        }
+
+        .tc-date {
+          color: #3d3a4a;
+          font-size: 11px;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+        }
+
+        .tc-divider {
+          width: 60px;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, #dcb432, transparent);
+          margin: 32px auto;
+        }
+
+        /* ── BODY ── */
+        .tc-body {
+          position: relative;
+          max-width: 860px;
+          margin: 0 auto;
+          padding: 0 24px 100px;
+        }
+
+        /* ── TIMELINE LINE ── */
         .tc-line {
           position: absolute;
-          left: 47px;
-          top: 72px;
-          bottom: 100px;
+          left: 43px;
+          top: 0;
+          bottom: 80px;
           width: 1px;
+          background: rgba(220,180,50,0.08);
         }
+
         .tc-line::after {
           content: '';
           position: absolute;
-          top: 0; left: 0;
-          width: 100%;
-          background: linear-gradient(180deg, #7c3aed, #a855f7);
+          top: 0;
+          left: 0;
+          width: 1px;
+          background: linear-gradient(180deg, #dcb432 0%, rgba(220,180,50,0.3) 100%);
           height: calc(var(--progress, 0) * 100%);
           transition: height 0.1s linear;
         }
@@ -104,238 +243,248 @@ const TerminosCondiciones: React.FC = () => {
           .tc-line { display: none; }
         }
 
-        /* ── Hero grid lines — light ── */
-        .tc-hero-grid::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 39px,
-            rgba(0,0,0,0.04) 39px,
-            rgba(0,0,0,0.04) 40px
-          );
-          pointer-events: none;
-        }
-        /* dark override */
-        .dark .tc-hero-grid::after {
-          background: repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 39px,
-            rgba(255,255,255,0.015) 39px,
-            rgba(255,255,255,0.015) 40px
-          );
+        /* ── ROW ── */
+        .tc-row {
+          display: flex;
+          gap: 24px;
+          margin-bottom: 16px;
+          opacity: 0;
+          transform: translateY(20px);
+          transition: opacity 0.5s ease, transform 0.5s ease;
         }
 
-        /* ── Card hover — light ── */
+        .tc-row.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        /* ── NUMBER ── */
+        .tc-num {
+          flex-shrink: 0;
+          width: 42px;
+          height: 42px;
+          border-radius: 50%;
+          border: 1px solid rgba(220,180,50,0.25);
+          background: rgba(220,180,50,0.04);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          font-weight: 600;
+          color: #dcb432;
+          letter-spacing: 0.05em;
+          position: relative;
+          z-index: 1;
+        }
+
+        @media (max-width: 640px) {
+          .tc-num { display: none; }
+        }
+
+        /* ── CARD ── */
+        .tc-card {
+          flex: 1;
+          border: 1px solid rgba(255,255,255,0.05);
+          border-radius: 12px;
+          padding: 22px 26px;
+          background: #0e0e12;
+          transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+          margin-bottom: 8px;
+        }
+
         .tc-card:hover {
-          border-color: rgba(124,58,237,0.35) !important;
-          background: rgba(124,58,237,0.04) !important;
-        }
-
-        /* ── Contact btn hover ── */
-        .tc-contact-btn:hover {
-          background: #6d28d9 !important;
+          border-color: rgba(220,180,50,0.2);
+          box-shadow: 0 0 0 1px rgba(220,180,50,0.08), 0 20px 50px rgba(0,0,0,0.6);
           transform: translateY(-1px);
         }
 
-        /* ── Back link hover ── */
-        .tc-back-link:hover { gap: 10px; }
-
-        /* ── Responsive ── */
-        @media (max-width: 640px) {
-          .tc-num-col { display: none !important; }
+        .tc-card-title {
+          font-weight: 600;
+          font-size: 14px;
+          color: #ffffff;
+          margin-bottom: 8px;
+          letter-spacing: 0.01em;
         }
+
+        .tc-card-body {
+          font-size: 13px;
+          line-height: 1.75;
+          color: #e8e4f0;
+          font-weight: 300;
+        }
+
+        /* ── CONTACT CARD ── */
+        .tc-contact-card {
+          flex: 1;
+          border: 1px solid rgba(220,180,50,0.2);
+          border-radius: 12px;
+          padding: 26px 30px;
+          background: linear-gradient(135deg, #0e0e12, #121018);
+          box-shadow: 0 0 0 1px rgba(220,180,50,0.06), 0 20px 60px rgba(0,0,0,0.5);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 20px;
+          flex-wrap: wrap;
+        }
+
+        .tc-contact-label {
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: #dcb432;
+          margin-bottom: 6px;
+        }
+
+        .tc-contact-desc {
+          font-size: 13px;
+          color: #5a5570;
+          margin-bottom: 14px;
+          font-weight: 300;
+        }
+
+        .tc-btn {
+          display: inline-block;
+          background: #dcb432;
+          color: #080808;
+          font-weight: 700;
+          font-size: 12px;
+          letter-spacing: 0.05em;
+          padding: 10px 20px;
+          border-radius: 6px;
+          text-decoration: none;
+          transition: background 0.2s, transform 0.2s;
+        }
+
+        .tc-btn:hover {
+          background: #f0ca50;
+          transform: translateY(-1px);
+        }
+
+        /* ── CONSENT BAR ── */
+        .tc-consent {
+          border: 1px solid rgba(220,180,50,0.1);
+          border-radius: 10px;
+          background: #0c0c10;
+          padding: 18px 24px;
+          font-size: 12px;
+          color: #5a5570;
+          text-align: center;
+          margin-bottom: 40px;
+          font-weight: 300;
+          line-height: 1.6;
+        }
+
+        .tc-consent strong {
+          color: #dcb432;
+          font-weight: 600;
+        }
+
+        /* ── FOOTER ── */
+        .tc-footer {
+          text-align: center;
+          border-top: 1px solid rgba(255,255,255,0.04);
+          padding-top: 40px;
+          margin-top: 20px;
+        }
+
+        .tc-footer p {
+          font-size: 12px;
+          color: #3a3750;
+          margin-bottom: 16px;
+          font-weight: 300;
+        }
+
+        .tc-footer a {
+          color: #dcb432;
+          font-size: 12px;
+          text-decoration: none;
+          letter-spacing: 0.05em;
+        }
+
+        .tc-footer a:hover { text-decoration: underline; }
       `}</style>
 
-      {/* ─────────────── LIGHT (default) / DARK via .dark class ─────────────── */}
-      <div
-        className="
-          tc-page
-          font-[DM_Sans,sans-serif]
-          min-h-screen
-          bg-white text-gray-900
-          dark:bg-[#0d0d0f] dark:text-[#e2ddf0]
-        "
-      >
+      <div className="tc-root">
 
-        {/* ── Hero ── */}
-        <div className="tc-hero-grid relative overflow-hidden px-6 pt-10 pb-6 text-center">
-
-          {/* glow */}
-          <div
-            className="
-              pointer-events-none absolute left-1/2 -top-32 -translate-x-1/2
-              w-[560px] h-[560px] rounded-full
-              bg-[radial-gradient(circle,rgba(124,58,237,0.08)_0%,transparent_65%)]
-              dark:bg-[radial-gradient(circle,rgba(100,50,200,0.18)_0%,transparent_65%)]
-            "
-          />
-
-          <div className="relative z-10" style={{ padding: "" }}>
-            {/* Eyebrow */}
-            <div className="
-              inline-flex items-center gap-2 mb-5
-              font-[Syne,sans-serif] text-[11px] font-semibold tracking-[0.2em] uppercase
-              text-violet-600 dark:text-[#8b5cf6]
-              px-[14px] py-[5px] rounded-full
-              border border-violet-200 bg-violet-50
-              dark:border-[rgba(139,92,246,0.3)] dark:bg-[rgba(139,92,246,0.07)]
-            ">
-              <div className="w-[5px] h-[5px] rounded-full bg-violet-500 dark:bg-[#8b5cf6]" />
-              Documento legal
-            </div>
-
-            {/* Title */}
-            <h1
-              className="
-                font-[Syne,sans-serif] text-3xl sm:text-5xl font-extrabold leading-[1.05] tracking-tight
-                text-gray-900 dark:text-white
-                mb-2
-              "
-              style={{ }}
-            >
-              Términos y<br />
-              <span className="text-violet-600 dark:text-[#7c3aed]">Condiciones</span>
+        {/* HERO */}
+        <div className="tc-hero" style={{ position: "relative", zIndex: 1 }}>
+          <div className="tc-hero-glow" />
+          <div className="tc-hero-glow2" />
+          <div style={{ position: "relative", zIndex: 2 }}>
+            <div className="tc-badge">Documento Legal · Ecuador</div>
+            <h1 className="tc-title">
+              TÉRMINOS Y<br /><span>CONDICIONES</span>
             </h1>
-
-            {/* Subtitle */}
-            <p className="
-              text-base font-light italic leading-relaxed
-              text-gray-500 dark:text-[#8b7faa]
-              max-w-[520px] mx-auto mb-3
-            ">
-              Al utilizar nuestros servicios aceptas los siguientes términos.
-              Te recomendamos leerlos detenidamente antes de realizar cualquier acción.
+            <p className="tc-subtitle">
+              Al realizar una compra en MARCA ESTILO aceptas estos términos en su totalidad. Te recomendamos leerlos antes de cada pedido.
             </p>
-
+            <p className="tc-date">Última actualización: 01 de junio de 2026</p>
+            <div className="tc-divider" />
           </div>
         </div>
 
-        {/* ── Divider ── */}
-        <div
-          className="mx-6 h-px"
-          style={{ background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.35) 40%, rgba(124,58,237,0.35) 60%, transparent)" }}
-        />
-
-        {/* ── Body ── */}
-        <div className="relative max-w-[860px] mx-auto px-6 pt-[20px] pb-[10px]">
-
-          {/* Timeline vertical line */}
+        {/* BODY */}
+        <div className="tc-body" style={{ position: "relative", zIndex: 1 }}>
           <div
-            className="tc-line bg-violet-100 dark:bg-[rgba(124,58,237,0.12)]"
+            className="tc-line"
             ref={lineRef}
             style={{ "--progress": "0" } as React.CSSProperties}
           />
 
-          {sections.map((s) =>
+          {sections.map((s, i) =>
             s.isContact ? (
-              /* Contact section */
-              <div key={s.number} className="tc-section flex gap-3 mb-12">
-                <div className="flex-shrink-0 flex flex-col items-center">
-
-                </div>
-                <div className="
-                  tc-contact-card flex-1 flex items-center justify-between flex-wrap gap-4
-                  rounded-2xl px-3 py-6
-                  bg-violet-50 border border-violet-200
-                  dark:bg-[rgba(124,58,237,0.07)] dark:border-[rgba(124,58,237,0.25)]
-                ">
+              <div
+                key={s.number}
+                id={`tc-section-${i}`}
+                className={`tc-row${visible.has(i) ? " visible" : ""}`}
+                style={{ transitionDelay: `${i * 40}ms` }}
+              >
+                <div className="tc-num">{s.number}</div>
+                <div className="tc-contact-card">
                   <div>
-                    <p className="
-                      font-[Syne,sans-serif] text-[17px] font-bold mb-1
-                      text-gray-900 dark:text-white
-                    ">
-                      Contacto
+                    <p className="tc-contact-label">Contacto</p>
+                    <p className="tc-contact-desc">
+                      Dudas sobre estos términos o para iniciar un cambio / garantía.
                     </p>
-                    <p className="text-sm font-light text-gray-500 dark:text-[#9d91b8] m-0">
-                      Consultas, comentarios o inquietudes sobre estos términos
-                    </p>
+                    <a href="mailto:marcaestilo593@gmail.com" className="tc-btn">
+                      marcaestilo593@gmail.com
+                    </a>
                   </div>
-                  <a
-                    href="mailto:marcaestilo@email.com"
-                    className="
-                      tc-contact-btn inline-flex items-center gap-2 flex-shrink-0
-                      font-[Syne,sans-serif] text-[13px] font-semibold
-                      bg-violet-600 hover:bg-violet-700 text-white
-                      px-5 py-[10px] rounded-[10px] no-underline whitespace-nowrap
-                      transition-all duration-200
-                    "
-                    style={{ display: "inline-flex" }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="4" width="20" height="16" rx="2"/>
-                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                    </svg>
-                    marcaestilo@email.com
-                  </a>
+                  <div style={{ fontSize: "12px", color: "#3a3750", textAlign: "right", lineHeight: 1.8 }}>
+                    <div style={{ color: "#5a5570", marginBottom: 4 }}>WhatsApp</div>
+                    <div style={{ color: "#dcb432", fontWeight: 600 }}>+593 99 936 9105</div>
+                  </div>
                 </div>
               </div>
             ) : (
-              /* Regular section */
-              <div key={s.number} className="tc-section flex gap-8 mb-12">
-                {/* Number badge */}
-                <div className="tc-num-col flex-shrink-0 flex flex-col items-center">
-                  <div className="
-                    w-[46px] h-[46px] rounded-full flex items-center justify-center relative z-10
-                    font-[Syne,sans-serif] text-xs font-bold
-                    text-violet-600 dark:text-[#8b5cf6]
-                    bg-white border border-violet-200
-                    dark:bg-[#0d0d0f] dark:border-[rgba(124,58,237,0.35)]
-                  ">
-                    {s.number}
-                  </div>
-                </div>
-
-                {/* Card */}
-                <div className="
-                  tc-card flex-1 rounded-2xl px-7 py-6
-                  bg-gray-50 border border-gray-100
-                  dark:bg-[rgba(255,255,255,0.025)] dark:border-[rgba(255,255,255,0.06)]
-                  transition-all duration-200
-                ">
-                  <p className="
-                    font-[Syne,sans-serif] text-[17px] font-bold mb-[10px] tracking-tight
-                    text-gray-900 dark:text-white
-                  ">
-                    {s.title}
-                  </p>
-                  <p className="text-[14.5px] font-light leading-[1.8] m-0 text-gray-500 dark:text-[#9d91b8]">
-                    {s.body}
-                  </p>
+              <div
+                key={s.number}
+                id={`tc-section-${i}`}
+                className={`tc-row${visible.has(i) ? " visible" : ""}`}
+                style={{ transitionDelay: `${i * 40}ms` }}
+              >
+                <div className="tc-num">{s.number}</div>
+                <div className="tc-card">
+                  <p className="tc-card-title">{s.title}</p>
+                  <p className="tc-card-body">{s.body}</p>
                 </div>
               </div>
             )
           )}
 
-          {/* ── Footer note ── */}
-          <div className="
-            mt-16 pt-8 text-center
-            border-t border-gray-100 dark:border-[rgba(255,255,255,0.06)]
-          ">
-            <p className="
-              text-[13.5px] font-light leading-[1.8] mb-4 max-w-[500px] mx-auto
-              text-gray-400 dark:text-[#5a5270]
-            ">
-              Gracias por confiar en MARCA ESTILO. Tu cumplimiento con estos términos
-              contribuye a mantener un entorno seguro, respetuoso y confiable para toda nuestra comunidad.
-            </p>
-            <Link
-              href="/"
-              className="
-                tc-back-link inline-flex items-center gap-2
-                font-[Syne,sans-serif] text-[13px] font-semibold no-underline
-                text-violet-600 dark:text-[#8b5cf6]
-                transition-all duration-200
-              "
-            >
-              ← Volver al inicio
-            </Link>
+          {/* CONSENT NOTE */}
+          <div className="tc-consent">
+            Al usar <strong>marcaestilo593.com</strong> y marcar la casilla <strong>"Acepto los Términos y Condiciones"</strong> en el checkout, confirmas que leíste y estás de acuerdo con este documento. Conforme a la <strong>Ley de Comercio Electrónico y Ley de Defensa del Consumidor de Ecuador</strong>.
+          </div>
+
+          {/* FOOTER */}
+          <div className="tc-footer">
+            <p>Gracias por confiar en MARCA ESTILO. Tu satisfacción es nuestra prioridad.</p>
+            <Link href="/">← Volver al inicio</Link>
           </div>
         </div>
-
       </div>
     </>
   );
