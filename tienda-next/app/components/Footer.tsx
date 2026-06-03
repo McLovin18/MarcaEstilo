@@ -22,26 +22,25 @@ const IconTikTok = () => (
 const socialLinks = [
   { href: "https://www.instagram.com/marcaestilo593/", label: "Instagram", Icon: IconInstagram },
   { href: "https://www.tiktok.com/@marcaestilomen", label: "TikTok", Icon: IconTikTok },
-
 ];
 
 const Footer: React.FC = () => {
   const pathname = usePathname();
   const { trackLinkClick } = useTracking();
 
-  const showWhatsAppFloating =
-    pathname && !pathname.startsWith("/admin");
+  const showWhatsAppFloating = pathname && !pathname.startsWith("/admin");
 
-  // Mostrar footer siempre (simplificado)
   return (
     <>
       <footer className={styles.pdxFooter}>
         <div className={styles.ftGlowLeft} />
         <div className={styles.ftGlowRight} />
 
-        {/* Main row - centered social buttons */}
+        {/* Main row */}
         <div className={styles.ftMain}>
           <div className="flex flex-col gap-8 items-center">
+
+            {/* Redes sociales */}
             <div className="w-full flex justify-center">
               <ul className={styles.ftSocials}>
                 {socialLinks.map(({ href, label, Icon }) => (
@@ -54,22 +53,54 @@ const Footer: React.FC = () => {
               </ul>
             </div>
 
+            {/* Links legales */}
             <div className="w-full flex flex-col text-center justify-center">
               <Link href="/politicas/privacidad" className={styles.ftDevLink} onClick={() => trackLinkClick().catch(console.error)}>
                 Política de privacidad
-
               </Link>
               <Link href="/politicas/terminos-y-condiciones" className={styles.ftDevLink} onClick={() => trackLinkClick().catch(console.error)}>
                 Términos y condiciones
               </Link>
             </div>
 
+            {/* Métodos de pago */}
             <div className="w-full flex justify-center items-center gap-4 md:gap-6 flex-wrap">
               <img src="/pagos/amex.svg" alt="American Express" className="h-8 md:h-10 object-contain" />
               <img src="/pagos/discover.svg" alt="Discover" className="h-8 md:h-10 object-contain" />
               <img src="/pagos/mastercard.svg" alt="Mastercard" className="h-8 md:h-10 object-contain" />
               <img src="/pagos/visa.svg" alt="Visa" className="h-8 md:h-10 object-contain" />
             </div>
+
+            {/* ── Info legal empresa — requerido por Datafast ── */}
+            <div className={styles.ftLegalWrap}>
+              <div className={styles.ftLegalRow}>
+                <span className={styles.ftLegalBrand}>
+                  MarcaEstilo - Información de contacto:
+                </span>
+
+                <span className={styles.ftLegalSeparator}></span>
+                <span>RUC: 0927584839001</span>
+                <span className={styles.ftLegalSeparator}>|</span>
+                <span>Guayaquil, Ecuador</span>
+                <span className={styles.ftLegalSeparator}>|</span>
+                <a
+                  href="mailto:marcaestilo593@gmail.com"
+                  className={styles.ftLegalLink}
+                >
+                  marcaestilo593@gmail.com
+                </a>
+                <span className={styles.ftLegalSeparator}>|</span>
+                <a
+                  href="https://wa.me/593999369105"
+                  target="_blank"
+                  rel="noreferrer"
+                  className={styles.ftLegalLink}
+                >
+                  +593 99 936 9105
+                </a>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -78,7 +109,7 @@ const Footer: React.FC = () => {
 
         {/* Copyright row */}
         <div className={styles.ftCopyRow}>
-          <p className={styles.ftCopyText}> 
+          <p className={styles.ftCopyText}>
             © {new Date().getFullYear()} Marca Estilo 2026. Todos los derechos reservados.
           </p>
           <div className={styles.ftCopyRight}>
@@ -105,4 +136,3 @@ const Footer: React.FC = () => {
 };
 
 export default Footer;
-

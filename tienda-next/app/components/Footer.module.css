@@ -322,6 +322,45 @@ a.ftContactVal:hover {
   color: #E0A11A;
 }
 
+.ftLegalWrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.ftLegalRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #9ca3af;
+}
+
+.ftLegalBrand {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #d1d5db;
+}
+
+.ftLegalSeparator {
+  color: #6b7280;
+}
+
+.ftLegalLink {
+  color: #9ca3af;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.ftLegalLink:hover {
+  color: #e5e7eb;
+}
+
 .ftContactLogged {
   display: flex;
   flex-direction: row;
@@ -333,5 +372,14 @@ a.ftContactVal:hover {
   .ftContactLogged {
     flex-direction: column;
     gap: 0;
+  }
+
+  .ftLegalRow {
+    gap: 8px 14px;
+    font-size: 13px;
+  }
+
+  .ftLegalSeparator {
+    display: none;
   }
 }
