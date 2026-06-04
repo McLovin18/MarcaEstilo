@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "../context/UserContext";
 import { getSnapshotPricing } from "../lib/pricing";
@@ -9,6 +9,7 @@ import CheckoutForm from "./Checkoutform";
 export default function CheckoutPage() {
   const { carrito, loading: contextLoading, cartReady } = useUser();
   const router = useRouter();
+  const hasCheckedRedirect = useRef(false);
 
   const items = Array.isArray(carrito) ? carrito : [];
   const total = items.reduce((sum, item: any) => {
@@ -17,15 +18,23 @@ export default function CheckoutPage() {
     return sum + finalPrice * Number(item?.cantidad || 1);
   }, 0);
 
-  console.log('🛒 CheckoutPage state:', { contextLoading, cartReady, itemsLength: items.length, total });
+  console.log('🛒 CheckoutPage state:', { contextLoading, cartReady, itemsLength: items.length, total, hasCheckedRedirect: hasCheckedRedirect.current });
 
   // Show loading if cart isn't ready yet
   const loading = !cartReady || (contextLoading && items.length === 0);
 
   // Sólo redirigir al carrito si cartReady es true Y items.length es 0
   useEffect(() => {
-    console.log('🔄 Checkout redirect check:', { cartReady, itemsLength: items.length });
-    if (cartReady && items.length === 0) {
+    console.log('🔄 Checkout redirect check:', { cartReady, itemsLength: items.length, hasCheckedRedirect: hasCheckedRedirect.current });
+    
+    if (!cartReady || hasCheckedRedirect.current) {
+      console.log('🔄 Skipping redirect check (not ready or already checked');
+      return;
+    }
+
+    hasCheckedRedirect.current = true;
+    console.log('🔄 Performing final redirect check:', { cartReady, itemsLength: items.length });
+    if (items.length === 0) {
       console.log('🔄 Redirecting to cart because cart is empty');
       router.replace("/cart");
     }
@@ -34,7 +43,7 @@ export default function CheckoutPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#080808] flex items-center justify-center">
-        <div className="animate-pulse">Cargando...</div>
+        <div className="animate-pulse text-white text-xl">Cargando...</div>
       </div>
     );
   }

@@ -165,15 +165,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setCarrito(newCart);
     }
     
+    const setReady = () => {
+      cartLoadedRef.current = true;
+      setCartReady(true);
+      console.log('✅ cartReady set to true');
+    };
+
     if (newCart) {
       // If we loaded or merged a cart, set cartLoadedRef to false first,
       // then after the state update, set it to true again so that the
       // saveCart useEffect doesn't save this initial load
       cartLoadedRef.current = false;
-      requestAnimationFrame(() => {
-        cartLoadedRef.current = true;
-        console.log('✅ cartLoadedRef reset to true after loading/merging cart');
-      });
+      requestAnimationFrame(setReady);
+    } else {
+      // If we didn't load/merge a cart, just make sure cartReady is true
+      setReady();
     }
     
     prevUidRef.current = uid;
