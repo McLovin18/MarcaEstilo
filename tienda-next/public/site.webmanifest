@@ -1,0 +1,16 @@
+{
+  "name": "Marca Estilo",
+  "short_name": "Marca Estilo",
+  "description": "Tienda online de camisetas para hombre. Diseños exclusivos, drops limitados y envíos a todo Ecuador.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#dcb432",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

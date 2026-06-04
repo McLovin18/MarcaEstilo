@@ -7,7 +7,7 @@ import { getSnapshotPricing } from "../lib/pricing";
 import CheckoutForm from "./Checkoutform";
 
 export default function CheckoutPage() {
-  const { carrito } = useUser();
+  const { carrito, loading } = useUser();
   const router = useRouter();
 
   const items = Array.isArray(carrito) ? carrito : [];
@@ -18,13 +18,21 @@ export default function CheckoutPage() {
   }, 0);
   console.log("🛒 Checkout total:", total);
 
-  // Si el carrito está vacío, redirigir al carrito
+  // Si el carrito está vacío y ya terminó de cargar, redirigir al carrito
   useEffect(() => {
-    if (items.length === 0) {
+    if (!loading && items.length === 0) {
       router.replace("/cart");
     }
-  }, [items, router]);
+  }, [items, router, loading]);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#080808] flex items-center justify-center">
+        <div className="animate-pulse">Cargando...</div>
+      </div>
+    );
+  }
+  
   if (items.length === 0) return null;
 
   return (
