@@ -74,10 +74,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     console.log('🚀 Initial guest cart length:', initialGuestCart.length);
     setCarrito(initialGuestCart);
     setCartLoading(false);
-    // Wait one tick to make sure the state update has gone through
+    // Wait one tick to make sure the state update has gone through, then set flags
     requestAnimationFrame(() => {
       setCartReady(true);
-      console.log('✅ Cart ready');
+      cartLoadedRef.current = true;
+      console.log('✅ Cart ready and cartLoadedRef set to true');
     });
   }, []);
 
@@ -148,21 +149,33 @@ export function UserProvider({ children }: { children: ReactNode }) {
     console.log('📦 Cart update useEffect triggered', { userLoading, user, prevUid: prevUidRef.current });
     if (userLoading) return;
     const uid = (user as any)?.uid || null;
-    cartLoadedRef.current = false;
-
+    
+    let newCart;
     if (uid && prevUidRef.current === null) {
       // Transición: invitado → logueado → fusionar carrito guest
       console.log('🔄 Merging guest cart into user cart');
-      const merged = mergeGuestCartIntoUser(uid);
-      console.log('📦 Merged cart length:', merged.length);
-      setCarrito(merged);
+      newCart = mergeGuestCartIntoUser(uid);
+      console.log('📦 Merged cart length:', newCart.length);
+      setCarrito(newCart);
     } else if (uid && prevUidRef.current !== uid) {
       // User changed, load their cart
       console.log('📦 Loading user cart, uid:', uid);
-      const userCart = getInitialCart(uid);
-      console.log('📦 User cart length:', userCart.length);
-      setCarrito(userCart);
+      newCart = getInitialCart(uid);
+      console.log('📦 User cart length:', newCart.length);
+      setCarrito(newCart);
     }
+    
+    if (newCart) {
+      // If we loaded or merged a cart, set cartLoadedRef to false first,
+      // then after the state update, set it to true again so that the
+      // saveCart useEffect doesn't save this initial load
+      cartLoadedRef.current = false;
+      requestAnimationFrame(() => {
+        cartLoadedRef.current = true;
+        console.log('✅ cartLoadedRef reset to true after loading/merging cart');
+      });
+    }
+    
     prevUidRef.current = uid;
   }, [user, userLoading]);
 
@@ -171,12 +184,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   // Guardar carrito en localStorage, pero NO durante la carga inicial
   useEffect(() => {
+    console.log('💾 saveCart useEffect triggered, cartLoadedRef:', cartLoadedRef.current, 'cart length:', carrito.length);
     if (!cartLoadedRef.current) {
       // Primera ejecución tras cargar: marcar como listo y no guardar
-      cartLoadedRef.current = true;
+      console.log('💾 Not saving cart (initial load)');
       return;
     }
     const uid = (user as any)?.uid || null;
+    console.log('💾 Saving cart to localStorage, uid:', uid, 'cart:', carrito);
     saveCart(carrito, uid);
   }, [carrito]); // eslint-disable-line react-hooks/exhaustive-deps
 
