@@ -7,6 +7,9 @@ console.log("[Firebase Admin] FIREBASE_PROJECT_ID exists:", !!process.env.FIREBA
 console.log("[Firebase Admin] FIREBASE_CLIENT_EMAIL exists:", !!process.env.FIREBASE_CLIENT_EMAIL);
 console.log("[Firebase Admin] FIREBASE_PRIVATE_KEY exists:", !!process.env.FIREBASE_PRIVATE_KEY);
 
+let db: admin.firestore.Firestore;
+let adminAuth: admin.auth.Auth;
+
 if (!admin.apps.length) {
   try {
     console.log("[Firebase Admin] 3. Apps not initialized, starting init...");
@@ -30,17 +33,22 @@ if (!admin.apps.length) {
       admin.initializeApp();
       console.log("[Firebase Admin] 6. ✅ Initialized with default credentials");
     }
+    
+    console.log("[Firebase Admin] 7. Getting Firestore instance...");
+    db = admin.firestore();
+    db.settings({ ignoreUndefinedProperties: true });
+    adminAuth = admin.auth();
+    console.log("[Firebase Admin] 8. ✅ Firestore instance ready");
   } catch (err) {
     console.error("[Firebase Admin] ❌ Initialization error:", err);
     throw err;
   }
 } else {
   console.log("[Firebase Admin] 3. Already initialized, skipping...");
+  console.log("[Firebase Admin] 7. Getting existing Firestore instance...");
+  db = admin.firestore();
+  adminAuth = admin.auth();
 }
 
-console.log("[Firebase Admin] 7. Getting Firestore instance...");
-export const adminAuth = admin.auth();
-export const db = admin.firestore();
-console.log("[Firebase Admin] 8. ✅ Firestore instance ready");
-
+export { db, adminAuth };
 export default admin;

@@ -30,6 +30,7 @@ interface UserContextType {
   carrito: any[];
   addCarrito: (p: any) => void;
   removeCarrito: (id: string) => void;
+  clearCarrito: () => void;
 }
 
 // Contexto de usuario global tipado
@@ -45,6 +46,7 @@ const UserContext = createContext<UserContextType>({
   carrito: [],
   addCarrito: () => {},
   removeCarrito: () => {},
+  clearCarrito: () => {},
 });
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -173,6 +175,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const removeCarrito = (id) => {
     setCarrito((prev) => prev.filter((p) => getCartItemKey(p) !== id));
   };
+  const clearCarrito = () => {
+    setCarrito([]);
+  };
 
   const isLogged = !!user;
   const isCliente = false;
@@ -200,6 +205,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       carrito,
       addCarrito,
       removeCarrito,
+      clearCarrito,
     }}>
       {children}
     </UserContext.Provider>

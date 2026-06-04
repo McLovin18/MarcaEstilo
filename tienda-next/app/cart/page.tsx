@@ -181,7 +181,6 @@ export default function CartPage() {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState<"cart" | "proforma">("cart");
   const [ordenCreada, setOrdenCreada] = useState<any>(null);
-  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const router = useRouter();
   const { isLogged } = useUser();
   const [atributos, setAtributos] = useState<any[]>([]);
@@ -303,10 +302,9 @@ export default function CartPage() {
     window.open(`https://wa.me/${whatsappNumber}?text=${message}`, "_blank");
   };
 
-  const handlePagoSimulado = () => {
-    if (!privacyAccepted) return;
+  const handlePagarAhora = () => {
     setError("");
-    window.alert("Pago simulado activado. Aquí conectaremos la pasarela real más adelante.");
+    router.push("/checkout");
   };
 
   const handleCantidad = (id: string, cantidad: number) => {
@@ -540,29 +538,12 @@ export default function CartPage() {
 
                   <div>
                     <button
-                      onClick={handlePagoSimulado}
-                      disabled={!privacyAccepted}
-                      className={`w-full flex items-center justify-center gap-2 py-3.5 px-6 font-bold text-sm rounded-xl transition-colors shadow-md border ${
-                        privacyAccepted
-                          ? "bg-[#E0A11A] border-[#c88c0a] text-white hover:bg-[#c88c0a] hover:shadow-lg"
-                          : "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
-                      }`}
-                      title="Pago simulado"
+                      onClick={handlePagarAhora}
+                      className="w-full flex items-center justify-center gap-2 py-3.5 px-6 font-bold text-sm rounded-xl transition-colors shadow-md border bg-[#E0A11A] border-[#c88c0a] text-white hover:bg-[#c88c0a] hover:shadow-lg"
+                      title="Pagar ahora"
                     >
                       Pagar ahora
                     </button>
-
-                    <label className="mt-3 flex items-start gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={privacyAccepted}
-                        onChange={(e) => setPrivacyAccepted(e.target.checked)}
-                        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#E0A11A] focus:ring-[#E0A11A]"
-                      />
-                      <span>
-                        Confirmo que he leído y acepto la <a href="/politicas/privacidad" className="underline text-slate-700 dark:text-slate-200">Política de Privacidad</a> y haber leído<a href="/politicas/terminos-y-condiciones" className="underline text-slate-700 dark:text-slate-200">términos y condiciones</a>.
-                      </span>
-                    </label>
                   </div>
                 </div>
               </div>
