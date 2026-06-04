@@ -32,6 +32,7 @@ interface UserContextType {
   removeCarrito: (id: string) => void;
   clearCarrito: () => void;
   loading: boolean;
+  cartReady: boolean;
 }
 
 // Contexto de usuario global tipado
@@ -49,6 +50,7 @@ const UserContext = createContext<UserContextType>({
   removeCarrito: () => {},
   clearCarrito: () => {},
   loading: true,
+  cartReady: false,
 });
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -57,12 +59,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [carrito, setCarrito] = useState([]);
   const [userLoading, setUserLoading] = useState(true);
   const [cartLoading, setCartLoading] = useState(true);
+  const [cartReady, setCartReady] = useState(false);
   // Controla si el carrito ya fue cargado desde localStorage (evita sobreescribir en la carga inicial)
   const cartLoadedRef = useRef(false);
   // Guarda el uid anterior para detectar transición de invitado → logueado
   const prevUidRef = useRef<string | null>(null);
 
-  console.log('🔄 UserContext state:', { user, userLoading, cartLoading, carritoLength: carrito.length });
+  console.log('🔄 UserContext state:', { user, userLoading, cartLoading, cartReady, carritoLength: carrito.length });
 
   // Load guest cart immediately on mount without waiting for auth
   useEffect(() => {
@@ -71,6 +74,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     console.log('🚀 Initial guest cart length:', initialGuestCart.length);
     setCarrito(initialGuestCart);
     setCartLoading(false);
+    // Wait one tick to make sure the state update has gone through
+    requestAnimationFrame(() => {
+      setCartReady(true);
+      console.log('✅ Cart ready');
+    });
   }, []);
 
   // Escuchar cambios en el token (incluye inicio de sesión y refresh de claims)
@@ -232,6 +240,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       removeCarrito,
       clearCarrito,
       loading,
+      cartReady,
     }}>
       {children}
     </UserContext.Provider>
