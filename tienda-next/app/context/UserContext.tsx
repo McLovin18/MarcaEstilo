@@ -229,7 +229,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const isLogged = !!user;
   const isCliente = false;
   const isAdmin = user?.role === "admin";
-  const loading = userLoading || cartLoading;
+  const loading = !cartReady || userLoading;
 
 
   if (loading) {

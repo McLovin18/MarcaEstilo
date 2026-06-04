@@ -22,13 +22,14 @@ export default function CheckoutPage() {
   // Show loading if cart isn't ready yet
   const loading = !cartReady || (contextLoading && items.length === 0);
 
-  // Si el carrito está vacío Y cartReady is true, redirigir al carrito
+  // Sólo redirigir al carrito si cartReady es true Y items.length es 0
   useEffect(() => {
+    console.log('🔄 Checkout redirect check:', { cartReady, itemsLength: items.length });
     if (cartReady && items.length === 0) {
       console.log('🔄 Redirecting to cart because cart is empty');
       router.replace("/cart");
     }
-  }, [items, router, cartReady]);
+  }, [cartReady, items.length, router]);
 
   if (loading) {
     return (
