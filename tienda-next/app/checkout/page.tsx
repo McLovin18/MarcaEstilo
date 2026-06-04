@@ -7,7 +7,7 @@ import { getSnapshotPricing } from "../lib/pricing";
 import CheckoutForm from "./Checkoutform";
 
 export default function CheckoutPage() {
-  const { carrito, loading } = useUser();
+  const { carrito, loading: contextLoading } = useUser();
   const router = useRouter();
 
   const items = Array.isArray(carrito) ? carrito : [];
@@ -16,14 +16,18 @@ export default function CheckoutPage() {
     console.log("🛒 Checkout item:", item, "finalPrice:", finalPrice);
     return sum + finalPrice * Number(item?.cantidad || 1);
   }, 0);
-  console.log("🛒 Checkout total:", total);
 
-  // Si el carrito está vacío y ya terminó de cargar, redirigir al carrito
+  console.log('🛒 CheckoutPage state:', { contextLoading, itemsLength: items.length, total });
+
+  // If cart has items, show checkout even if user auth is still loading
+  const loading = contextLoading && items.length === 0;
+
+  // Si el carrito está vacío y ya terminó de cargar todo, redirigir al carrito
   useEffect(() => {
-    if (!loading && items.length === 0) {
+    if (!contextLoading && items.length === 0) {
       router.replace("/cart");
     }
-  }, [items, router, loading]);
+  }, [items, router, contextLoading]);
 
   if (loading) {
     return (

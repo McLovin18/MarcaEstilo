@@ -55,18 +55,31 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [favoritos, setFavoritos] = useState([]);
   const [carrito, setCarrito] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [userLoading, setUserLoading] = useState(true);
+  const [cartLoading, setCartLoading] = useState(true);
   // Controla si el carrito ya fue cargado desde localStorage (evita sobreescribir en la carga inicial)
   const cartLoadedRef = useRef(false);
   // Guarda el uid anterior para detectar transición de invitado → logueado
   const prevUidRef = useRef<string | null>(null);
 
+  console.log('🔄 UserContext state:', { user, userLoading, cartLoading, carritoLength: carrito.length });
+
+  // Load guest cart immediately on mount without waiting for auth
+  useEffect(() => {
+    console.log('🚀 Loading initial guest cart');
+    const initialGuestCart = getInitialCart(null);
+    console.log('🚀 Initial guest cart length:', initialGuestCart.length);
+    setCarrito(initialGuestCart);
+    setCartLoading(false);
+  }, []);
+
   // Escuchar cambios en el token (incluye inicio de sesión y refresh de claims)
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (realUser) => {
+      console.log('🔐 onIdTokenChanged fired', { realUser });
       if (!realUser) {
         setUser(null);
-        setLoading(false);
+        setUserLoading(false);
         return;
       }
       
@@ -86,11 +99,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
             const data = await res.json();
             // Incluir emailVerified en el usuario sin bloquear acceso
             setUser({ ...(realUser as any), role: data.role, emailVerified: realUser.emailVerified });
-            setLoading(false);
+            setUserLoading(false);
             return;
           }
         } catch (e) {
-          // ignore and fallback to token claims
+          console.log('⚠️ Failed to fetch user role from backend:', e);
         }
         
         // Fallback: leer claims desde el token
@@ -102,13 +115,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
             emailVerified: realUser.emailVerified 
           });
         } catch (e) {
+          console.log('⚠️ Failed to get token result:', e);
           setUser({ ...(realUser as any), emailVerified: realUser.emailVerified });
         }
       } catch (err) {
+        console.log('⚠️ Error in onIdTokenChanged:', err);
         setUser({ ...(realUser as any), emailVerified: realUser.emailVerified });
       }
       
-      setLoading(false);
+      setUserLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -122,19 +137,26 @@ export function UserProvider({ children }: { children: ReactNode }) {
   // (invitado => 'carrito_guest', logueado => 'carrito_<uid>')
   // Si el usuario acaba de autenticarse, fusionar el carrito guest en el suyo
   useEffect(() => {
-    if (loading) return;
+    console.log('📦 Cart update useEffect triggered', { userLoading, user, prevUid: prevUidRef.current });
+    if (userLoading) return;
     const uid = (user as any)?.uid || null;
     cartLoadedRef.current = false;
 
     if (uid && prevUidRef.current === null) {
       // Transición: invitado → logueado → fusionar carrito guest
+      console.log('🔄 Merging guest cart into user cart');
       const merged = mergeGuestCartIntoUser(uid);
+      console.log('📦 Merged cart length:', merged.length);
       setCarrito(merged);
-    } else {
-      setCarrito(getInitialCart(uid));
+    } else if (uid && prevUidRef.current !== uid) {
+      // User changed, load their cart
+      console.log('📦 Loading user cart, uid:', uid);
+      const userCart = getInitialCart(uid);
+      console.log('📦 User cart length:', userCart.length);
+      setCarrito(userCart);
     }
     prevUidRef.current = uid;
-  }, [user, loading]);
+  }, [user, userLoading]);
 
   // Guardar favoritos en localStorage cuando cambian
   useEffect(() => { saveFavorites(favoritos); }, [favoritos]);
@@ -184,6 +206,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const isLogged = !!user;
   const isCliente = false;
   const isAdmin = user?.role === "admin";
+  const loading = userLoading || cartLoading;
 
 
   if (loading) {
