@@ -34,6 +34,26 @@ export default function DatafastWidget({ checkoutId, pedidoId }: DatafastWidgetP
   useEffect(() => {
     if (!checkoutId || !containerRef.current) return;
 
+    // ⭐ Configurar wpwlOptions ANTES de cargar el script
+    window.wpwlOptions = {
+      onReady: function() {
+        const datafast = '<br/><br/><img src="https://www.datafast.com.ec/images/verified.png" style="display:block;margin:0 auto; width:100%;">';
+        const form = document.querySelector('form.wpwl-form-card');
+        if (form) {
+          const button = form.querySelector('.wpwl-button');
+          if (button) {
+            button.insertAdjacentHTML('beforebegin', datafast);
+          }
+        }
+      },
+      style: "card",
+      locale: "es",
+      labels: {
+        cvv: "CVV",
+        cardHolder: "Nombre(Igual que en la tarjeta)"
+      }
+    };
+
     // Limpiar script anterior si existiera
     if (scriptRef.current) {
       document.body.removeChild(scriptRef.current);
@@ -103,16 +123,16 @@ export default function DatafastWidget({ checkoutId, pedidoId }: DatafastWidgetP
           align-items: center;
           gap: 8px;
           padding: 10px 16px;
-          background: rgba(220, 180, 50, 0.06);
-          border: 1px solid rgba(220, 180, 50, 0.2);
+          background: rgba(30,30,30,0.8);
+          border: 1px solid rgba(255,255,255,0.1);
           border-radius: 8px;
-          color: #dcb432;
+          color: #ddd;
           font-size: 13px;
           font-weight: 500;
         }
 
         .payment-form-container {
-          background: #fff;
+          background: #000;
           border-radius: 12px;
           overflow: hidden;
           padding: 4px;
@@ -122,7 +142,7 @@ export default function DatafastWidget({ checkoutId, pedidoId }: DatafastWidgetP
 
         .widget-disclaimer {
           font-size: 12px;
-          color: #555;
+          color: #aaa;
           text-align: center;
           line-height: 1.6;
           margin: 0;

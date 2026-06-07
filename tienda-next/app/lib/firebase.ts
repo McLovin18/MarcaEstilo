@@ -2,7 +2,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -15,8 +15,24 @@ const firebaseConfig = {
 };
 
 // Solo inicializa si no hay apps
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+export { app };
 
-export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Habilitar persistencia offline para Firestore
+if (typeof window !== "undefined") {
+  enableIndexedDbPersistence(db, {
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+  }).catch((err) => {
+    if (err.code === "failed-precondition") {
+      console.log("[Firebase] Múltiples pestañas abiertas, persistencia no disponible");
+    } else if (err.code === "unimplemented") {
+      console.log("[Firebase] El navegador no soporta IndexedDB");
+    } else {
+      console.error("[Firebase] Error al habilitar persistencia:", err);
+    }
+  });
+}

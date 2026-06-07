@@ -75,11 +75,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setCarrito(initialGuestCart);
     setCartLoading(false);
     // Wait one tick to make sure the state update has gone through, then set flags
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       setCartReady(true);
       cartLoadedRef.current = true;
       console.log('✅ Cart ready and cartLoadedRef set to true');
-    });
+    }, 100);
   }, []);
 
   // Escuchar cambios en el token (incluye inicio de sesión y refresh de claims)
@@ -191,9 +191,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   // Guardar carrito en localStorage, pero NO durante la carga inicial
   useEffect(() => {
     console.log('💾 saveCart useEffect triggered, cartLoadedRef:', cartLoadedRef.current, 'cart length:', carrito.length);
-    if (!cartLoadedRef.current) {
+    if (!cartLoadedRef.current || !cartReady) {
       // Primera ejecución tras cargar: marcar como listo y no guardar
-      console.log('💾 Not saving cart (initial load)');
+      console.log('💾 Not saving cart (initial load or not ready)');
       return;
     }
     const uid = (user as any)?.uid || null;
@@ -214,19 +214,31 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   // Métodos para carrito
   const addCarrito = (producto) => {
+    console.log('➕ addCarrito called with producto:', producto);
     setCarrito((prev) => {
       const nextKey = getCartItemKey(producto);
+      console.log('➕ addCarrito nextKey:', nextKey, 'prev cart length:', prev.length);
       // Si ya existe, reemplaza la cantidad
       if (prev.find((p) => getCartItemKey(p) === nextKey)) {
-        return prev.map((p) =>
+        console.log('➕ addCarrito: product already exists, updating');
+        const updated = prev.map((p) =>
           getCartItemKey(p) === nextKey ? { ...p, ...producto, cantidad: producto.cantidad || 1 } : p
         );
+        console.log('➕ addCarrito updated cart:', updated);
+        return updated;
       }
-      return [...prev, { ...producto, cantidad: producto.cantidad || 1 }];
+      const newCart = [...prev, { ...producto, cantidad: producto.cantidad || 1 }];
+      console.log('➕ addCarrito: adding new product, new cart:', newCart);
+      return newCart;
     });
   };
   const removeCarrito = (id) => {
-    setCarrito((prev) => prev.filter((p) => getCartItemKey(p) !== id));
+    console.log('➖ removeCarrito called with id:', id);
+    setCarrito((prev) => {
+      const newCart = prev.filter((p) => getCartItemKey(p) !== id);
+      console.log('➖ removeCarrito new cart:', newCart);
+      return newCart;
+    });
   };
   const clearCarrito = () => {
     setCarrito([]);

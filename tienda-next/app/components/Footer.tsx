@@ -61,6 +61,12 @@ const Footer: React.FC = () => {
               <Link href="/politicas/terminos-y-condiciones" className={styles.ftDevLink} onClick={() => trackLinkClick().catch(console.error)}>
                 Términos y condiciones
               </Link>
+              <Link href="/politicas/politicasEnvio" className={styles.ftDevLink} onClick={() => trackLinkClick().catch(console.error)}>
+                Políticas de envío
+              </Link>
+              <Link href="/contactanos" className={styles.ftDevLink} onClick={() => trackLinkClick().catch(console.error)}>
+                Contáctanos
+              </Link>
             </div>
 
             {/* Métodos de pago */}

@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     if (!productos.length) {
       return NextResponse.json({ error: "No hay productos para pagar." }, { status: 400 });
     }
-    if (!cliente?.nombre || !cliente?.email || !cliente?.telefono) {
+    if (!cliente?.nombre || !cliente?.email || !cliente?.telefono || !cliente?.identificacion) {
       return NextResponse.json(
         { error: "Faltan datos del cliente para iniciar el pago." },
         { status: 400 }
@@ -62,11 +62,70 @@ export async function POST(req: NextRequest) {
     const orderRef = db.collection("ordenes").doc();
     const merchantTransactionId = orderRef.id;
 
+    // Obtener IP del cliente
+    const clientIp = req.headers.get("x-forwarded-for") || 
+                     req.headers.get("x-real-ip") || 
+                     "127.0.0.1";
+
+    // Dividir nombre (ej: "Juan Carlos" → givenName="Juan", middleName="Carlos")
+    const nombreParts = cliente.nombreSolo?.split(" ") || cliente.nombre?.split(" ") || [];
+    const givenName = nombreParts[0] || "";
+    const middleName = nombreParts.slice(1).join(" ") || ".";
+
+    // Formatear identificación (solo primeros 10 dígitos)
+    const identificacion = cliente.identificacion.replace(/\D/g, "").slice(0, 10).padStart(10, "0");
+
+    // Calcular impuestos (ejemplo simple: 0% base 0, 12% IVA)
+    const base0 = 0; // Por ahora 0, ajusta según tu lógica
+    const baseImp = totalCliente;
+    const iva = 0; // Por ahora 0, ajusta según tu lógica
+
     const checkoutPayload = new URLSearchParams();
     checkoutPayload.set("entityId", entityId);
     checkoutPayload.set("amount", totalCliente.toFixed(2));
     checkoutPayload.set("currency", currency);
     checkoutPayload.set("paymentType", "DB");
+    checkoutPayload.set("testMode", "EXTERNAL");
+
+    // Datos del cliente
+    checkoutPayload.set("customer.givenName", givenName);
+    checkoutPayload.set("customer.middleName", middleName);
+    checkoutPayload.set("customer.surname", cliente.apellido || "");
+    checkoutPayload.set("customer.ip", clientIp);
+    checkoutPayload.set("customer.merchantCustomerId", userId || "guest");
+    checkoutPayload.set("merchantTransactionId", merchantTransactionId);
+    checkoutPayload.set("customer.email", cliente.email);
+    checkoutPayload.set("customer.identificationDocType", "IDCARD");
+    checkoutPayload.set("customer.identificationDocId", identificacion);
+    checkoutPayload.set("customer.phone", cliente.telefono);
+
+    // Direcciones
+    checkoutPayload.set("billing.street1", `${direccion.direccion}, ${direccion.ciudad}, ${direccion.provincia}`);
+    checkoutPayload.set("billing.country", "EC");
+    checkoutPayload.set("shipping.street1", `${direccion.direccion}, ${direccion.ciudad}, ${direccion.provincia}`);
+    checkoutPayload.set("shipping.country", "EC");
+
+    // Datos de los productos
+    productos.forEach((item: any, index: number) => {
+      const precio = Number(item.precio || item.precioUnitario || item.precioBase || 0);
+      checkoutPayload.set(`cart.items[${index}].name`, item.nombre?.slice(0, 255) || `Producto ${index + 1}`);
+      checkoutPayload.set(`cart.items[${index}].description`, item.nombre?.slice(0, 255) || `Producto ${index + 1}`);
+      checkoutPayload.set(`cart.items[${index}].price`, precio.toFixed(2));
+      checkoutPayload.set(`cart.items[${index}].quantity`, String(item.cantidad || 1));
+    });
+
+    // Parámetros personalizados Datafast (MID, TID, impuestos, etc.)
+    checkoutPayload.set("customParameters[SHOPPER_VAL_BASE0]", base0.toFixed(2));
+    checkoutPayload.set("customParameters[SHOPPER_VAL_BASEIMP]", baseImp.toFixed(2));
+    checkoutPayload.set("customParameters[SHOPPER_VAL_IVA]", iva.toFixed(2));
+    checkoutPayload.set("customParameters[SHOPPER_MID]", process.env.DATAFAST_MID || "1000000406");
+    checkoutPayload.set("customParameters[SHOPPER_TID]", process.env.DATAFAST_TID || "PD100406");
+    checkoutPayload.set("customParameters[SHOPPER_ECI]", "0103910");
+    checkoutPayload.set("customParameters[SHOPPER_PSERV]", "17913101");
+    checkoutPayload.set("customParameters[SHOPPER_VERSIONDF]", "2");
+
+    // Risk parameters
+    checkoutPayload.set("risk.parameters[USER_DATA2]", "MARCAESTILO");
 
     console.log("📤 Sending to Datafast:", {
       url: `${baseUrl}/v1/checkouts`,
@@ -180,6 +239,8 @@ export async function POST(req: NextRequest) {
           testMode: isTestMode || null,
           status: "initialized",
           initializedAt: now,
+          // GUARDAR TODO EL JSON DE RESPUESTA DE DATAFAST
+          fullCheckoutResponse: datafastJson,
         },
       };
 

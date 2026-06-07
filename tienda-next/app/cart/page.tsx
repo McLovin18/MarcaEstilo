@@ -276,7 +276,9 @@ export default function CartPage() {
     const { finalPrice } = calcularPrecioData(p);
     return sum + finalPrice * (p.cantidad || 1);
   }, 0);
-  const total = subtotal;
+  
+  const costoEnvio = 5;
+  const total = subtotal + costoEnvio;
 
   const generateWhatsAppMessage = async (): Promise<string> => {
     const bodegas = await obtenerBodegas();
@@ -292,7 +294,10 @@ export default function CartPage() {
     const headerMsg = "Hola, Me gustaría realizar una compra:";
     const footerMsg = "Quiero confirmar disponibilidad y conocer más detalles. Gracias!";
     
-    const message = `${headerMsg}\n\n${productosText}\n\n???????????????\nTOTAL: $${total.toFixed(2)}\n???????????????\n\n${footerMsg}`;
+    // Para WhatsApp, solo incluir subtotal + envío
+    const totalWhatsApp = subtotal + costoEnvio;
+    
+    const message = `${headerMsg}\n\n${productosText}\n\n???????????????\nTOTAL: $${totalWhatsApp.toFixed(2)}\n???????????????\n\n${footerMsg}`;
     return encodeURIComponent(message);
   };
 
@@ -507,9 +512,12 @@ export default function CartPage() {
                       </div>
                       <div className="flex justify-between text-sm text-slate-500 dark:text-slate-400">
                         <span>Envío</span>
-                        <span className="text-green-600 dark:text-green-400 font-medium">
-                          Gratis
+                        <span className="text-slate-900 dark:text-white font-medium">
+                          ${costoEnvio.toFixed(2)}
                         </span>
+                      </div>
+                      <div className="text-xs text-slate-400 dark:text-slate-500">
+                        Recargo del 7% (solo aplica pago con tarjetas)
                       </div>
                     </div>
                     <div className="border-t border-slate-100 dark:border-rgba(224, 161, 26, 0.1) mt-3 pt-3 flex justify-between font-bold text-base">
@@ -518,6 +526,14 @@ export default function CartPage() {
                         ${total.toFixed(2)}
                       </span>
                     </div>
+                    <a
+                      href="/politicas/politicasEnvio"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block text-xs text-[#E0A11A] hover:underline mt-2"
+                    >
+                      Ver políticas de envío
+                    </a>
                   </div>
 
                   <div>

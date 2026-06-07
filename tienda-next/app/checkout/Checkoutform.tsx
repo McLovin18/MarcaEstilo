@@ -28,6 +28,7 @@ interface CheckoutFormProps {
 interface DatosCliente {
   nombre: string;
   apellido: string;
+  identificacion: string;
   email: string;
   telefono: string;
   provincia: string;
@@ -56,10 +57,12 @@ export default function CheckoutForm({ items, total }: CheckoutFormProps) {
   const [errores, setErrores] = useState<Partial<DatosCliente>>({});
   const [checkoutError, setCheckoutError] = useState("");
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [shippingPolicyAccepted, setShippingPolicyAccepted] = useState(false);
 
   const [datos, setDatos] = useState<DatosCliente>({
     nombre: "",
     apellido: "",
+    identificacion: "",
     email: "",
     telefono: "",
     provincia: "Guayas",
@@ -82,6 +85,11 @@ export default function CheckoutForm({ items, total }: CheckoutFormProps) {
     const nuevosErrores: Partial<DatosCliente> = {};
     if (!datos.nombre.trim()) nuevosErrores.nombre = "Campo requerido";
     if (!datos.apellido.trim()) nuevosErrores.apellido = "Campo requerido";
+    if (!datos.identificacion.trim()) nuevosErrores.identificacion = "Campo requerido";
+    // Valida que sea cédula (10 dígitos) o RUC (13 dígitos)
+    if (!/^\d{10}$|^\d{13}$/.test(datos.identificacion)) {
+      nuevosErrores.identificacion = "Cédula (10 dígitos) o RUC (13 dígitos)";
+    }
     if (!datos.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) nuevosErrores.email = "Email inválido";
     if (!datos.telefono.match(/^0\d{9}$/)) nuevosErrores.telefono = "Ej: 0999999999";
     if (!datos.ciudad.trim()) nuevosErrores.ciudad = "Campo requerido";
@@ -96,6 +104,10 @@ export default function CheckoutForm({ items, total }: CheckoutFormProps) {
       setCheckoutError("Debes aceptar la Política de Privacidad y los Términos para continuar.");
       return;
     }
+    if (!shippingPolicyAccepted) {
+      setCheckoutError("Debes aceptar las Políticas de Envío para continuar.");
+      return;
+    }
 
     setCheckoutError("");
     setCargando(true);
@@ -108,6 +120,7 @@ export default function CheckoutForm({ items, total }: CheckoutFormProps) {
             nombre: `${datos.nombre} ${datos.apellido}`.trim(),
             nombreSolo: datos.nombre.trim(),
             apellido: datos.apellido.trim(),
+            identificacion: datos.identificacion.trim(),
             email: datos.email.trim(),
             telefono: datos.telefono.trim(),
           },
@@ -124,6 +137,8 @@ export default function CheckoutForm({ items, total }: CheckoutFormProps) {
             selectedColor: item.selectedColor,
             selectedVariations: item.selectedVariations,
             variationAttributeIds: item.variationAttributeIds,
+            nombre: item.nombre,
+            precio: item.precioUnitario || item.precioBase || item.precio,
           })),
           total,
         }),
@@ -200,6 +215,10 @@ export default function CheckoutForm({ items, total }: CheckoutFormProps) {
             <div className="form-grid">
               <Field label="Nombre" name="nombre" value={datos.nombre} onChange={handleChange} error={errores.nombre} placeholder="Juan" />
               <Field label="Apellido" name="apellido" value={datos.apellido} onChange={handleChange} error={errores.apellido} placeholder="Pérez" />
+            </div>
+
+            <div className="form-grid">
+              <Field label="Identificación (Cédula/RUC)" name="identificacion" value={datos.identificacion} onChange={handleChange} error={errores.identificacion} placeholder="0999999999" />
             </div>
 
             <div className="form-grid">
@@ -285,7 +304,18 @@ export default function CheckoutForm({ items, total }: CheckoutFormProps) {
                       </span>
                     </label>
 
-                    <button className="btn-primary" onClick={handleProcederAlPago} disabled={cargando || !privacyAccepted}>
+                    <label className="privacy-check">
+                      <input
+                        type="checkbox"
+                        checked={shippingPolicyAccepted}
+                        onChange={(e) => setShippingPolicyAccepted(e.target.checked)}
+                      />
+                      <span>
+                        Confirmo que he leído y acepto las <a href="/politicas/politicasEnvio" target="_blank" rel="noreferrer">Políticas de Envío</a>.
+                      </span>
+                    </label>
+
+                    <button className="btn-primary" onClick={handleProcederAlPago} disabled={cargando || !privacyAccepted || !shippingPolicyAccepted}>
               {cargando ? (
                 <>
                   <span className="spinner" />
