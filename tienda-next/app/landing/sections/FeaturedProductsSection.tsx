@@ -57,16 +57,6 @@ export default function FeaturedProductsSection({
               </div>
             ))}
         </div>
-
-        {/* Botón Ver todos los productos */}
-        <div className="flex justify-center mt-7 md:mt-8 w-full">
-          <Link
-            href="/productos"
-            className="mt-2 inline-flex items-center gap-2 bg-white border border-slate-300 text-slate-900 hover:border-black/60 hover:shadow-md font-semibold px-6 py-2.5 rounded-xl transition-colors shadow"
-          >
-            Ver todos los productos
-          </Link>
-        </div>
       </div>
     </section>
   );

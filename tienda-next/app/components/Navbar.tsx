@@ -241,10 +241,10 @@ export const Navbar = () => {
     : "/products-by-category";
 
   const links = [
-    { href: "/", label: "Home" },
+    { href: "/", label: "Inicio" },
     { href: "/nueva-coleccion", label: "Nueva coleccion" },
     { href: "/productos", label: "Ver Catalogo" },
-    { href: "/ofertas", label: "Oferta" },
+    { href: "/ofertas", label: "Descuentos" },
     { href: "/blogs", label: "Blogs" },
   ];
 

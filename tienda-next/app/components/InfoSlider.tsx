@@ -86,14 +86,14 @@ export default function InfoSlider({ items = [], intervalMs = 5000 }: InfoSlider
           } as React.CSSProperties}
         >
           {typeof items[index] === "string" ? (
-            <span className="text-base sm:text-lg md:text-xl lg:text-xl wrap-break-word">{items[index]}</span>
+            <span className="text-base sm:text-xs md:text-xs lg:text-xs wrap-break-word">{items[index]}</span>
           ) : (
             (() => {
               const it = items[index] as { text: string; href?: string };
               return it.href ? (
                 <a
                   href={it.href}
-                  className="text-base sm:text-lg md:text-xl lg:text-xl text-black hover:underline wrap-break-word"
+                  className="text-base sm:text-lg md:text-xl lg:text-sm text-black hover:underline wrap-break-word"
                   style={{ display: "inline-block" }}
                 >
                   {it.text}
