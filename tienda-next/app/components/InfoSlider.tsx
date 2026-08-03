@@ -57,7 +57,7 @@ export default function InfoSlider({ items = [], intervalMs = 5000 }: InfoSlider
 
   return (
     <div
-      className="w-full text-center py-3 font-medium bg-white text-body relative"
+      className="hidden md:block w-full text-center py-3 font-medium bg-white text-body relative"
       onMouseEnter={() => { pauseRef.current = true; setIsPaused(true); }}
       onMouseLeave={() => { pauseRef.current = false; setIsPaused(false); }}
       aria-live="polite"

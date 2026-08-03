@@ -435,7 +435,6 @@ const innerStyle: React.CSSProperties = ((): React.CSSProperties => {
     };
   }
   return {
-    borderRadius: hasGallery ? "0" : borderRadius,
     aspectRatio: hasGallery ? "2400 / 1800" : "2400 / 1000",
     overflow: "hidden",
     position: "relative",
@@ -596,7 +595,7 @@ const innerStyle: React.CSSProperties = ((): React.CSSProperties => {
 ) : hasVideo ? (
   <video
     className="w-full h-full object-cover block"
-    style={{ borderRadius, display: "block" }}
+    style={{display: "block" }}
     autoPlay
     muted
     loop
