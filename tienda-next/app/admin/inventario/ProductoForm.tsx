@@ -21,7 +21,7 @@ type Producto = {
   precio: string;
   descuento?: number;
   categoria: string;
-  subcategoria: string;
+  subcategoria?: string;
   subsubcategoria?: string;
   marca?: string;
   imagenes: (string | File)[];
@@ -177,9 +177,9 @@ export default function ProductoForm({ initialData = null, onSave, onCancel }: P
     subcategorias: cat.subcategorias || []
   }));
   const subcategoriasOptions = categorias.find((c: any) => c.value === categoria)?.subcategorias || [];
-  const subcategoriaRequired = subcategoriasOptions.length > 0;
+  const subcategoriaRequired = false;
   const subsubcategoriasOptions = subcategoriasOptions.find((s: any) => s.id === subcategoria)?.subcategorias || [];
-  const subsubcategoriaRequired = subsubcategoriasOptions.length > 0;
+  const subsubcategoriaRequired = false;
 
   // Manejo de imágenes (por URL o archivo)
   function handleAddImagen(e: React.ChangeEvent<HTMLInputElement>) {

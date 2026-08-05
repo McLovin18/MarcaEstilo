@@ -30,7 +30,7 @@ export async function obtenerBodegas(): Promise<Bodega[]> {
   } as Bodega));
 }
 
-export async function crearBodega(nombre: string, tiempoEntrega: number = 72): Promise<void> {
+export async function crearBodega(nombre: string, tiempoEntrega: number = 24): Promise<void> {
   const id = nombre.toLowerCase().replace(/\s+/g, "_");
   await setDoc(doc(db, COLLECTION, id), {
     nombre,
@@ -57,7 +57,7 @@ export async function crearBodegaDefault(): Promise<void> {
     const existeDefault = bodegas.some(b => b.id === "technothings");
     
     if (!existeDefault) {
-      await crearBodega("Technothings", 12);
+      await crearBodega("Technothings", 24);
     }
   } catch (error) {
     console.error("Error al crear bodega default:", error);

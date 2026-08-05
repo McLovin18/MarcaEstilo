@@ -140,7 +140,7 @@ export default function VariationsAdminPanel() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Variaciones (Atributos)</h2>
         <div className="flex items-center gap-2">
-          <input value={newAttrName} onChange={e => setNewAttrName(e.target.value)} placeholder="Nueva variable (ej: Color)" className="px-3 py-2 border rounded" />
+          <input value={newAttrName} onChange={e => setNewAttrName(e.target.value)} placeholder="Nueva variable (ej: Color)" className="px-3 py-2 border rounded text-slate-900 dark:text-white bg-white dark:bg-slate-700" />
           <button onClick={handleCreate} className="px-3 py-2 bg-rose-600 text-white rounded">Crear variable</button>
           <button onClick={refresh} className="ml-2 px-3 py-2 border rounded">Actualizar</button>
         </div>
@@ -162,7 +162,7 @@ export default function VariationsAdminPanel() {
                     <div key={v} className="px-3 py-1 rounded-full bg-slate-100 text-sm flex items-center gap-2">
                       {editingValue[attr.id] === v ? (
                         <>
-                          <input className="px-2 py-1 text-sm" value={editingValue[attr.id] || ""} onChange={e => setEditingValue({ ...editingValue, [attr.id]: e.target.value })} />
+                          <input className="px-2 py-1 text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-700" value={editingValue[attr.id] || ""} onChange={e => setEditingValue({ ...editingValue, [attr.id]: e.target.value })} />
                           <button className="text-xs text-emerald-600" onClick={() => saveEditValue(attr.id, v)}>Guardar</button>
                           <button className="text-xs text-slate-600" onClick={() => cancelEditValue(attr.id)}>Cancelar</button>
                         </>
@@ -177,7 +177,7 @@ export default function VariationsAdminPanel() {
                   )) : null}
                 </div>
                 <div className="mt-3 flex items-center gap-2">
-                  <input placeholder="Nuevo valor" value={newValuesMap[attr.id] || ""} onChange={e => onNewValueChange(attr.id, e.target.value)} className="px-2 py-1 border rounded text-sm" />
+                  <input placeholder="Nuevo valor" value={newValuesMap[attr.id] || ""} onChange={e => onNewValueChange(attr.id, e.target.value)} className="px-2 py-1 border rounded text-sm text-slate-900 dark:text-white bg-white dark:bg-slate-700" />
                   <button className="px-3 py-1 bg-rose-500 text-white rounded text-sm" onClick={() => handleAddValue(attr.id, attr.nombre)}>Agregar</button>
                 </div>
               </div>
