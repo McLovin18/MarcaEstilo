@@ -10,7 +10,7 @@ import { useToast } from "../context/ToastContext";
 import { getCatalogPricing } from "../lib/pricing";
 
 const cardStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Barlow:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Inter:wght@400;500;600;700&display=swap');
 
   @keyframes pc-fadeIn {
     from { opacity: 0; transform: translateY(12px); }
@@ -79,9 +79,9 @@ const cardStyles = `
     z-index: 10;
     background: #e63946;
     color: #fff;
-    font-family: 'Barlow', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.06em;
     padding: 3px 8px;
     border-radius: 2px;
@@ -99,7 +99,7 @@ const cardStyles = `
   }
 
   .pc-no-stock span {
-    font-family: 'Barlow', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.12em;
@@ -161,27 +161,24 @@ const cardStyles = `
     }
   }
 
-  /* nombre — cursiva serif como en la imagen */
+  /* nombre — Cormorant Garamond Semibold sin cursiva */
   .pc-name {
     font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
+    font-style: normal;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 16px;
     line-height: 1.25;
     color: #ffffff;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    text-decoration-thickness: 1px;
-    text-decoration-color: rgba(255,255,255,0.35);
+    text-decoration: none;
   }
 
   @media (min-width: 640px) {
     .pc-name {
-      font-size: 15px;
+      font-size: 19px;
     }
   }
 
@@ -195,8 +192,8 @@ const cardStyles = `
   }
 
   .pc-price-final {
-    font-family: 'Barlow', sans-serif;
-    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
     font-size: 13px;
     color: #ffffff;
     letter-spacing: 0.02em;
@@ -209,7 +206,7 @@ const cardStyles = `
   }
 
   .pc-price-old {
-    font-family: 'Barlow', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-weight: 400;
     font-size: 11px;
     color: rgba(255,255,255,0.35);
@@ -239,7 +236,7 @@ const cardStyles = `
     border: 1px solid rgba(255,255,255,0.2);
     background: transparent;
     color: #fff;
-    font-family: 'Barlow', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.08em;
@@ -423,7 +420,7 @@ function ProductoCard({
               alt={producto.nombre}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-contain"
+              className="object-cover"
               style={{
                 opacity: 0,
                 transition: "opacity 0.4s ease",

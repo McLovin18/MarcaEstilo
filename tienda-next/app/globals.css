@@ -9,11 +9,11 @@
   --text: #0f172a;
   --textSecondary: #64748b;
   --border: #e2e8f0;
-  --font-body-family: Helvetica, Arial, sans-serif;
+  --font-body-family: var(--font-inter), "Inter", sans-serif;
   --font-body-style: normal;
-  --font-body-weight: 700;
-  --font-body-weight-bold: 1000;
-  --font-heading-family: var(--font-source-serif-4), "Source Serif 4", serif;
+  --font-body-weight: 400;
+  --font-body-weight-bold: 600;
+  --font-heading-family: var(--font-cormorant-garamond), "Cormorant Garamond", serif;
   --font-heading-style: italic;
   --font-heading-weight: 400;
   --font-body-scale: 1.0;
