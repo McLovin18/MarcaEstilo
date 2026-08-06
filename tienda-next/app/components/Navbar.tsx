@@ -264,9 +264,6 @@ export const Navbar = () => {
 
   return (
     <>
-      {/* ══════════════════ INFORMATIVE SLIDER ══════════════════ */}
-      <InfoSlider items={infoSliderItems} />
-
       {/* ══════════════════ NAVBAR ══════════════════ */}
       <nav
         className="sticky top-0 z-40 border-b py-3 shadow-sm backdrop-blur-md"
