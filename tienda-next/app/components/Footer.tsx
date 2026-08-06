@@ -21,7 +21,7 @@ const IconTikTok = () => (
 
 const socialLinks = [
   { href: "https://www.instagram.com/marcaestilo593/", label: "Instagram", Icon: IconInstagram },
-  { href: "https://www.tiktok.com/@marcaestilomen", label: "TikTok", Icon: IconTikTok },
+  { href: "https://www.tiktok.com/@marcaestilomen?_r=1&_t=ZS-98fSNEl9TnQ", label: "TikTok", Icon: IconTikTok },
 ];
 
 const Footer: React.FC = () => {
