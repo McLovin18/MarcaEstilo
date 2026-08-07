@@ -2,6 +2,7 @@
 import BottomBarPublic from "../components/BottomBarPublic";
 import { useUser } from "../context/UserContext";
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import ProductoCard from "../components/ProductoCard";
 import { Loading3DIcon } from "../components/Loading3DIcon";
@@ -35,6 +36,15 @@ export default function SearchResultsPage() {
   const [isMobile, setIsMobile] = useState(false);
   const categoriesScrollRef = useRef<HTMLDivElement>(null);
 
+  // Posición calculada del dropdown móvil (relativa al viewport, vía portal)
+  const [dropdownPos, setDropdownPos] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
+  const catButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const mobileDropdownRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -43,6 +53,28 @@ export default function SearchResultsPage() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Cierra el dropdown móvil solo si el scroll/resize ocurre FUERA del propio dropdown
+  useEffect(() => {
+    if (!isMobile || !hoveredCatId) return;
+    const close = (e: Event) => {
+      if (
+        mobileDropdownRef.current &&
+        e.target instanceof Node &&
+        mobileDropdownRef.current.contains(e.target)
+      ) {
+        return;
+      }
+      setHoveredCatId(null);
+      setDropdownPos(null);
+    };
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [isMobile, hoveredCatId]);
 
   // 🔥 Cargar productos
   useEffect(() => {
@@ -158,6 +190,37 @@ export default function SearchResultsPage() {
     </div>
   ), [search]);
 
+  // Abre el dropdown móvil calculando la posición real del botón en pantalla
+  const openMobileSubcats = useCallback((catId: string) => {
+    if (hoveredCatId === catId) {
+      setHoveredCatId(null);
+      setDropdownPos(null);
+      return;
+    }
+    const btn = catButtonRefs.current[catId];
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      const dropdownWidth = 220;
+      const left = Math.min(
+        Math.max(rect.left, 16),
+        window.innerWidth - dropdownWidth - 16
+      );
+      setDropdownPos({
+        top: rect.bottom + 6,
+        left,
+        width: dropdownWidth,
+      });
+    }
+    setHoveredCatId(catId);
+  }, [hoveredCatId]);
+
+  const closeMobileSubcats = useCallback(() => {
+    setHoveredCatId(null);
+    setDropdownPos(null);
+  }, []);
+
+  const hoveredCat = categorias.find((c) => c.id === hoveredCatId);
+
   return (
     <div className=" min-h-screen flex flex-col bg-black dark:bg-black">
       <BottomBarPublic/>
@@ -169,8 +232,8 @@ export default function SearchResultsPage() {
 
         {/*Buscador de productos */}
         {categorias.length > 0 && (
-          <div className="mb-6" ref={categoriesScrollRef}>
-            <div className="overflow-visible pb-2">
+          <div className="mb-6 relative z-50">
+            <div className={`${isMobile && !hoveredCatId ? 'overflow-x-auto' : ''} ${isMobile && hoveredCatId ? 'overflow-hidden' : ''} pb-2`}>
               <div className="flex gap-2 min-w-max">
                 <button
                   onClick={() => {
@@ -192,9 +255,12 @@ export default function SearchResultsPage() {
                     onMouseLeave={() => !isMobile && setHoveredCatId(null)}
                   >
                     <button
+                      ref={(el) => {
+                        catButtonRefs.current[cat.id] = el;
+                      }}
                       onClick={() => {
                         if (isMobile && cat.subcategorias && cat.subcategorias.length > 0) {
-                          setHoveredCatId(hoveredCatId === cat.id ? null : cat.id);
+                          openMobileSubcats(cat.id);
                         } else {
                           window.location.href = `/search-results?query=${encodeURIComponent(queryParam)}&cat=${encodeURIComponent(cat.id)}`;
                         }
@@ -211,9 +277,9 @@ export default function SearchResultsPage() {
                         <span className="ml-1 text-xs">▼</span>
                       )}
                     </button>
-                    {/* Subcategorías dropdown */}
-                    {cat.subcategorias && cat.subcategorias.length > 0 && hoveredCatId === cat.id && (
-                      <div className="absolute top-full left-0 mt-0 bg-white border border-slate-200 rounded-xl shadow-xl z-[9999] min-w-[200px] max-h-[300px] overflow-y-auto py-2">
+                    {/* Dropdown desktop: se mantiene igual (funciona bien) */}
+                    {!isMobile && cat.subcategorias && cat.subcategorias.length > 0 && hoveredCatId === cat.id && (
+                      <div className="absolute top-full mt-0 bg-white border border-slate-200 rounded-xl shadow-xl z-[99999] min-w-[200px] max-h-[300px] overflow-y-auto py-2">
                         {cat.subcategorias.map((sub: any) => (
                           <button
                             key={sub.id}
@@ -239,6 +305,47 @@ export default function SearchResultsPage() {
             </div>
           </div>
         )}
+
+        {/* Dropdown móvil: renderizado vía portal en document.body, posicionado con coordenadas reales del botón. Así escapa del scroll horizontal del carrusel de categorías y no se cierra al hacer scroll dentro de sí mismo. */}
+        {isMobile && hoveredCatId && dropdownPos && hoveredCat?.subcategorias?.length > 0 &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <>
+              <div
+                className="fixed inset-0 z-[99998]"
+                onClick={closeMobileSubcats}
+              />
+              <div
+                ref={mobileDropdownRef}
+                style={{
+                  position: "fixed",
+                  top: dropdownPos.top,
+                  left: dropdownPos.left,
+                  width: dropdownPos.width,
+                }}
+                className="bg-white border border-slate-200 rounded-xl shadow-xl z-[99999] max-h-[300px] overflow-y-auto py-2"
+              >
+                {hoveredCat.subcategorias.map((sub: any) => (
+                  <button
+                    key={sub.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.location.href = `/search-results?query=${encodeURIComponent(queryParam)}&cat=${encodeURIComponent(hoveredCat.id)}&sub=${encodeURIComponent(sub.id)}`;
+                      closeMobileSubcats();
+                    }}
+                    className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                      searchParams?.get("sub") === sub.id
+                        ? "bg-black text-white"
+                        : "text-slate-900 hover:bg-slate-100"
+                    }`}
+                  >
+                    {sub.nombre}
+                  </button>
+                ))}
+              </div>
+            </>,
+            document.body
+          )}
 
             {loading ? (
               <div className="flex flex-col items-center justify-center py-24">
@@ -292,4 +399,3 @@ export default function SearchResultsPage() {
     </div>
   );
 }
-

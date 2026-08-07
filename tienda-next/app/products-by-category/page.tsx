@@ -404,8 +404,8 @@ export default function ProductsByCategoryPage() {
 
         {/* ── Categorías Filter - Scroll Horizontal ────────────── */}
         {categorias.length > 0 && (
-          <div className="mb-6" ref={categoriesScrollRef}>
-            <div className="overflow-visible pb-2">
+          <div className="mb-6 relative z-50">
+            <div className={`${isMobile && !hoveredCatId ? 'overflow-x-auto' : ''} ${isMobile && hoveredCatId ? 'overflow-hidden' : ''} pb-2`}>
               <div className="flex gap-2 min-w-max">
                 <button
                   type="button"
@@ -448,7 +448,7 @@ export default function ProductsByCategoryPage() {
                     </button>
                     {/* Subcategorías dropdown */}
                     {cat.subcategorias && cat.subcategorias.length > 0 && hoveredCatId === cat.id && (
-                      <div className="absolute top-full left-0 mt-0 bg-white border border-slate-200 rounded-xl shadow-xl z-[9999] min-w-[200px] max-h-[300px] overflow-y-auto py-2">
+                      <div className={`${isMobile ? 'fixed left-0 right-0 mx-4' : 'absolute'} top-full mt-0 bg-white border border-slate-200 rounded-xl shadow-xl z-[99999] min-w-[200px] max-h-[300px] overflow-y-auto py-2`}>
                         {cat.subcategorias.map((sub: any) => (
                           <button
                             key={sub.id}
