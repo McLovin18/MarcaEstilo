@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import ProductoCard from "../components/ProductoCard";
 import { obtenerProductos } from "../lib/productos-db";
@@ -19,6 +19,17 @@ export default function OfertasPage() {
   const [loading, setLoading] = useState(true);
   const [categorias, setCategorias] = useState<any[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [hoveredCatId, setHoveredCatId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -84,9 +95,10 @@ export default function OfertasPage() {
           </Link>
         </div>
         
-        <div className="mb-8 overflow-x-auto">
-          <div className="flex gap-2 min-w-max">
-            
+        <div className="mb-8">
+          <div className="overflow-visible">
+            <div className="flex gap-2 min-w-max">
+
             <button
               onClick={() => setSelectedCategoryId("")}
               className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
@@ -99,19 +111,53 @@ export default function OfertasPage() {
             </button>
 
             {categorias.map((cat) => (
-              <button
+              <div
                 key={cat.id}
-                onClick={() => setSelectedCategoryId(cat.id)}
-                className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
-                  selectedCategoryId === cat.id
-                    ? "shadow-sm scale-105 bg-black text-white border border-black"
-                    : "bg-white text-slate-900 border border-slate-300 hover:border-black/60 hover:shadow-sm"
-                }`}
+                className="relative"
+                onMouseEnter={() => !isMobile && setHoveredCatId(cat.id)}
+                onMouseLeave={() => !isMobile && setHoveredCatId(null)}
               >
-                {cat.nombre}
-              </button>
+                <button
+                  onClick={() => {
+                    if (isMobile && cat.subcategorias && cat.subcategorias.length > 0) {
+                      setHoveredCatId(hoveredCatId === cat.id ? null : cat.id);
+                    } else {
+                      setSelectedCategoryId(cat.id);
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-full whitespace-nowrap font-medium text-sm transition-all ${
+                    selectedCategoryId === cat.id
+                      ? "shadow-sm scale-105 bg-black text-white border border-black"
+                      : "bg-white text-slate-900 border border-slate-300 hover:border-black/60 hover:shadow-sm"
+                  }`}
+                >
+                  {cat.nombre}
+                  {cat.subcategorias && cat.subcategorias.length > 0 && (
+                    <span className="ml-1 text-xs">▼</span>
+                  )}
+                </button>
+                {/* Subcategorías dropdown */}
+                {cat.subcategorias && cat.subcategorias.length > 0 && hoveredCatId === cat.id && (
+                  <div className="absolute top-full left-0 mt-0 bg-white border border-slate-200 rounded-xl shadow-xl z-[9999] min-w-[200px] max-h-[300px] overflow-y-auto py-2">
+                    {cat.subcategorias.map((sub: any) => (
+                      <button
+                        key={sub.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedCategoryId(cat.id);
+                          setHoveredCatId(null);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm transition-colors text-slate-900 hover:bg-slate-100"
+                      >
+                        {sub.nombre}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
+        </div>
         </div>
 
 
