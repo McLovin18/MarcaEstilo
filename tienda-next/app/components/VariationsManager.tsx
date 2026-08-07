@@ -35,7 +35,8 @@ export default function VariationsManager({
     const formatted: Record<string, string[]> = {};
 
     variationAttributeIds.forEach((targetAttrId) => {
-      const values = new Set<string>();
+      const values: string[] = [];
+      const seen = new Set<string>();
 
       stockVariants.forEach((variant) => {
         if (variant.cantidad <= 0) {
@@ -55,12 +56,13 @@ export default function VariationsManager({
           return attrs[attrId] === selectedVariations[attrId];
         });
 
-        if (isCompatibleWithOtherSelections && attrs[targetAttrId]) {
-          values.add(attrs[targetAttrId]);
+        if (isCompatibleWithOtherSelections && attrs[targetAttrId] && !seen.has(attrs[targetAttrId])) {
+          values.push(attrs[targetAttrId]);
+          seen.add(attrs[targetAttrId]);
         }
       });
 
-      formatted[targetAttrId] = Array.from(values).sort();
+      formatted[targetAttrId] = values;
     });
 
     return formatted;
