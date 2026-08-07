@@ -303,7 +303,7 @@ export const Navbar = () => {
               className="flex items-center gap-2 shrink-0 text-white pointer-events-auto"
             >
 
-              <span className="font-heading tracking-tight whitespace-nowrap text-xl sm:text-3xl">
+              <span className="font-heading tracking-tight whitespace-nowrap text-3xl sm:text-4xl">
                 Marca Estilo
               </span>
             </a>
