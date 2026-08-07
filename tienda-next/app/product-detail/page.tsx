@@ -664,19 +664,6 @@ export default function ProductDetailPage({ params }) {
               </ul>
             )}
 
-            {/* Banner login */}
-            {!isLogged && (
-              <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-white/25 bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.04] rounded-xl px-3 py-2.5">
-                <span className="material-icons-round text-sm flex-shrink-0">info</span>
-                <span>
-                  Mejor experiencia al{" "}
-                  <a href="/login?tab=register" className="underline underline-offset-2 text-slate-600 dark:text-white/40 hover:text-slate-900 dark:hover:text-white/70 transition-colors">
-                    iniciar sesión
-                  </a>
-                </span>
-              </div>
-            )}
-
           </div>
 
         </div>
