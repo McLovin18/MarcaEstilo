@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import BottomBarPublic from "../components/BottomBarPublic";
 
 const Contacto: React.FC = () => {
   const [copied, setCopied] = useState(false);
@@ -30,6 +31,7 @@ const Contacto: React.FC = () => {
 
   return (
     <>
+      <BottomBarPublic />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@1,300;1,400&display=swap');
 

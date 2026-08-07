@@ -6,6 +6,7 @@ import { redirectIfLoggedIn } from "../../lib/firebase-auth";
 import { getBlogById } from "../../lib/blogs-db";
 import type { Blog } from "../../lib/blog-types";
 import BlogPreview from "../BlogPreview";
+import BottomBarPublic from "../../components/BottomBarPublic";
 
 export default function BlogDetailPage() {
   const router = useRouter();
@@ -33,6 +34,7 @@ export default function BlogDetailPage() {
       }}
       className="min-h-screen flex flex-col"
     >
+      <BottomBarPublic />
       <main className="max-w-3xl mx-auto px-4 py-8 lg:px-6 flex-1 w-full">
         {loading ? (
           <div className="text-center py-16">

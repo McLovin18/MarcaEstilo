@@ -225,7 +225,7 @@ export default function SearchResultsPage() {
     <div className=" min-h-screen flex flex-col bg-black dark:bg-black">
       <BottomBarPublic/>
 
-      <main className="max-w-350 mx-auto px-3 sm:px-5 py-8 flex-1">
+      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8 flex-1">
         <div className="mb-6">
           {FilterPanel}
         </div>
@@ -355,7 +355,7 @@ export default function SearchResultsPage() {
               <p className="text-slate-700 dark:text-white/50">No hay resultados</p>
             ) : (
           <>
-              <div className="grid grid-cols-2 gap-2 lg:grid-cols-5 animate-in fade-in duration-700">              {paginatedProducts.map((p: any) => (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 animate-in fade-in duration-700">              {paginatedProducts.map((p: any) => (
                 <ProductoCard
                   key={p.id}
                   producto={p}

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import BottomBarPublic from "../../components/BottomBarPublic";
 
 const sections = [
   {
@@ -107,6 +108,7 @@ const TerminosCondiciones: React.FC = () => {
 
   return (
     <>
+      <BottomBarPublic />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&display=swap');
 

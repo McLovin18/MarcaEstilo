@@ -321,45 +321,55 @@ export const Navbar = () => {
                   <span className="material-icons-round text-2xl">search</span>
                 </button>
               ) : (
-                <form
-                  className="absolute right-0 top-1/2 transform -translate-y-1/2 w-[min(75vw,300px)] md:w-[min(92vw,420px)] rounded-2xl border shadow-2xl z-50 overflow-hidden text-body"
-                  style={{ background: "#ffffff", borderColor: "rgba(17,24,39,0.12)" }}
-                  onSubmit={(e) => { e.preventDefault(); handleSearch(); }}
-                >
-                  <div
-                    className="flex items-center gap-2 px-3 py-2 border-b"
-                    style={{ background: "#f8fafc", borderColor: "rgba(17,24,39,0.08)" }}
+                // Wrapper centrado verticalmente: SOLO contiene el buscador (altura fija).
+                // Las sugerencias van fuera de este cálculo de altura, ancladas por top-full,
+                // así el buscador nunca se mueve al aparecer/desaparecer resultados.
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-[min(75vw,300px)] md:w-[min(92vw,420px)]">
+                  <form
+                    className="rounded-2xl border shadow-2xl z-50 overflow-hidden text-body"
+                    style={{ background: "#ffffff", borderColor: "rgba(17,24,39,0.12)" }}
+                    onSubmit={(e) => { e.preventDefault(); handleSearch(); }}
                   >
-                    <span className="material-icons-round text-lg" style={{ color: "#64748b" }}>
-                      search
-                    </span>
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      placeholder="Buscar un producto..."
-                      className="bg-transparent outline-none text-sm flex-1 text-body"
-                      style={{ color: "#0f172a", minWidth: 140 }}
-                      autoComplete="off"
-                      value={searchValue}
-                      onChange={(e) => setSearchValue(e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearchValue("");
-                        setSuggestions([]);
-                        setSearchOpen(false);
-                      }}
-                      className="rounded-full p-1 transition-colors"
-                      style={{ color: "#64748b" }}
-                      aria-label="Cerrar búsqueda"
+                    <div
+                      className="flex items-center gap-2 px-3 py-2"
+                      style={{ background: "#f8fafc" }}
                     >
-                      <span className="material-icons-round text-base">close</span>
-                    </button>
-                  </div>
+                      <span className="material-icons-round text-lg" style={{ color: "#64748b" }}>
+                        search
+                      </span>
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        placeholder="Buscar un producto..."
+                        className="bg-transparent outline-none text-sm flex-1 text-body"
+                        style={{ color: "#0f172a", minWidth: 140 }}
+                        autoComplete="off"
+                        value={searchValue}
+                        onChange={(e) => setSearchValue(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchValue("");
+                          setSuggestions([]);
+                          setSearchOpen(false);
+                        }}
+                        className="rounded-full p-1 transition-colors"
+                        style={{ color: "#64748b" }}
+                        aria-label="Cerrar búsqueda"
+                      >
+                        <span className="material-icons-round text-base">close</span>
+                      </button>
+                    </div>
+                  </form>
 
+                  {/* Sugerencias: posicionadas fuera del form, ancladas debajo del buscador. 
+                      No afecta el centrado vertical del wrapper padre porque es position:absolute. */}
                   {searchValue.trim() && (
-                    <div className="max-h-75 overflow-y-auto">
+                    <div
+                      className="absolute left-0 right-0 top-full mt-2 rounded-2xl border shadow-2xl overflow-hidden text-body max-h-75 overflow-y-auto"
+                      style={{ background: "#ffffff", borderColor: "rgba(17,24,39,0.12)" }}
+                    >
                       {searchLoading ? (
                         <div className="p-4 text-center text-sm" style={{ color: "#64748b" }}>
                           Buscando...
@@ -403,7 +413,7 @@ export const Navbar = () => {
                       )}
                     </div>
                   )}
-                </form>
+                </div>
               )}
             </div>
             <div className="relative flex flex-col items-center">
@@ -597,7 +607,7 @@ export const Navbar = () => {
       {/* ══════════════════ MOBILE DRAWER ══════════════════ */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm mb-12"
+          className="fixed inset-0 z-[100000] bg-black/50 backdrop-blur-sm mb-12"
           onClick={() => setMobileOpen(false)}
         >
           <div
@@ -767,4 +777,3 @@ export const Navbar = () => {
 };
 
 export default Navbar;
-

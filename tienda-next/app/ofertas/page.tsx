@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import ProductoCard from "../components/ProductoCard";
+import BottomBarPublic from "../components/BottomBarPublic";
 import { obtenerProductos } from "../lib/productos-db";
 import { getCatalogPricing } from "../lib/pricing";
 import type { Producto } from "../lib/productos-db";
@@ -140,6 +141,7 @@ export default function OfertasPage() {
 
   return (
     <div className="min-h-screen bg-black bg-linear-to-b dark:from-black dark:via-slate-950 dark:to-black text-slate-900 dark:text-white">
+      <BottomBarPublic />
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
