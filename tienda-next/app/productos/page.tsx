@@ -1,4 +1,15 @@
-Subcategoria,
+"use client";
+import { useRouter, useSearchParams } from "next/navigation";
+import ProductoCard from "../components/ProductoCard";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import type { Producto } from "../lib/productos-db";
+import { obtenerProductos } from "../lib/productos-db";
+import {
+  mapCategorySnapshot,
+  sortCategoriasByOrder,
+  sameCategoryId,
+  productMatchesCategoria,
+  productMatchesSubcategoria,
   productMatchesSubsubcategoria,
 } from "../lib/categorias-db";
 import { collection, query, onSnapshot } from "firebase/firestore";
@@ -220,16 +231,16 @@ export default function ProductosPage() {
     precioMax,
     orden,
   ]);
+const getProductsPerPage = () => {
+  if (typeof window !== "undefined") {
+    if (window.innerWidth < 640) return 10;
+    if (window.innerWidth >= 1024) return 15;
+    if (window.innerWidth >= 768) return 9;
+    if (window.innerWidth >= 640) return 6;
+  }
+  return 10;
+};
 
-  const getProductsPerPage = () => {
-    if (typeof window !== "undefined") {
-      if (window.innerWidth < 640) return 10;
-      if (window.innerWidth >= 1024) return 15;
-      if (window.innerWidth >= 768) return 9;
-      if (window.innerWidth >= 640) return 6;
-    }
-    return 10;
-  };
   const [productsPerPage, setProductsPerPage] = useState(getProductsPerPage());
 
   useEffect(() => {
