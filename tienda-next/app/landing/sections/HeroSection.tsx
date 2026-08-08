@@ -795,7 +795,7 @@ const innerStyle: React.CSSProperties = ((): React.CSSProperties => {
             <img
               ref={mobileParallaxRef}
               data-hero-parallax="true"
-              src="https://marcaestilo593.com/cdn/shop/files/WhatsApp_Image_2025-04-10_at_14.38.14.jpg?v=1744313930&width=1500"
+              src="/me.png"
               alt="Marca Estilo"
               className="w-full h-auto object-cover block"
               style={{ filter: "none", transition: "transform 0.12s linear", willChange: "transform" }}
