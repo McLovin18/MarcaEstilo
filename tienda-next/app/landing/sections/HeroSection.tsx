@@ -768,7 +768,7 @@ const innerStyle: React.CSSProperties = ((): React.CSSProperties => {
           <div
             className="absolute inset-0"
             style={{
-              backgroundImage: `url(https://marcaestilo593.com/cdn/shop/files/WhatsApp_Image_2025-04-10_at_14.38.14.jpg?v=1744313930&width=1500)`,
+              backgroundImage: `url(/me.png)`,
               backgroundAttachment: "fixed",
               backgroundSize: "cover",
               backgroundPosition: "center center",

@@ -470,13 +470,13 @@ export default function ProductDetailPage({ params }) {
             {/* Nombre + SKU */}
             <div>
               <h1
-                className="text-2xl sm:text-3xl font-bold leading-tight text-slate-800 dark:text-white break-words max-w-full whitespace-pre-line"
+                className="text-3xl sm:text-5xl font-bold leading-tight text-black dark:text-white break-words max-w-full whitespace-pre-line"
                 style={{ wordBreak: "break-word", maxWidth: "100%" }}
                 title={producto.nombre}
               >
                 {producto.nombre}
               </h1>
-              <p className="text-xs text-slate-400 dark:text-white/20 mt-1.5">
+              <p className="text-xl text-slate-400 dark:text-white/20 mt-1.5">
                 SKU: {producto.sku || producto.id}
               </p>
             </div>
@@ -513,8 +513,8 @@ export default function ProductDetailPage({ params }) {
 
             {/* Stock */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 dark:text-white/30 font-medium">Disponibilidad:</span>
-              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+              <span className="text-l text-slate-400 dark:text-white/30 font-medium">Disponibilidad:</span>
+              <span className={`text-l font-semibold px-2.5 py-1 rounded-full ${
                 hasVariations && variationAttributeIds.length > 0 && !variationAttributeIds.every(attrId => selectedVariations[attrId])
                   ? "bg-blue-50 dark:bg-blue-400/10 text-blue-600 dark:text-blue-400"
                   : maxCantidad > 0
