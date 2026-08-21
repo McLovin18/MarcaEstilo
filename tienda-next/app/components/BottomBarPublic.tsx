@@ -5,7 +5,7 @@ import { useUser } from "../context/UserContext";
 
 const publicItems = [
   { name: "Inicio", path: "/", icon: "home" },
-  { name: "Productos", path: "/products-by-category", icon: "store" },
+  { name: "Productos", path: "/productos", icon: "store" },
   { name: "Carrito", path: "/cart", icon: "shopping_bag" },
   { name: "Buscar", path: "/search-results", icon: "search" },
 ];
