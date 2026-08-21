@@ -5,6 +5,7 @@ import { Loading3DIcon } from "../components/Loading3DIcon";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 
 import { obtenerProductos } from "../lib/productos-db";
 import {
@@ -108,6 +109,15 @@ export default function ProductsByCategoryPage() {
   const [isMobile, setIsMobile] = useState(false);
   const categoriesScrollRef = useRef<HTMLDivElement>(null);
 
+  // Posición calculada del dropdown móvil (relativa al viewport, vía portal)
+  const [dropdownPos, setDropdownPos] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
+  const catButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const mobileDropdownRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -116,6 +126,28 @@ export default function ProductsByCategoryPage() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Cierra el dropdown móvil solo si el scroll/resize ocurre FUERA del propio dropdown
+  useEffect(() => {
+    if (!isMobile || !hoveredCatId) return;
+    const close = (e: Event) => {
+      if (
+        mobileDropdownRef.current &&
+        e.target instanceof Node &&
+        mobileDropdownRef.current.contains(e.target)
+      ) {
+        return;
+      }
+      setHoveredCatId(null);
+      setDropdownPos(null);
+    };
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [isMobile, hoveredCatId]);
 
   // 1. Control de Montaje - Inicializa filtros desde URL
   useEffect(() => {
@@ -327,6 +359,37 @@ export default function ProductsByCategoryPage() {
     setOrden("newest");
   }, []);
 
+  // Abre el dropdown móvil calculando la posición real del botón en pantalla
+  const openMobileSubcats = useCallback((catId: string) => {
+    if (hoveredCatId === catId) {
+      setHoveredCatId(null);
+      setDropdownPos(null);
+      return;
+    }
+    const btn = catButtonRefs.current[catId];
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      const dropdownWidth = 220;
+      const left = Math.min(
+        Math.max(rect.left, 16),
+        window.innerWidth - dropdownWidth - 16
+      );
+      setDropdownPos({
+        top: rect.bottom + 6,
+        left,
+        width: dropdownWidth,
+      });
+    }
+    setHoveredCatId(catId);
+  }, [hoveredCatId]);
+
+  const closeMobileSubcats = useCallback(() => {
+    setHoveredCatId(null);
+    setDropdownPos(null);
+  }, []);
+
+  const hoveredCat = categorias.find((c) => c.id === hoveredCatId);
+
   // --- Helpers de Estilo ---
   const chip = (active: boolean) =>
     `flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all cursor-pointer select-none whitespace-nowrap ${
@@ -402,7 +465,9 @@ export default function ProductsByCategoryPage() {
           </div>
         </div>
 
-        {/* ── Categorías Filter - Scroll Horizontal ────────────── */}
+
+
+                {/* Categorías */}
         {categorias.length > 0 && (
           <div className="mb-6 relative z-50">
             <div className={`${isMobile && !hoveredCatId ? 'overflow-x-auto' : ''} ${isMobile && hoveredCatId ? 'overflow-hidden' : ''} pb-2`}>
@@ -427,9 +492,12 @@ export default function ProductsByCategoryPage() {
                   >
                     <button
                       type="button"
+                      ref={(el) => {
+                        catButtonRefs.current[cat.id] = el;
+                      }}
                       onClick={() => {
                         if (isMobile && cat.subcategorias && cat.subcategorias.length > 0) {
-                          setHoveredCatId(hoveredCatId === cat.id ? null : cat.id);
+                          openMobileSubcats(cat.id);
                         } else {
                           selectCategoria(cat.id);
                         }
@@ -446,9 +514,10 @@ export default function ProductsByCategoryPage() {
                         <span className="ml-1 text-xs">▼</span>
                       )}
                     </button>
-                    {/* Subcategorías dropdown */}
-                    {cat.subcategorias && cat.subcategorias.length > 0 && hoveredCatId === cat.id && (
-                      <div className={`${isMobile ? 'fixed left-0 right-0 mx-4' : 'absolute'} top-full mt-0 bg-white border border-slate-200 rounded-xl shadow-xl z-[99999] min-w-[200px] max-h-[300px] overflow-y-auto py-2`}>
+
+                    {/* Dropdown desktop: se mantiene igual (funciona bien) */}
+                    {!isMobile && cat.subcategorias && cat.subcategorias.length > 0 && hoveredCatId === cat.id && (
+                      <div className="absolute top-full mt-0 bg-white border border-slate-200 rounded-xl shadow-xl z-[99999] min-w-[200px] max-h-[300px] overflow-y-auto py-2">
                         {cat.subcategorias.map((sub: any) => (
                           <button
                             key={sub.id}
@@ -458,7 +527,7 @@ export default function ProductsByCategoryPage() {
                               setFilterCat(cat.id);
                               setFilterSub(sub.id);
                               setFilterSubsub("");
-                              router.replace(`/products-by-category?cat=${encodeURIComponent(cat.id)}&sub=${encodeURIComponent(sub.id)}`, { scroll: false });
+                              router.replace(`/products-by-category?cat=${encodeURIComponent(cat.id)}&subcat=${encodeURIComponent(sub.id)}`, { scroll: false });
                               setHoveredCatId(null);
                             }}
                             className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
@@ -478,6 +547,56 @@ export default function ProductsByCategoryPage() {
             </div>
           </div>
         )}
+
+        {/* Dropdown móvil: renderizado vía portal en document.body, posicionado con coordenadas reales del botón. Así escapa del scroll horizontal del carrusel de categorías y no se cierra al hacer scroll dentro de sí mismo. */}
+        {isMobile && hoveredCatId && dropdownPos && hoveredCat?.subcategorias?.length > 0 &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <>
+              <div
+                className="fixed inset-0 z-[99998]"
+                onClick={closeMobileSubcats}
+              />
+              <div
+                ref={mobileDropdownRef}
+                style={{
+                  position: "fixed",
+                  top: dropdownPos.top,
+                  left: dropdownPos.left,
+                  width: dropdownPos.width,
+                }}
+                className="bg-white border border-slate-200 rounded-xl shadow-xl z-[99999] max-h-[300px] overflow-y-auto py-2"
+              >
+                {hoveredCat.subcategorias.map((sub: any) => (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFilterCat(hoveredCat.id);
+                      setFilterSub(sub.id);
+                      setFilterSubsub("");
+                      router.replace(
+                        `/products-by-category?cat=${encodeURIComponent(hoveredCat.id)}&subcat=${encodeURIComponent(sub.id)}`,
+                        { scroll: false }
+                      );
+                      closeMobileSubcats();
+                    }}
+                    className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                      subcategoriaId === sub.id
+                        ? "bg-black text-white"
+                        : "text-slate-900 hover:bg-slate-100"
+                    }`}
+                  >
+                    {sub.nombre}
+                  </button>
+                ))}
+              </div>
+            </>,
+            document.body
+          )}
+
+
 
         {/* Grid de productos o Loading */}
         {(!isMounted || loading) ? (

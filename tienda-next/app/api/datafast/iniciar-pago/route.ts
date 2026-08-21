@@ -92,7 +92,13 @@ export async function POST(req: NextRequest) {
     checkoutPayload.set("customer.middleName", middleName);
     checkoutPayload.set("customer.surname", cliente.apellido || "");
     checkoutPayload.set("customer.ip", clientIp);
-    checkoutPayload.set("customer.merchantCustomerId", userId || "guest");
+    
+    // merchantCustomerId único: usar userId si existe, si no usar identificación o merchantTransactionId
+    // Requisito Datafast: cada cliente debe tener un merchantCustomerId único
+    const merchantCustomerId = userId || 
+                               cliente.identificacion?.replace(/\D/g, "") || 
+                               `guest_${merchantTransactionId}`;
+    checkoutPayload.set("customer.merchantCustomerId", merchantCustomerId);
     checkoutPayload.set("merchantTransactionId", merchantTransactionId);
     checkoutPayload.set("customer.email", cliente.email);
     checkoutPayload.set("customer.identificationDocType", "IDCARD");

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import admin, { db } from "../../../lib/firebase-admin";
 import { applyStockDeltaToProduct, cleanUndefined } from "../../../lib/order-checkout-utils";
+import { sendOrderNotificationToOwner } from "../../../lib/order-notification";
 
 export const runtime = "nodejs";
 
@@ -233,6 +234,37 @@ export async function GET(req: NextRequest) {
           },
         });
       });
+
+      // 📧 Enviar notificación por correo al dueño de la tienda
+      try {
+        const orderData = orderSnap.data() || {};
+        const notificationData = {
+          orderId: orderData.orderId || "N/A",
+          cliente: {
+            nombre: orderData.cliente?.nombre || orderData.userName || "N/A",
+            email: orderData.cliente?.email || orderData.userEmail || orderData.guestEmail || "N/A",
+            telefono: orderData.cliente?.telefono || orderData.clientPhone || "N/A",
+          },
+          direccion: {
+            provincia: orderData.direccion?.provincia || "N/A",
+            ciudad: orderData.direccion?.ciudad || "N/A",
+            direccion: orderData.direccion?.direccion || orderData.clientAddress || "N/A",
+          },
+          productos: orderData.productos || [],
+          total: orderData.total || 0,
+          metodoPago: "Tarjeta (Datafast)",
+          paidAt: admin.firestore.Timestamp.now(),
+        };
+
+        const notificationResult = await sendOrderNotificationToOwner(notificationData);
+        if (notificationResult.success) {
+          console.log("[Datafast Resultado] ✅ Notificación enviada al dueño");
+        } else {
+          console.error("[Datafast Resultado] ❌ Error enviando notificación:", notificationResult.error);
+        }
+      } catch (notificationError: any) {
+        console.error("[Datafast Resultado] ❌ Error en notificación (no bloquea el proceso):", notificationError);
+      }
 
       return buildRedirect(req, pedidoId, "success");
     }
