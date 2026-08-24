@@ -251,6 +251,8 @@ export async function GET(req: NextRequest) {
             direccion: orderData.direccion?.direccion || orderData.clientAddress || "N/A",
           },
           productos: orderData.productos || [],
+          subtotal: orderData.subtotal || 0,
+          costoEnvio: orderData.costoEnvio || 5,
           total: orderData.total || 0,
           metodoPago: "Tarjeta (Datafast)",
           paidAt: admin.firestore.Timestamp.now(),

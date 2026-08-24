@@ -1,6 +1,0 @@
-ID Prueba,Tipo Tarjeta,Número Tarjeta,Expiración,CVV,Nombre Titular,Email,Teléfono,Identificación,Merchant Customer ID,Moneda,Monto,Resultado Esperado,ReferenceNbr,Número Lote,Fecha Prueba,Notas
-8ac7a4a0a000b8e101a0094de1e81d88,VISA,4200000000000000,08/26,246,Juan Perez,juan.perez@test.com,+593991234567,0912345678,0912345678,USD,65.00,APROBADO,,,,,Prueba VISA estándar,260816_000001,260816,2026-08-16 06:38:08,
-TEST-002,MASTERCARD,5500000000000004,06/2027,456,Maria Garcia,maria.garcia@test.com,+593997654321,0923456789,user_002,USD,45.50,APROBADO,,,,,Prueba Mastercard estándar
-TEST-003,AMEX,378282246310005,09/2029,1234,Carlos Rodriguez,carlos.rodriguez@test.com,+593998765432,0934567890,user_003,USD,85.00,APROBADO,,,,,Prueba American Express
-TEST-004,DINERS,30000000000004,11/2028,123,Ana Martinez,ana.martinez@test.com,+593993456789,0945678901,user_004,USD,32.00,APROBADO,,,,,Prueba Diners Club
-TEST-005,VISA,4000000000000002,03/2029,789,Roberto Sanchez,roberto.sanchez@test.com,+593994567890,0956789012,user_005,USD,15.00,FALLADO,,,,,Prueba VISA fondos insuficientes

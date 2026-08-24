@@ -88,18 +88,27 @@ function buildOrderEmailHTML(orden: any): string {
           <tr>
             <td style="padding:0 36px 24px;">
               <div style="background:#f9fafb;border-radius:8px;padding:16px;">
-                <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;">
-                  <span style="color:#666;">Subtotal:</span>
-                  <span style="color:#1f2937;font-weight:bold;">$${(orden.total || 0).toFixed(2)}</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;">
-                  <span style="color:#666;">Envío:</span>
-                  <span style="color:#16a34a;font-weight:bold;">Gratis</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:2px solid #e5e7eb;font-size:16px;font-weight:bold;">
-                  <span style="color:#1f2937;">Total:</span>
-                  <span style="color:#6d28d9;">$${(orden.total || 0).toFixed(2)}</span>
-                </div>
+                ${(() => {
+                  const subtotal = orden.productos?.reduce((sum: number, p: any) => {
+                    const { finalPrice: precioUnit } = getSnapshotPricing(p);
+                    return sum + precioUnit * (p.cantidad || 1);
+                  }, 0) || 0;
+                  const costoEnvio = 5; // Costo de envío fijo según el carrito
+                  return `
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;">
+                      <span style="color:#666;">Subtotal:</span>
+                      <span style="color:#1f2937;font-weight:bold;">$${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;">
+                      <span style="color:#666;">Envío:</span>
+                      <span style="color:${costoEnvio > 0 ? '#1f2937' : '#16a34a'};font-weight:bold;">${costoEnvio > 0 ? `$${costoEnvio.toFixed(2)}` : 'Gratis'}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:2px solid #e5e7eb;font-size:16px;font-weight:bold;">
+                      <span style="color:#1f2937;">Total:</span>
+                      <span style="color:#6d28d9;">$${(orden.total || 0).toFixed(2)}</span>
+                    </div>
+                  `;
+                })()}
               </div>
             </td>
           </tr>
@@ -165,11 +174,11 @@ export async function POST(req: NextRequest) {
 
     // Enviar email con Resend
     const emailResponse = await resend.emails.send({
-      from: "pedidos@tecnothings.com",
+      from: "pedidos@marcaestilo.com",
       to: email.trim(),
       subject: `Tu pedido ${orden.orderId} ha sido recibido — TecnoThings`,
       html: buildOrderEmailHTML(orden),
-      replyTo: "soporte@tecnothings.com",
+      replyTo: "soporte@marcaestilo.com",
     });
 
     if (emailResponse.error) {

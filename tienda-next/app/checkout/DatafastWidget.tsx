@@ -51,6 +51,10 @@ export default function DatafastWidget({ checkoutId, pedidoId }: DatafastWidgetP
       labels: {
         cvv: "CVV",
         cardHolder: "Nombre(Igual que en la tarjeta)"
+      },
+      // Configuración para manejar 3DS
+      threeDS: {
+        challengeWindowSize: "05" // 05 = Tamaño completo de pantalla
       }
     };
 

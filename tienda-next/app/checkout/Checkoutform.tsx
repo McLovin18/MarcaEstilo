@@ -22,6 +22,8 @@ interface Producto {
 
 interface CheckoutFormProps {
   items: Producto[];
+  subtotal: number;
+  costoEnvio: number;
   total: number;
 }
 
@@ -48,7 +50,7 @@ const PROVINCIAS = [
 
 // ── Componente ────────────────────────────────────────────────────────────────
 
-export default function CheckoutForm({ items, total }: CheckoutFormProps) {
+export default function CheckoutForm({ items, subtotal, costoEnvio, total }: CheckoutFormProps) {
   const [paso, setPaso] = useState<1 | 2 | 3>(1);
   const [pedidoId, setPedidoId] = useState<string>("");
   const [pedidoDocId, setPedidoDocId] = useState<string>("");
@@ -288,10 +290,20 @@ export default function CheckoutForm({ items, total }: CheckoutFormProps) {
               ))}
             </div>
 
-            <div className="total-row">
-                      <span>Total a pagar</span>
-                      <span className="total-amount">${total.toFixed(2)}</span>
-                    </div>
+            <div className="totales-section">
+              <div className="total-row">
+                <span>Subtotal</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+              <div className="total-row">
+                <span>Envío</span>
+                <span>${costoEnvio.toFixed(2)}</span>
+              </div>
+              <div className="total-row total-bold">
+                <span>Total a pagar</span>
+                <span className="total-amount">${total.toFixed(2)}</span>
+              </div>
+            </div>
 
                     <label className="privacy-check">
                       <input
@@ -545,12 +557,31 @@ export default function CheckoutForm({ items, total }: CheckoutFormProps) {
         .producto-variant { font-size: 12px; color: #777; margin: 4px 0 0; }
         .producto-precio { font-weight: 600; font-size: 16px; color: #dcb432; flex-shrink: 0; }
 
+        .totales-section {
+          background: #111;
+          border: 1px solid #222;
+          border-radius: 12px;
+          padding: 20px;
+          margin-top: 20px;
+        }
         .total-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 20px 0;
+          padding: 12px 0;
           border-top: 1px solid #1e1e1e;
+        }
+        .total-row:first-child {
+          border-top: none;
+          padding-top: 0;
+        }
+        .total-bold {
+          font-weight: 600;
+          color: #dcb432;
+          border-top: 2px solid #2a2a2a;
+          padding-top: 16px;
+          margin-top: 8px;
+        }
           margin-bottom: 28px;
           font-size: 18px;
           font-weight: 500;

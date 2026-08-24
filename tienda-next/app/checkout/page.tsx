@@ -10,11 +10,13 @@ export default function CheckoutPage() {
   const { carrito, loading: contextLoading, cartReady } = useUser();
 
   const items = Array.isArray(carrito) ? carrito : [];
-  const total = items.reduce((sum, item: any) => {
+  const subtotal = items.reduce((sum, item: any) => {
     const { finalPrice } = getSnapshotPricing(item);
     console.log("🛒 Checkout item:", item, "finalPrice:", finalPrice);
     return sum + finalPrice * Number(item?.cantidad || 1);
   }, 0);
+  const costoEnvio = 5; // Costo de envío fijo según el carrito
+  const total = subtotal + costoEnvio;
 
   console.log('🛒 CheckoutPage state:', { contextLoading, cartReady, itemsLength: items.length, total });
 
@@ -121,7 +123,7 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <CheckoutForm items={items} total={total} />
+      <CheckoutForm items={items} subtotal={subtotal} costoEnvio={costoEnvio} total={total} />
 
       <style jsx>{`
         .checkout-page {

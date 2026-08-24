@@ -109,18 +109,27 @@ function buildOrderEmailHTML(orden: any): string {
       </table>
 
       <div class="totals-box">
-        <div class="total-row">
-          <span>Subtotal:</span>
-          <span>${(orden.total || 0).toFixed(2)}$</span>
-        </div>
-        <div class="total-row">
-          <span>Envío:</span>
-          <span style="color: #16a34a; font-weight: bold;">Gratis</span>
-        </div>
-        <div class="total-row bold">
-          <span>Total:</span>
-          <span class="purple-text">$${(orden.total || 0).toFixed(2)}</span>
-        </div>
+        ${(() => {
+          const subtotal = orden.productos?.reduce((sum: number, p: any) => {
+            const precio = Number(p.precioUnitario || p.precioFinal || p.precio || 0);
+            return sum + precio * (p.cantidad || 1);
+          }, 0) || 0;
+          const costoEnvio = 5; // Costo de envío fijo según el carrito
+          return `
+            <div class="total-row">
+              <span>Subtotal:</span>
+              <span>$${subtotal.toFixed(2)}</span>
+            </div>
+            <div class="total-row">
+              <span>Envío:</span>
+              <span style="color: ${costoEnvio > 0 ? '#1f2937' : '#16a34a'}; font-weight: bold;">${costoEnvio > 0 ? `$${costoEnvio.toFixed(2)}` : 'Gratis'}</span>
+            </div>
+            <div class="total-row bold">
+              <span>Total:</span>
+              <span class="purple-text">$${(orden.total || 0).toFixed(2)}</span>
+            </div>
+          `;
+        })()}
       </div>
 
       <div class="info-box">

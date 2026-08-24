@@ -20,6 +20,8 @@ interface OrderNotificationData {
     direccion: string;
   };
   productos: any[];
+  subtotal: number;
+  costoEnvio: number;
   total: number;
   metodoPago: string;
   paidAt?: any;
@@ -115,8 +117,12 @@ function buildOrderNotificationHTML(data: OrderNotificationData): string {
           <td style="padding:0 36px 24px;">
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
+                <td style="padding:8px 8px;text-align:right;font-size:13px;color:#6b7280;">Subtotal</td>
+                <td style="padding:8px 8px;text-align:right;font-size:13px;color:#374151;font-weight:600;width:110px;">$${Number(data.subtotal).toFixed(2)}</td>
+              </tr>
+              <tr>
                 <td style="padding:8px 8px;text-align:right;font-size:13px;color:#6b7280;">Envío</td>
-                <td style="padding:8px 8px;text-align:right;font-size:13px;color:#16a34a;font-weight:600;width:110px;">Gratis</td>
+                <td style="padding:8px 8px;text-align:right;font-size:13px;color:${data.costoEnvio > 0 ? '#374151' : '#16a34a'};font-weight:600;width:110px;">${data.costoEnvio > 0 ? `$${Number(data.costoEnvio).toFixed(2)}` : 'Gratis'}</td>
               </tr>
               <tr style="background:#f5f3ff;border-radius:8px;">
                 <td style="padding:12px 8px;text-align:right;font-size:17px;font-weight:bold;color:#3a1859;">Total</td>
@@ -168,7 +174,7 @@ export async function sendOrderNotificationToOwner(data: OrderNotificationData):
 
     // Enviar email con Resend al dueño de la tienda
     const emailResponse = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "pedidos@marcaestilo.com",
+      from: process.env.RESEND_FROM_EMAIL || "pedidos@marcaestilo593.com",
       to: process.env.STORE_OWNER_EMAIL,
       subject: `🛒 Nuevo Pedido Pagado: ${data.orderId} - Marca Estilo`,
       html,

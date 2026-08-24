@@ -287,7 +287,31 @@ export default function CartPage() {
     const productosText = carrito
       .map((p) => {
         const tiempoEntrega = bodegasMap.get(p.bodegaId || "technothings") || 72;
-        return `${p.nombre} (Entrega Aproximada en: ${tiempoEntrega}h)`;
+        
+        // Obtener información de la variante seleccionada
+        let variantInfo = "";
+        
+        // Sistema nuevo de variaciones dinámicas
+        if (p.selectedVariations && p.variationAttributeIds && Array.isArray(p.variationAttributeIds)) {
+          const variantNames = p.variationAttributeIds
+            .map((attrId: string) => p.selectedVariations[attrId])
+            .filter(Boolean)
+            .join(", ");
+          if (variantNames) {
+            variantInfo = ` - ${variantNames}`;
+          }
+        }
+        // Sistema legacy de talla/color
+        else if (p.selectedTalla || p.selectedColor) {
+          const parts = [];
+          if (p.selectedTalla) parts.push(`Talla: ${p.selectedTalla}`);
+          if (p.selectedColor) parts.push(`Color: ${p.selectedColor}`);
+          if (parts.length > 0) {
+            variantInfo = ` - ${parts.join(", ")}`;
+          }
+        }
+        
+        return `${p.nombre}${variantInfo} (Entrega Aproximada en: ${tiempoEntrega}h)`;
       })
       .join("\n");
     
