@@ -59,7 +59,7 @@ function buildOrderEmailHTML(orden: any): string {
 <body>
   <div class="container">
     <div class="header">
-      <h1>🛍️ TecnoThings</h1>
+      <h1>🛍️ Marca Estilo </h1>
       <p>Tu orden ha sido recibida</p>
     </div>
     

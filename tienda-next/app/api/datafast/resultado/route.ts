@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import admin, { db } from "../../../lib/firebase-admin";
 import { applyStockDeltaToProduct, cleanUndefined } from "../../../lib/order-checkout-utils";
 import { sendOrderNotificationToOwner } from "../../../lib/order-notification";
+import { Resend } from "resend";
 
 export const runtime = "nodejs";
 
@@ -263,6 +264,143 @@ export async function GET(req: NextRequest) {
           console.log("[Datafast Resultado] ✅ Notificación enviada al dueño");
         } else {
           console.error("[Datafast Resultado] ❌ Error enviando notificación:", notificationResult.error);
+        }
+
+        // 📧 Enviar confirmación al cliente
+        try {
+          const clientEmail = orderData.cliente?.email || orderData.userEmail || orderData.guestEmail;
+          if (clientEmail && clientEmail !== "N/A") {
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            const fromEmail = process.env.RESEND_FROM_EMAIL || "pedidos@marcaestilo593.com"; // Forzar dominio verificado
+            
+            const clientEmailResult = await resend.emails.send({
+              from: fromEmail,
+              to: clientEmail,
+              subject: `[MARCA ESTILO] Confirmación de Pedido #${orderData.orderId}`,
+              html: `
+                <!DOCTYPE html>
+                <html lang="es">
+                <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/></head>
+                <body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:32px 0;">
+                    <tr><td align="center">
+                      <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.08);max-width:98vw;">
+                        <tr>
+                          <td style="background:linear-gradient(135deg,#3a1859,#6d28d9);padding:32px 36px;">
+                            <h1 style="margin:0;color:#fff;font-size:28px;letter-spacing:1px;">Marca Estilo</h1>
+                            <p style="margin:6px 0 0;color:#e9d5ff;font-size:14px;">¡Pedido Confirmado!</p>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding:24px 36px;">
+                            <p style="margin:0;font-size:13px;color:#6b7280;">Número de orden</p>
+                            <p style="margin:4px 0 0;font-size:22px;font-weight:bold;color:#3a1859;">${orderData.orderId}</p>
+                          </td>
+                        </tr>
+                        <tr><td style="padding:20px 36px 0;"><hr style="border:none;border-top:1px solid #e5e7eb;"/></td></tr>
+                        <tr>
+                          <td style="padding:16px 36px;">
+                            <h3 style="margin:0 0 12px;font-size:16px;color:#374151;">Datos de Envío</h3>
+                            <p style="margin:4px 0;font-size:14px;color:#6b7280;"><strong>Dirección:</strong> ${orderData.direccion?.direccion || "N/A"}</p>
+                            <p style="margin:4px 0;font-size:14px;color:#6b7280;"><strong>Ciudad:</strong> ${orderData.direccion?.ciudad || "N/A"}, ${orderData.direccion?.provincia || "N/A"}</p>
+                          </td>
+                        </tr>
+                        <tr><td style="padding:20px 36px 0;"><hr style="border:none;border-top:1px solid #e5e7eb;"/></td></tr>
+                        <tr>
+                          <td style="padding:16px 36px;">
+                            <h3 style="margin:0 0 12px;font-size:16px;color:#374151;">Productos</h3>
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                              <thead>
+                                <tr style="background:#f9fafb;">
+                                  <th style="padding:10px 8px;text-align:left;font-size:13px;color:#6b7280;font-weight:600;border-bottom:2px solid #e5e7eb;">Producto</th>
+                                  <th style="padding:10px 8px;text-align:center;font-size:13px;color:#6b7280;font-weight:600;border-bottom:2px solid #e5e7eb;">Cant.</th>
+                                  <th style="padding:10px 8px;text-align:right;font-size:13px;color:#6b7280;font-weight:600;border-bottom:2px solid #e5e7eb;">Precio</th>
+                                  <th style="padding:10px 8px;text-align:right;font-size:13px;color:#6b7280;font-weight:600;border-bottom:2px solid #e5e7eb;">Subtotal</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                ${(orderData.productos || []).map((p: any) => {
+                                  const precio = Number(p.precioUnitario || p.precioFinal || 0);
+                                  const cantidad = Number(p.cantidad || 1);
+                                  const subtotal = precio * cantidad;
+                                  const variantInfo = p.variantSelectionSummary 
+                                    ? `<div style="font-size:11px;color:#6b7280;margin-top:2px;">${p.variantSelectionSummary}</div>` 
+                                    : '';
+                                  return `
+                                    <tr style="border-bottom:1px solid #e5e7eb;">
+                                      <td style="padding:10px 8px;font-size:13px;color:#374151;">
+                                        <strong>${p.nombre || "Producto"}</strong>
+                                        ${variantInfo}
+                                      </td>
+                                      <td style="padding:10px 8px;text-align:center;font-size:13px;color:#374151;">${cantidad}</td>
+                                      <td style="padding:10px 8px;text-align:right;font-size:13px;color:#374151;">$${precio.toFixed(2)}</td>
+                                      <td style="padding:10px 8px;text-align:right;font-size:13px;font-weight:bold;color:#6d28d9;">$${subtotal.toFixed(2)}</td>
+                                    </tr>
+                                  `;
+                                }).join('')}
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding:0 36px 24px;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                              <tr>
+                                <td style="padding:8px 8px;text-align:right;font-size:13px;color:#6b7280;">Subtotal</td>
+                                <td style="padding:8px 8px;text-align:right;font-size:13px;color:#374151;font-weight:600;width:110px;">$${Number(orderData.subtotal || 0).toFixed(2)}</td>
+                              </tr>
+                              <tr>
+                                <td style="padding:8px 8px;text-align:right;font-size:13px;color:#6b7280;">Envío</td>
+                                <td style="padding:8px 8px;text-align:right;font-size:13px;color:#16a34a;font-weight:600;width:110px;">$${Number(orderData.costoEnvio || 5).toFixed(2)}</td>
+                              </tr>
+                              <tr style="background:#f5f3ff;border-radius:8px;">
+                                <td style="padding:12px 8px;text-align:right;font-size:17px;font-weight:bold;color:#3a1859;">Total</td>
+                                <td style="padding:12px 8px;text-align:right;font-size:20px;font-weight:bold;color:#6d28d9;width:110px;">$${Number(orderData.total || 0).toFixed(2)}</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                        <tr><td style="padding:20px 36px 0;"><hr style="border:none;border-top:1px solid #e5e7eb;"/></td></tr>
+                        <tr>
+                          <td style="padding:16px 36px;">
+                            <h3 style="margin:0 0 12px;font-size:16px;color:#374151;">Información de Pago</h3>
+                            <p style="margin:4px 0;font-size:14px;color:#6b7280;">Método: <strong>Tarjeta (Datafast)</strong></p>
+                            <p style="margin:4px 0;font-size:14px;color:#6b7280;">Estado: <strong>Pagado</strong></p>
+                          </td>
+                        </tr>
+                        <tr><td style="padding:20px 36px 0;"><hr style="border:none;border-top:1px solid #e5e7eb;"/></td></tr>
+                        <tr>
+                          <td style="padding:16px 36px;">
+                            <div style="background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:16px 20px;">
+                              <p style="margin:0;font-size:14px;color:#166534;">
+                                <strong>✅ Pago completado exitosamente</strong>. Estamos procesando tu pedido para envío a: ${orderData.direccion?.direccion || "tu dirección"}.
+                              </p>
+                            </div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="background:#f9fafb;padding:20px 36px;text-align:center;border-top:1px solid #e5e7eb;">
+                            <p style="margin:0;font-size:12px;color:#9ca3af;">Este correo fue enviado automáticamente por Marca Estilo.</p>
+                            <p style="margin:4px 0 0;font-size:11px;color:#d1d5db;">Para consultas: marcaestilo593@gmail.com</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td></tr>
+                  </table>
+                </body>
+                </html>
+              `,
+              replyTo: process.env.STORE_OWNER_EMAIL || "marcaestilo593@gmail.com",
+            });
+            
+            if (clientEmailResult.error) {
+              console.error("[Datafast Resultado] ❌ Error enviando email al cliente:", clientEmailResult.error);
+            } else {
+              console.log("[Datafast Resultado] ✅ Email enviado al cliente:", clientEmail);
+            }
+          }
+        } catch (clientEmailError: any) {
+          console.error("[Datafast Resultado] ❌ Error en email al cliente (no bloquea el proceso):", clientEmailError);
         }
       } catch (notificationError: any) {
         console.error("[Datafast Resultado] ❌ Error en notificación (no bloquea el proceso):", notificationError);

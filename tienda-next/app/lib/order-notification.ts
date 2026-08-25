@@ -61,7 +61,7 @@ function buildOrderNotificationHTML(data: OrderNotificationData): string {
         <tr>
           <td style="background:linear-gradient(135deg,#3a1859,#6d28d9);padding:32px 36px;">
             <h1 style="margin:0;color:#fff;font-size:28px;letter-spacing:1px;">Marca Estilo</h1>
-            <p style="margin:6px 0 0;color:#e9d5ff;font-size:14px;">Nuevo Pedido Pagado con Tarjeta</p>
+            <p style="margin:6px 0 0;color:#e9d5ff;font-size:14px;">Confirmacion de Pedido - $${Number(data.total).toFixed(2)}</p>
           </td>
         </tr>
         <!-- Order ID -->
@@ -172,13 +172,20 @@ export async function sendOrderNotificationToOwner(data: OrderNotificationData):
     const resend = new Resend(resendApiKey);
     const html = buildOrderNotificationHTML(data);
 
+    // Forzar uso del dominio verificado
+    const fromEmail = process.env.RESEND_FROM_EMAIL || "pedidos@marcaestilo593.com";
+
     // Enviar email con Resend al dueño de la tienda
     const emailResponse = await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "pedidos@marcaestilo593.com",
+      from: fromEmail,
       to: process.env.STORE_OWNER_EMAIL,
-      subject: `🛒 Nuevo Pedido Pagado: ${data.orderId} - Marca Estilo`,
+      subject: `Pedido ${data.orderId} recibido`,
       html,
       replyTo: data.cliente.email, // El dueño puede responder directamente al cliente
+      tags: [
+        { name: "category", value: "order" },
+        { name: "order_id", value: data.orderId }
+      ]
     });
 
     if (emailResponse.error) {

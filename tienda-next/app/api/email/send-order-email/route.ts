@@ -2,13 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getSnapshotPricing } from "../../../lib/pricing";
 
-/**
- * 📧 ENDPOINT: Enviar correo de orden con Resend
- * 
- * Usado cuando se crea una orden (proforma)
- * Envía información de la orden al cliente
- */
-
 function buildOrderEmailHTML(orden: any): string {
   return `
 <!DOCTYPE html>
@@ -25,7 +18,7 @@ function buildOrderEmailHTML(orden: any): string {
         <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);border-radius:12px 12px 0 0;">
           <tr>
             <td style="padding:32px;text-align:center;color:white;">
-              <h1 style="margin:0 0 8px;font-size:28px;font-weight:bold;">🛍️ TecnoThings</h1>
+              <h1 style="margin:0 0 8px;font-size:28px;font-weight:bold;">Marca Estilo</h1>
               <p style="margin:0;font-size:14px;opacity:0.9;">Tu orden ha sido recibida</p>
             </td>
           </tr>
@@ -173,13 +166,13 @@ export async function POST(req: NextRequest) {
     const resend = new Resend(resendApiKey);
 
     // Enviar email con Resend
-    const emailResponse = await resend.emails.send({
-      from: "pedidos@marcaestilo.com",
-      to: email.trim(),
-      subject: `Tu pedido ${orden.orderId} ha sido recibido — TecnoThings`,
-      html: buildOrderEmailHTML(orden),
-      replyTo: "soporte@marcaestilo.com",
-    });
+  const emailResponse = await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev", // Dominio por defecto de Resend
+    to: email.trim(),
+    subject: `Tu pedido ${orden.orderId} ha sido recibido — Marca Estilo`,
+    html: buildOrderEmailHTML(orden),
+    replyTo: process.env.STORE_OWNER_EMAIL || "marcaestilo593@gmail.com",
+  });
 
     if (emailResponse.error) {
       console.error("[send-order-email] Resend error:", emailResponse.error);
