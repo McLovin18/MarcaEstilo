@@ -34,9 +34,13 @@ function buildOrderNotificationHTML(data: OrderNotificationData): string {
       const variantInfo = p.variantSelectionSummary 
         ? `<div style="font-size:11px;color:#6b7280;margin-top:2px;">${p.variantSelectionSummary}</div>` 
         : '';
+      const productImage = p.imagen || '';
       
       return `
         <tr>
+          <td style="padding:10px 8px; border-bottom:1px solid #e5e7eb; width: 80px;">
+            ${productImage ? `<img src="${productImage}" alt="${p.nombre}" style="width:60px;height:60px;object-fit:cover;border-radius:4px;" />` : ''}
+          </td>
           <td style="padding:10px 8px; border-bottom:1px solid #e5e7eb;">
             <div style="font-weight:500;">${p.nombre}</div>
             ${variantInfo}
@@ -59,9 +63,9 @@ function buildOrderNotificationHTML(data: OrderNotificationData): string {
       <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.08);max-width:98vw;">
         <!-- Header -->
         <tr>
-          <td style="background:linear-gradient(135deg,#3a1859,#6d28d9);padding:32px 36px;">
+          <td style="background:#000000;padding:32px 36px;">
             <h1 style="margin:0;color:#fff;font-size:28px;letter-spacing:1px;">Marca Estilo</h1>
-            <p style="margin:6px 0 0;color:#e9d5ff;font-size:14px;">Confirmacion de Pedido - $${Number(data.total).toFixed(2)}</p>
+            <p style="margin:6px 0 0;color:#d4af37;font-size:14px;">Confirmacion de Pedido - $${Number(data.total).toFixed(2)}</p>
           </td>
         </tr>
         <!-- Order ID -->
@@ -102,6 +106,7 @@ function buildOrderNotificationHTML(data: OrderNotificationData): string {
             <table width="100%" cellpadding="0" cellspacing="0">
               <thead>
                 <tr style="background:#f9fafb;">
+                  <th style="padding:10px 8px;text-align:left;font-size:13px;color:#6b7280;font-weight:600;border-bottom:2px solid #e5e7eb;width:80px;">Imagen</th>
                   <th style="padding:10px 8px;text-align:left;font-size:13px;color:#6b7280;font-weight:600;border-bottom:2px solid #e5e7eb;">Producto</th>
                   <th style="padding:10px 8px;text-align:center;font-size:13px;color:#6b7280;font-weight:600;border-bottom:2px solid #e5e7eb;">Cant.</th>
                   <th style="padding:10px 8px;text-align:right;font-size:13px;color:#6b7280;font-weight:600;border-bottom:2px solid #e5e7eb;">Precio unit.</th>
