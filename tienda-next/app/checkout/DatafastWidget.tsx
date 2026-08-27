@@ -22,10 +22,10 @@ interface DatafastWidgetProps {
 
 const DATAFAST_SCRIPT_BASE =
   process.env.NEXT_PUBLIC_DATAFAST_SCRIPT_URL ||
-  "https://test.oppwa.com/v1/paymentWidgets.js?checkoutId=";
+  "https://eu-prod.oppwa.com/v1/paymentWidgets.js?checkoutId=";
 
-// Tipos de pago a mostrar en el widget (VISA, MASTERCARD, AMEX, etc.)
-const PAYMENT_BRANDS = "VISA MASTERCARD DINERS AMEX";
+// Tipos de pago a mostrar en el widget (VISA, MASTER, AMEX, etc.)
+const PAYMENT_BRANDS = "VISA MASTER DINERS AMEX";
 
 export default function DatafastWidget({ checkoutId, pedidoId }: DatafastWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -37,14 +37,59 @@ export default function DatafastWidget({ checkoutId, pedidoId }: DatafastWidgetP
     // ⭐ Configurar wpwlOptions ANTES de cargar el script
     window.wpwlOptions = {
       onReady: function() {
+        console.log("=== DATAFAST WIDGET READY ===");
         const datafast = '<br/><br/><img src="https://www.datafast.com.ec/images/verified.png" style="display:block;margin:0 auto; width:100%;">';
         const form = document.querySelector('form.wpwl-form-card');
         if (form) {
           const button = form.querySelector('.wpwl-button');
           if (button) {
             button.insertAdjacentHTML('beforebegin', datafast);
+            
+            // Agregar listener al botón para capturar intentos de pago fallidos
+            button.addEventListener('click', function(e) {
+              console.log("=== PAYMENT BUTTON CLICKED ===");
+              console.log("Form state:", form.checkValidity());
+              
+              // Capturar valores del formulario para evidencia
+              const cardNumber = form.querySelector('.wpwl-control-cardNumber')?.value;
+              const expiry = form.querySelector('.wpwl-control-expiry')?.value;
+              const cvv = form.querySelector('.wpwl-control-cvv')?.value;
+              
+              console.log("Form values:", {
+                cardNumber: cardNumber ? '****' + cardNumber.slice(-4) : 'empty',
+                expiry: expiry || 'empty',
+                cvv: cvv ? '***' : 'empty'
+              });
+              
+              localStorage.setItem('datafast_form_state', JSON.stringify({
+                timestamp: new Date().toISOString(),
+                formValid: form.checkValidity(),
+                expiry: expiry || 'empty',
+                checkoutId: checkoutId,
+                pedidoId: pedidoId
+              }));
+            });
           }
         }
+      },
+      onError: function(error) {
+        console.error("=== DATAFAST WIDGET ERROR ===");
+        console.error("Error Details:", error);
+        console.error("Error Type:", error?.name);
+        console.error("Error Message:", error?.message);
+        console.error("Error Code:", error?.code);
+        console.error("==============================");
+        
+        // Guardar el error en localStorage para evidencia
+        const errorData = {
+          timestamp: new Date().toISOString(),
+          errorType: error?.name || "unknown",
+          errorMessage: error?.message || "unknown",
+          errorCode: error?.code || "unknown",
+          checkoutId: checkoutId,
+          pedidoId: pedidoId
+        };
+        localStorage.setItem('datafast_widget_error', JSON.stringify(errorData));
       },
       style: "card",
       locale: "es",

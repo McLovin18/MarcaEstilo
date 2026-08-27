@@ -100,7 +100,7 @@ export default function CheckoutForm({ items, subtotal, costoEnvio, total }: Che
     return Object.keys(nuevosErrores).length === 0;
   }
 
-  async function handleProcederAlPago() {
+async function handleProcederAlPago() {
     if (!validar()) return;
     if (!privacyAccepted) {
       setCheckoutError("Debes aceptar la Política de Privacidad y los Términos para continuar.");
@@ -122,7 +122,7 @@ export default function CheckoutForm({ items, subtotal, costoEnvio, total }: Che
             nombre: `${datos.nombre} ${datos.apellido}`.trim(),
             nombreSolo: datos.nombre.trim(),
             apellido: datos.apellido.trim(),
-            identificacion: datos.identificacion.trim(),
+            identificacion: (datos.identificacion || "").trim(),
             email: datos.email.trim(),
             telefono: datos.telefono.trim(),
           },
@@ -147,6 +147,7 @@ export default function CheckoutForm({ items, subtotal, costoEnvio, total }: Che
       });
 
       const json = await res.json();
+
       if (!res.ok || !json.checkoutId || !json.pedidoId || !json.orderId) {
         throw new Error(json.error || "Error al iniciar pago");
       }

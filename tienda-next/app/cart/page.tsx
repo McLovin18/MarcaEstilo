@@ -277,7 +277,7 @@ export default function CartPage() {
     return sum + finalPrice * (p.cantidad || 1);
   }, 0);
   
-  const costoEnvio = 5;
+  const costoEnvio = 1; // $1 temporalmente para prueba de Datafast de $3 total
   const total = subtotal + costoEnvio;
 
   const generateWhatsAppMessage = async (): Promise<string> => {

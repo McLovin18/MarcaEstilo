@@ -15,8 +15,10 @@ export default function CheckoutPage() {
     console.log("🛒 Checkout item:", item, "finalPrice:", finalPrice);
     return sum + finalPrice * Number(item?.cantidad || 1);
   }, 0);
-  const costoEnvio = 5; // Costo de envío fijo según el carrito
+  const costoEnvio = 1; // $1 temporalmente para prueba de Datafast de $3 total
   const total = subtotal + costoEnvio;
+  
+  console.log("[CheckoutPage] costoEnvio:", costoEnvio, "subtotal:", subtotal, "total:", total);
 
   console.log('🛒 CheckoutPage state:', { contextLoading, cartReady, itemsLength: items.length, total });
 

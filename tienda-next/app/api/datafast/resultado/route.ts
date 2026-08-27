@@ -7,7 +7,7 @@ import { Resend } from "resend";
 export const runtime = "nodejs";
 
 function getDatafastConfig() {
-  const baseUrl = (process.env.DATAFAST_BASE_URL || "https://test.oppwa.com").replace(/\/+$/, "");
+  const baseUrl = (process.env.DATAFAST_BASE_URL || "https://eu-prod.oppwa.com").replace(/\/+$/, "");
   const entityId = process.env.DATAFAST_ENTITY_ID;
   const authToken = process.env.DATAFAST_AUTH_TOKEN;
   const testModeEnv = process.env.DATAFAST_TEST_MODE;
@@ -46,10 +46,6 @@ function classifyResultCode(code?: string | null, isTestMode = false) {
   if (successPattern.test(resultCode)) {
     console.log("[classifyResultCode] returning success (successPattern matched)");
     return "success";
-  }
-  if (isTestMode) {
-    console.log("[classifyResultCode] returning success (isTestMode is true)");
-    return "success"; // Force success in test mode for testing
   }
   if (pendingPattern.test(resultCode)) {
     console.log("[classifyResultCode] returning pending");
@@ -119,15 +115,26 @@ export async function GET(req: NextRequest) {
       console.log("[Datafast Resultado] Failed to parse response as JSON");
     }
     console.log("[Datafast Resultado] Datafast status response:", statusJson);
+    
+    // Log específico para certificación Datafast
+    console.log("=== DATAFAST CERTIFICATION INFO ===");
+    console.log("Transacción ID:", statusJson?.id);
+    console.log("Merchant Transaction ID:", statusJson?.merchantTransactionId);
+    console.log("Result Code:", statusJson?.result?.code);
+    console.log("Result Description:", statusJson?.result?.description);
+    console.log("Amount:", statusJson?.amount);
+    console.log("Currency:", statusJson?.currency);
+    console.log("Payment Brand:", statusJson?.paymentBrand);
+    console.log("Card BIN:", statusJson?.card?.bin);
+    console.log("Card Last 4 Digits:", statusJson?.card?.last4Digits);
+    console.log("Card Holder:", statusJson?.card?.holder);
+    console.log("==================================");
 
     const resultCode = statusJson?.result?.code || null;
     const resultDescription = statusJson?.result?.description || null;
     
     let resultStatus: string;
-    if (config.isTestMode) {
-      resultStatus = "success";
-      console.log("[Datafast Resultado] TEST MODE: Forcing success regardless of Datafast result (for integration testing)");
-    } else if (statusRes.ok) {
+    if (statusRes.ok) {
       resultStatus = classifyResultCode(resultCode, config.isTestMode);
     } else {
       resultStatus = "failed";
@@ -253,7 +260,7 @@ export async function GET(req: NextRequest) {
           },
           productos: orderData.productos || [],
           subtotal: orderData.subtotal || 0,
-          costoEnvio: orderData.costoEnvio || 5,
+          costoEnvio: orderData.costoEnvio || 1, // $1 temporalmente para prueba de Datafast
           total: orderData.total || 0,
           metodoPago: "Tarjeta (Datafast)",
           paidAt: admin.firestore.Timestamp.now(),

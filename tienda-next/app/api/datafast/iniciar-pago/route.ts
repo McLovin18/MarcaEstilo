@@ -9,7 +9,7 @@ import {
 export const runtime = "nodejs";
 
 function getDatafastConfig() {
-  const baseUrl = (process.env.DATAFAST_BASE_URL || "https://test.oppwa.com").replace(/\/+$/, "");
+  const baseUrl = (process.env.DATAFAST_BASE_URL || "https://eu-prod.oppwa.com").replace(/\/+$/, "");
   const entityId = process.env.DATAFAST_ENTITY_ID;
   const authToken = process.env.DATAFAST_AUTH_TOKEN;
   const currency = process.env.DATAFAST_CURRENCY || "USD";
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     const identificacion = cliente.identificacion.replace(/\D/g, "").slice(0, 10).padStart(10, "0");
 
     // Calcular impuestos según Ecuador (IVA 12%)
-    const costoEnvio = 5; // Costo de envío fijo según el carrito
+    const costoEnvio = 1; // $1 temporalmente para prueba de Datafast de $3 total // Costo de envío fijo según el carrito
     const subtotalProductos = productos.reduce((sum: number, item: any) => {
       const precio = Number(item.precio || item.precioUnitario || item.precioBase || 0);
       return sum + precio * (item.cantidad || 1);
@@ -105,7 +105,6 @@ export async function POST(req: NextRequest) {
     checkoutPayload.set("amount", totalCliente.toFixed(2));
     checkoutPayload.set("currency", currency);
     checkoutPayload.set("paymentType", "DB");
-    checkoutPayload.set("testMode", "EXTERNAL");
 
     // OPCIONAL: Para pruebas de rechazo, descomenta la siguiente línea
     // checkoutPayload.set("amount", "9999.99"); // Monto que suele causar rechazo
@@ -154,8 +153,8 @@ export async function POST(req: NextRequest) {
     checkoutPayload.set("customParameters[SHOPPER_VAL_BASE0]", base0.toFixed(2));
     checkoutPayload.set("customParameters[SHOPPER_VAL_BASEIMP]", baseImp.toFixed(2)); // Base imponible calculada
     checkoutPayload.set("customParameters[SHOPPER_VAL_IVA]", iva.toFixed(2)); // IVA calculado
-    checkoutPayload.set("customParameters[SHOPPER_MID]", process.env.DATAFAST_MID || "1000000406");
-    checkoutPayload.set("customParameters[SHOPPER_TID]", process.env.DATAFAST_TID || "PD100406");
+    checkoutPayload.set("customParameters[SHOPPER_MID]", process.env.DATAFAST_MID || "4100009839");
+    checkoutPayload.set("customParameters[SHOPPER_TID]", process.env.DATAFAST_TID || "BP467198");
     checkoutPayload.set("customParameters[SHOPPER_ECI]", "0103910");
     checkoutPayload.set("customParameters[SHOPPER_PSERV]", "17913101");
     checkoutPayload.set("customParameters[SHOPPER_VERSIONDF]", "2");
@@ -223,10 +222,10 @@ export async function POST(req: NextRequest) {
         (sum, item) => sum + Number(item.subtotal || 0),
         0
       );
-      const costoEnvio = 5; // Costo de envío fijo según el carrito
+      const costoEnvio = 1; // $1 temporalmente para prueba de Datafast de $3 total // Costo de envío fijo según el carrito
       const totalCalculado = Math.round((subtotal + costoEnvio) * 100) / 100;
       const difference = Math.abs(totalCalculado - totalCliente);
-
+      
       if (difference > 0.01) {
         throw new Error("El total cambió. Revisa tu carrito antes de volver a pagar.");
       }
