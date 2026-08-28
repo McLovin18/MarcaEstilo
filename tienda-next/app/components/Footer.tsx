@@ -84,8 +84,6 @@ const Footer: React.FC = () => {
                   MarcaEstilo - Información de contacto:
                 </span>
 
-                <span className={styles.ftLegalSeparator}></span>
-                <span>RUC: 0927584839001</span>
                 <span className={styles.ftLegalSeparator}>|</span>
                 <span>Guayaquil, Ecuador</span>
                 <span className={styles.ftLegalSeparator}>|</span>
