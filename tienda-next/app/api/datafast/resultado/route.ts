@@ -260,7 +260,7 @@ export async function GET(req: NextRequest) {
           },
           productos: orderData.productos || [],
           subtotal: orderData.subtotal || 0,
-          costoEnvio: orderData.costoEnvio || 1, // $1 temporalmente para prueba de Datafast
+          costoEnvio: orderData.costoEnvio || 5, // $5 costo de envío
           total: orderData.total || 0,
           metodoPago: "Tarjeta (Datafast)",
           paidAt: admin.firestore.Timestamp.now(),

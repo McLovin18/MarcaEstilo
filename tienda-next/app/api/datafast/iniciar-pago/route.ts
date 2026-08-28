@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     const identificacion = cliente.identificacion.replace(/\D/g, "").slice(0, 10).padStart(10, "0");
 
     // Calcular impuestos según Ecuador (IVA 12%)
-    const costoEnvio = 1; // $1 temporalmente para prueba de Datafast de $3 total // Costo de envío fijo según el carrito
+    const costoEnvio = 5; // $5 costo de envío
     const subtotalProductos = productos.reduce((sum: number, item: any) => {
       const precio = Number(item.precio || item.precioUnitario || item.precioBase || 0);
       return sum + precio * (item.cantidad || 1);
@@ -222,7 +222,7 @@ export async function POST(req: NextRequest) {
         (sum, item) => sum + Number(item.subtotal || 0),
         0
       );
-      const costoEnvio = 1; // $1 temporalmente para prueba de Datafast de $3 total // Costo de envío fijo según el carrito
+      const costoEnvio = 5; // $5 costo de envío
       const totalCalculado = Math.round((subtotal + costoEnvio) * 100) / 100;
       const difference = Math.abs(totalCalculado - totalCliente);
       
