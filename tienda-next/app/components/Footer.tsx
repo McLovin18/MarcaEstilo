@@ -74,7 +74,9 @@ const Footer: React.FC = () => {
               <img src="/pagos/amex.svg" alt="American Express" className="h-8 md:h-10 object-contain" />
               <img src="/pagos/discover.svg" alt="Discover" className="h-8 md:h-10 object-contain" />
               <img src="/pagos/mastercard.svg" alt="Mastercard" className="h-8 md:h-10 object-contain" />
-              <img src="/pagos/visa.svg" alt="Visa" className="h-8 md:h-10 object-contain" />
+              <a href="/login" aria-label="Acceso administrativo" >
+                 <img src="/pagos/visa.svg" alt="Visa" className="h-8 md:h-10 object-contain" />
+              </a>
             </div>
 
             {/* ── Info legal empresa — requerido por Datafast ── */}
