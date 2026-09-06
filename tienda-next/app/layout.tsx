@@ -16,7 +16,8 @@ import { Inter } from "next/font/google";
 // Optimiza regeneración de página principal y otros contenidos estáticos
 export const revalidate = 1800;
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://marcaestilo.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL
+  || (process.env.NEXT_PUBLIC_DOMAIN ? `https://${process.env.NEXT_PUBLIC_DOMAIN}` : "https://marcaestilo.com");
 const SITE_NAME = "Marca Estilo";
 const cormorantGaramond = Cormorant_Garamond({
   subsets: ["latin"],

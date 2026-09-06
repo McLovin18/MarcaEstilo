@@ -9,6 +9,7 @@ import {
 } from "../lib/categorias-db";
 import { useUser } from "../context/UserContext";
 import { useTracking } from "../lib/useAnalytics";
+import { slugify } from "../lib/seo";
 
 const CategoriesBar = () => {
   const { isAdmin, user } = useUser();
@@ -82,7 +83,7 @@ const CategoriesBar = () => {
                               {sub.subcategorias.map((subsub: any) => (
                                 <Link
                                   key={subsub.id}
-                                  href={`${basePath}?cat=${category.id}&sub=${sub.id}&subsub=${subsub.id}`}
+                                  href={`${basePath}/${slugify(category.nombre)}?subcat=${encodeURIComponent(sub.nombre)}&subsub=${encodeURIComponent(subsub.nombre)}`}
                                   onClick={() => trackCategoryClick().catch(console.error)}
                                   className="block px-4 py-2 hover:bg-slate-100 dark:hover:bg-black text-sm"
                                 >
@@ -98,7 +99,7 @@ const CategoriesBar = () => {
               </>
             ) : (
               <Link
-                href={`${basePath}?cat=${category.id}`}
+                href={`${basePath}/${slugify(category.nombre)}`}
                 onClick={() => trackCategoryClick().catch(console.error)}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-colors shadow-sm border"
                 style={{

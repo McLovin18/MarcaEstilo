@@ -375,7 +375,7 @@ export const Navbar = () => {
                         </div>
                       ) : suggestions.length > 0 ? (
                         suggestions.map((prod) => {
-                          let href = `/product-detail?id=${prod.id}`;
+                          let href = `/product-detail/${String(prod.nombre || prod.id).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}`;
                           if (isAdmin) href = `/admin/product-detail?id=${prod.id}`;
                           return (
                             <a
@@ -675,7 +675,7 @@ export const Navbar = () => {
                       </div>
                     ) : suggestions.length > 0 ? (
                       suggestions.map((prod) => {
-                        let href = `/product-detail?id=${prod.id}`;
+                        let href = `/product-detail/${String(prod.nombre || prod.id).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}`;
                         if (isAdmin) href = `/admin/product-detail?id=${prod.id}`;
                         return (
                           <a

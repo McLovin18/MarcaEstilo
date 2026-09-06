@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { getBlogById } from "../../lib/blogs-db";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://marcaestilo.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL
+  || (process.env.NEXT_PUBLIC_DOMAIN ? `https://${process.env.NEXT_PUBLIC_DOMAIN}` : "https://marcaestilo.com");
 
 // ISR: Revalidar cada hora (3600 segundos)
 // Significa que la página se cachea por 1 hora, después se regenera
@@ -57,8 +58,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       };
     }
 
-    const description =
-      blog.excerpt || blog.content?.substring(0, 160) || "Artículo de Marca Estilo";
+    const blockText = Array.isArray(blog.blocks)
+      ? blog.blocks
+          .filter((block: any) => block.type === "paragraph" || block.type === "subtitle")
+          .map((block: any) => block.text)
+          .join(" ")
+      : "";
+    const description = String((blog as any).excerpt || blog.description || blockText || "Artículo de Marca Estilo").slice(0, 160);
     const imageUrl = blog.image || `${SITE_URL}/default-blog-image.jpg`;
 
     return {

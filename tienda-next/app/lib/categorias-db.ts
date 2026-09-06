@@ -46,7 +46,7 @@ export function sameCategoryId(a?: string, b?: string): boolean {
 }
 
 function findCategoryById(categorias: any[], id: string): any | undefined {
-  return categorias.find((c) => sameCategoryId(c.id, id));
+  return categorias.find((c) => sameCategoryId(c.id, id) || sameCategoryId(c.nombre, id));
 }
 
 function findSubcategory(
@@ -55,7 +55,7 @@ function findSubcategory(
   subId: string
 ): any | undefined {
   const cat = findCategoryById(categorias, categoriaId);
-  return cat?.subcategorias?.find((s: any) => sameCategoryId(s.id, subId));
+  return cat?.subcategorias?.find((s: any) => sameCategoryId(s.id, subId) || sameCategoryId(s.nombre, subId));
 }
 
 function findSubsubcategory(

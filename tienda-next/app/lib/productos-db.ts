@@ -271,6 +271,21 @@ export async function obtenerProductoPorId(id: string): Promise<Producto | null>
   return { id: docSnap.id, ...docSnap.data() };
 }
 
+// Resolver URLs públicas por nombre, manteniendo el ID fuera de la URL visible.
+export async function obtenerProductoPorSlug(slug: string): Promise<Producto | null> {
+  const productos = await obtenerProductos({ incluirSinStock: true });
+  const normalizedSlug = slug.toLowerCase();
+  return productos.find((producto) => {
+    const nombreSlug = String(producto.nombre || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    return nombreSlug === normalizedSlug;
+  }) || null;
+}
+
 // Actualizar producto
 export async function actualizarProducto(id: string, data: Partial<Producto>): Promise<void> {
   await updateDoc(doc(db, COLLECTION, id), cleanUndefinedDeep(data));

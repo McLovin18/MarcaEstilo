@@ -20,8 +20,9 @@ import {
 import { useUser } from "../context/UserContext";
 import { collection, query, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { slugify } from "../lib/seo";
 
-export default function ProductsByCategoryPage() {
+export default function ProductsByCategoryPage({ routeCategory = "" }: { routeCategory?: string }) {
   // Estado para el mapeo de nombres
   const [catMap, setCatMap] = useState<any>({});
   const [subcatMap, setSubcatMap] = useState<any>({});
@@ -69,7 +70,7 @@ export default function ProductsByCategoryPage() {
   const isLogged = useUser();
   const searchParams = useSearchParams();
 
-  const categoriaFromUrl = (searchParams?.get("cat") || searchParams?.get("category") || "").trim();
+  const categoriaFromUrl = (searchParams?.get("cat") || searchParams?.get("category") || routeCategory || "").trim();
   const subcategoriaFromUrl = (searchParams?.get("subcat") || searchParams?.get("subcategory") || searchParams?.get("sub") || "").trim();
   const subsubcategoriaFromUrl = (searchParams?.get("subsubcat") || searchParams?.get("subsubcategory") || searchParams?.get("subsub") || "").trim();
 
@@ -172,8 +173,9 @@ export default function ProductsByCategoryPage() {
       setFilterCat(catId);
       setFilterSub("");
       setFilterSubsub("");
+      const category = categorias.find((item: any) => item.id === catId);
       const url = catId
-        ? `/products-by-category?cat=${encodeURIComponent(catId)}`
+        ? `/products-by-category/${slugify(category?.nombre || catId)}`
         : "/products-by-category";
       router.replace(url, { scroll: false });
     },

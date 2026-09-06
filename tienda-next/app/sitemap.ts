@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import admin from './lib/firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
+import { slugify, productSlug } from './lib/seo';
 
 // Inicializar Firebase Admin (si no está ya inicializado)
 let db: any;
@@ -10,7 +11,8 @@ try {
   console.log('Firebase Admin init (sitemap):', error);
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://marcaestilo.com';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL
+  || (process.env.NEXT_PUBLIC_DOMAIN ? `https://${process.env.NEXT_PUBLIC_DOMAIN}` : 'https://marcaestilo.com');
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes: MetadataRoute.Sitemap = [
@@ -45,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Agregar URLs dinámicas de productos
     const productosSnapshot = await db.collection('productos').get();
     const productosUrls = productosSnapshot.docs.map((doc: any) => ({
-      url: `${BASE_URL}/home/product-detail?id=${doc.id}`,
+      url: `${BASE_URL}/product-detail/${productSlug({ id: doc.id, nombre: doc.data().nombre })}`,
       lastModified: doc.data().updatedAt || new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
@@ -73,22 +75,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const categoria = doc.data();
         // URL principal de la categoría
         urls.push({
-          url: `${BASE_URL}/products-by-category?cat=${doc.id}`,
+          url: `${BASE_URL}/products-by-category/${slugify(categoria.nombre || doc.id)}`,
           lastModified: categoria.updatedAt || new Date(),
           changeFrequency: 'weekly' as const,
           priority: 0.7,
         });
-        // URLs de subcategorías
-        if (categoria.subcategorias && Array.isArray(categoria.subcategorias)) {
-          categoria.subcategorias.forEach((sub: any) => {
-            urls.push({
-              url: `${BASE_URL}/products-by-category?cat=${doc.id}&subcat=${sub.nombre}`,
-              lastModified: categoria.updatedAt || new Date(),
-              changeFrequency: 'weekly' as const,
-              priority: 0.6,
-            });
-          });
-        }
         return urls;
       })
       .flat();

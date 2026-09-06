@@ -10,6 +10,7 @@ import {
 } from "../lib/categorias-db";
 import { useUser } from "../context/UserContext";
 import { useTracking } from "../lib/useAnalytics";
+import { slugify } from "../lib/seo";
 
 const CategoriesBarMobile = () => {
   const [categorias, setCategorias] = useState<any[]>([]);
@@ -37,7 +38,7 @@ const CategoriesBarMobile = () => {
           <div key={category.id} className="relative">
             {!category.subcategorias?.length ? (
               <Link
-                href={`${basePath}?cat=${category.id}`}
+                href={`${basePath}/${slugify(category.nombre)}`}
                 onClick={() => trackCategoryClick().catch(console.error)}
                 className="w-full flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors text-sm font-medium"
               >
@@ -99,7 +100,7 @@ const CategoriesBarMobile = () => {
                             {subcat.subcategorias.map((subsubcat: any) => (
                               <Link
                                 key={subsubcat.id}
-                                href={`${basePath}?cat=${category.id}&sub=${subcat.id}&subsub=${subsubcat.id}`}
+                                href={`${basePath}/${slugify(category.nombre)}?subcat=${encodeURIComponent(subcat.nombre)}&subsub=${encodeURIComponent(subsubcat.nombre)}`}
                                 onClick={() =>
                                   trackCategoryClick().catch(console.error)
                                 }
@@ -113,7 +114,7 @@ const CategoriesBarMobile = () => {
                       </>
                     ) : (
                       <Link
-                        href={`${basePath}?cat=${category.id}&sub=${subcat.id}`}
+                        href={`${basePath}/${slugify(category.nombre)}?subcat=${encodeURIComponent(subcat.nombre)}`}
                         onClick={() =>
                           trackCategoryClick().catch(console.error)
                         }

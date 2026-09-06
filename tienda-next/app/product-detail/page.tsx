@@ -1,6 +1,6 @@
 "use client";
 
-import { obtenerProductoPorId, obtenerProductosPorCategoria, obtenerProductosPorSubcategoria, obtenerProductosPorSubsubcategoria } from "../lib/productos-db";
+import { obtenerProductoPorId, obtenerProductoPorSlug, obtenerProductosPorCategoria, obtenerProductosPorSubcategoria, obtenerProductosPorSubsubcategoria } from "../lib/productos-db";
 import { obtenerAtributos } from "../lib/atributos-db";
 import { Loading3DIcon } from "../components/Loading3DIcon";
 import ProductoCard from "../components/ProductoCard";
@@ -99,11 +99,12 @@ export default function ProductDetailPage({ params }) {
     async function fetchProducto() {
       setLoading(true);
       const id = params?.id || searchParams.get("id");
-      if (!id) { setProducto(null); setRelacionados([]); setLoading(false); return; }
-      const prod = await obtenerProductoPorId(id);
+      const slug = params?.slug;
+      if (!id && !slug) { setProducto(null); setRelacionados([]); setLoading(false); return; }
+      const prod = slug ? await obtenerProductoPorSlug(slug) : await obtenerProductoPorId(id);
       setProducto(prod);
       setLoading(false);
-      fetchReviews(id);
+      if (prod) fetchReviews(prod.id);
       if (prod) {
         let rel = [];
         console.log("[RELACIONADOS] subsubcategoria:", prod.subsubcategoria, "subcategoria:", prod.subcategoria, "categoria:", prod.categoria);
@@ -126,7 +127,7 @@ export default function ProductDetailPage({ params }) {
     }
     fetchProducto();
     // eslint-disable-next-line
-  }, [params?.id, searchParams]);
+  }, [params?.id, params?.slug, searchParams]);
 
   useEffect(() => {
     if (isLogged && user) {

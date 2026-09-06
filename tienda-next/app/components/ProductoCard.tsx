@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useTracking } from "../lib/useAnalytics";
 import { useToast } from "../context/ToastContext";
 import { getCatalogPricing } from "../lib/pricing";
+import { productSlug } from "../lib/seo";
 
 const cardStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Inter:wght@400;500;600;700&display=swap');
@@ -336,7 +337,7 @@ function ProductoCard({
     getCatalogPricing(producto);
 
   const getDetailUrl = () => {
-    let detailUrl = `/product-detail?id=${producto.id}`;
+    let detailUrl = `/product-detail/${productSlug(producto)}`;
     try {
       if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) {
         detailUrl = `/admin/product-detail?id=${producto.id}`;
