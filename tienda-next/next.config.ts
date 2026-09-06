@@ -134,19 +134,6 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Rewrites para mejorar URLs
-  async rewrites() {
-    return {
-      beforeFiles: [
-        // Rewrite para sitemap dinámico
-        {
-          source: "/sitemap.xml",
-          destination: "/api/sitemap",
-        },
-      ],
-    };
-  },
-
 };
 
 
