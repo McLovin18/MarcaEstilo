@@ -377,7 +377,7 @@ export default function AdminInventario() {
                               </label>
                             </td>
                             <td className="px-4 py-3 text-right font-bold text-amber-600 whitespace-nowrap">${Number(p.precio || 0).toFixed(2)}</td>
-                            <td className="px-6 py-3 text-right font-bold whitespace-nowrap">{stockTotal}</td>
+                            <td className="px-6 py-3 text-right font-bold text-black whitespace-nowrap">{stockTotal}</td>
                           </tr>
                         );
                       })}

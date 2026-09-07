@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import type {
   LandingSectionStyles,
   LandingFieldStyle,
@@ -26,7 +25,21 @@ export default function FeaturedProductsSection({
   const paddingBottom = styles?.paddingBottom || (typeof window !== "undefined" && window.innerWidth < 768 ? "0.5rem" : "0.5rem");
 
   // ── Return condicional DESPUÉS de todos los hooks ──
-  if (!products.length) return null;
+  const validProducts = products.filter((prod: any) => prod && prod.id);
+  if (!validProducts.length) return null;
+
+  const mobileTabletProducts = validProducts.slice(0, validProducts.length - (validProducts.length % 2));
+
+  const renderProductCards = (items: any[]) =>
+    items.map((prod: any, idx: number) => (
+      <div
+        key={prod.id}
+        className="transition-all duration-300 flex flex-col items-stretch justify-stretch h-full w-full"
+        style={{ minWidth: 0 }}
+      >
+        <ProductoCard producto={prod} index={idx} />
+      </div>
+    ));
 
   return (
     <section
@@ -44,18 +57,11 @@ export default function FeaturedProductsSection({
       )}
 
       <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 md:px-12">
-        <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {products
-            .filter((prod: any) => prod && prod.id)
-            .map((prod: any, idx: number) => (
-              <div
-                key={prod.id}
-                className="transition-all duration-300 flex flex-col items-stretch justify-stretch h-full w-full"
-                style={{ minWidth: 0 }}
-              >
-                <ProductoCard producto={prod} index={idx} />
-              </div>
-            ))}
+        <div className="grid w-full grid-cols-2 gap-2 lg:hidden">
+          {renderProductCards(mobileTabletProducts)}
+        </div>
+        <div className="hidden w-full grid-cols-4 gap-2 lg:grid xl:grid-cols-5">
+          {renderProductCards(validProducts)}
         </div>
       </div>
     </section>

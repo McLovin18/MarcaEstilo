@@ -833,7 +833,7 @@ export default function ProductoForm({ initialData = null, onSave, onCancel }: P
               {stockVariants.length > 0 && (
                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                   <div className="border-b border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700">Variaciones generadas</div>
-                  <div className="grid items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 md:grid-cols-[minmax(0,1.8fr)_90px_90px_52px]">
+                  <div className="grid items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-black md:grid-cols-[minmax(0,1.8fr)_90px_90px_52px]">
                     <div>Variación</div>
                     <div>Stock</div>
                     <div>Precio</div>
@@ -854,7 +854,7 @@ export default function ProductoForm({ initialData = null, onSave, onCancel }: P
                           <input
                             type="number"
                             min="0"
-                            className="h-8 w-full rounded-xl border border-slate-200 bg-slate-50 px-2 text-sm"
+                            className="h-8 w-full rounded-xl border border-slate-300 bg-white px-2 text-sm text-black caret-black placeholder:text-black/60 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                             value={variant.cantidad}
                             onChange={(e) => updateVariantCantidad(idx, Number(e.target.value))}
                           />
@@ -865,7 +865,7 @@ export default function ProductoForm({ initialData = null, onSave, onCancel }: P
                             type="number"
                             min="0"
                             step="0.01"
-                            className="h-8 w-full rounded-xl border border-slate-200 bg-slate-50 px-2 text-sm"
+                            className="h-8 w-full rounded-xl border border-slate-300 bg-white px-2 text-sm text-black caret-black placeholder:text-black/60 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                             value={variant.precio ?? ""}
                             onChange={(e) => updateVariantPrecio(idx, e.target.value)}
                             placeholder="Opcional"
