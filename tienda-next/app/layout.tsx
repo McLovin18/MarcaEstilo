@@ -130,14 +130,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className={`${cormorantGaramond.variable} ${inter.variable}`}>
       <head>
                 {/* Google Analytics gtag.js - insertado justo después de <head> */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-K1Q0MYDSKF"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXP4W7CBBP"></script>
         <script
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-K1Q0MYDSKF');
+              gtag('config', 'G-XXP4W7CBBP');
             `,
           }}
         />
