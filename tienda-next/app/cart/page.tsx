@@ -311,7 +311,11 @@ export default function CartPage() {
           }
         }
         
-        return `${p.nombre}${variantInfo} (Entrega Aproximada en: ${tiempoEntrega}h)`;
+        // Obtener imágenes del producto
+        const imagen = p.imagenes?.[0] || "";
+        const imagenInfo = imagen ? `\n📷 Imagen: ${imagen}` : "";
+        
+        return `${p.nombre}${variantInfo} (Entrega Aproximada en: ${tiempoEntrega}h)${imagenInfo}`;
       })
       .join("\n");
     
