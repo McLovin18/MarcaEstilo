@@ -613,7 +613,9 @@ export default function ProductDetailPage({ params }) {
             <button
               onClick={() => {
                 const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "0962873167";
-                const message = `Hola, me interesa comprar este producto:\n\n${producto.nombre}\nPrecio: $${finalPrice.toFixed(2)}\n\n${hasVariations && variationAttributeIds.length > 0 ? Object.entries(selectedVariations)
+                const imagen = producto.imagenes?.[0] || "";
+                const imagenInfo = imagen ? `\n📷 Imagen: ${imagen}` : "";
+                const message = `Hola, me interesa comprar este producto:\n\n${producto.nombre}\nPrecio: $${finalPrice.toFixed(2)}${imagenInfo}\n\n${hasVariations && variationAttributeIds.length > 0 ? Object.entries(selectedVariations)
                   .filter(([_, value]) => value)
                   .map(([attrId, value]) => {
                     const attrName = atributos[attrId] || attrId;
