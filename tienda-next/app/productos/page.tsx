@@ -58,7 +58,7 @@ export default function ProductosPage() {
   const [search, setSearch] = useState("");
   const [precioMin, setPrecioMin] = useState("");
   const [precioMax, setPrecioMax] = useState("");
-  const [orden, setOrden] = useState("price-high");
+  const [orden, setOrden] = useState("newest");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [categorias, setCategorias] = useState<any[]>([]);
   const [hoveredCatId, setHoveredCatId] = useState<string | null>(null);
@@ -277,10 +277,10 @@ export default function ProductosPage() {
 
   const getProductsPerPage = () => {
     if (typeof window !== "undefined") {
-      if (window.innerWidth < 640) return 10;
-      if (window.innerWidth >= 1024) return 15;
-      if (window.innerWidth >= 768) return 9;
-      if (window.innerWidth >= 640) return 6;
+      if (window.innerWidth < 640) return 20;
+      if (window.innerWidth >= 1024) return 25;
+      if (window.innerWidth >= 768) return 15;
+      if (window.innerWidth >= 640) return 12;
     }
     return 10;
   };
