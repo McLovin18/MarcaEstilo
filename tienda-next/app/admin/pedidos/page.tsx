@@ -11,11 +11,10 @@ function getTodayYMD() {
 export default function PedidosAdminPage() {
 	const [ordenes, setOrdenes] = useState<any[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [tab, setTab] = useState<"pendientes" | "aprobadas">("pendientes");
 	const [filtro, setFiltro] = useState("");
 	const [clientesMap, setClientesMap] = useState<Record<string, { displayName: string | null; email: string | null }>>({});
-	const [fechaDesde, setFechaDesde] = useState<string>(getTodayYMD());
-	const [fechaHasta, setFechaHasta] = useState<string>(getTodayYMD());
+	const [fechaDesde, setFechaDesde] = useState<string>("");
+	const [fechaHasta, setFechaHasta] = useState<string>("");
 	const [expandedTarjetas, setExpandedTarjetas] = useState(false);
 
 	useEffect(() => {
@@ -139,10 +138,26 @@ export default function PedidosAdminPage() {
 	};
 
 	// Filtro por rango de fechas de visita
-	const estaEnRango = (visitaFecha: string | undefined) => {
-		if (!visitaFecha) return false;
-		if (fechaDesde && visitaFecha < fechaDesde) return false;
-		if (fechaHasta && visitaFecha > fechaHasta) return false;
+	const estaEnRango = (visitaFecha: string | undefined, createdAt?: any) => {
+		// Si no hay visitaFecha, usar fecha de creación (convertir Timestamp a string YYYY-MM-DD)
+		let fechaAComparar = visitaFecha;
+		if (!fechaAComparar && createdAt) {
+			try {
+				const fecha = createdAt?.toDate ? createdAt.toDate() : new Date(createdAt);
+				// Validar que la fecha sea válida
+				if (!isNaN(fecha.getTime())) {
+					fechaAComparar = fecha.toISOString().slice(0, 10);
+				}
+			} catch (err) {
+				console.warn("Error al convertir createdAt a fecha:", err);
+			}
+		}
+
+		// Si no hay ninguna fecha, incluir la orden
+		if (!fechaAComparar) return true;
+
+		if (fechaDesde && fechaAComparar < fechaDesde) return false;
+		if (fechaHasta && fechaAComparar > fechaHasta) return false;
 		return true;
 	};
 
@@ -160,26 +175,19 @@ export default function PedidosAdminPage() {
 		);
 	};
 
-	const ordenesPendientes = ordenes.filter((o) =>
-		(o.estado === "generada" || o.estado === "pendiente_pago" || o.estado === "pago_fallido") &&
-		estaEnRango(o.visitaFecha) &&
-		matchesBusqueda(o)
-	);
-
 	const ordenesAprobadas = ordenes.filter((o) =>
-		o.estado === "aprobada" &&
-		estaEnRango(o.visitaFecha) &&
+		(o.estado === "aprobada" || o.estado === "pagada") &&
+		estaEnRango(o.visitaFecha, o.createdAt) &&
 		matchesBusqueda(o)
 	);
 
-	// (Stripe removed) - no filter for card payments
-
-	const ordenesMostradas = tab === "pendientes" ? ordenesPendientes : ordenesAprobadas;
+	const ordenesMostradas = ordenesAprobadas;
 
 	const estadoBadge = (estado: string) => {
 		const map: Record<string, { label: string; className: string }> = {
 			generada:       { label: "✔ Generada",        className: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300" },
 			aprobada:       { label: "✅ Aprobada",        className: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300" },
+			pagada:         { label: "💳 Pagada",          className: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300" },
 			pendiente_pago: { label: "⏳ Pago pendiente",  className: "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300" },
 			pago_fallido:   { label: "❌ Pago fallido",    className: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300" },
 			rechazada:      { label: "🚫 Rechazada",       className: "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300" },
@@ -278,25 +286,6 @@ export default function PedidosAdminPage() {
 				<div className="font-bold text-base text-slate-800 dark:text-slate-100">
 					Total: <span className="text-purple-700 dark:text-purple-300">${calcularTotalOrden(orden).toFixed(2)}</span>
 				</div>
-
-				{/* Acciones - Mostrar botones si NO está ya aprobada/rechazada */}
-				{orden.estado !== "aprobada" && orden.estado !== "rechazada" && (
-					<div className="flex gap-2">
-						<button
-							onClick={() => rechazarOrden(orden)}
-							className="px-3 py-1.5 rounded-lg border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 text-sm font-medium transition-colors"
-						>
-							🚫 Rechazar
-						</button>
-
-						<button
-							onClick={() => aprobarOrden(orden)}
-							className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors flex items-center gap-2"
-						>
-							<span>✅ Aprobar</span>
-						</button>
-					</div>
-				)}
 			</div>
 
 			{orden.motivoRechazo && orden.estado === "rechazada" && (
@@ -366,31 +355,11 @@ export default function PedidosAdminPage() {
 				</div>
 			</div>
 
-			{/* Tabs */}
-			<div className="flex gap-1 mb-5 bg-slate-100 dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700">
-				{(["pendientes", "aprobadas"] as const).map((t) => {
-					const count = t === "pendientes" ? ordenesPendientes.length : ordenesAprobadas.length;
-					return (
-						<button
-							key={t}
-							onClick={() => setTab(t)}
-							className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-								tab === t
-									? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm"
-									: "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-							}`}
-						>
-							{t === "pendientes" ? "Pendientes" : "Aprobadas"}
-							<span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
-								tab === t
-									? (t === "pendientes" ? "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300" : "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300")
-									: "bg-slate-200 dark:bg-slate-600 text-slate-500 dark:text-slate-400"
-							}`}>
-								{count}
-							</span>
-						</button>
-					);
-				})}
+			{/* Contador de órdenes */}
+			<div className="mb-5">
+				<span className="text-sm text-slate-600 dark:text-slate-300">
+					{ordenesMostradas.length} orden{ordenesMostradas.length !== 1 ? "es" : ""} aprobada{ordenesMostradas.length !== 1 ? "s" : ""}
+				</span>
 			</div>
 
 

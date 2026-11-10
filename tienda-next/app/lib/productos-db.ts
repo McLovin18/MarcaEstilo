@@ -303,7 +303,7 @@ export async function obtenerProductosDestacados(opts = {}) {
   let productos = snapshot.docs.map(doc => {
     const data = doc.data();
     const producto = { id: doc.id, ...data };
-    
+
     // Normalizar createdAt
     if (!producto.createdAt) {
       if (data.fechaCreacion && typeof data.fechaCreacion.toMillis === 'function') {
@@ -314,10 +314,13 @@ export async function obtenerProductosDestacados(opts = {}) {
         producto.createdAt = 0;
       }
     }
-    
+
     return producto;
   });
-  
+
+  // Ordenar por createdAt descendente (más recientes primero)
+  productos.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
   return filtrarProductosConStock(productos, opts);
 }
 
@@ -327,12 +330,12 @@ export function onProductosDestacadosChange(
   opts = {}
 ) {
   const q = query(collection(db, COLLECTION), where("destacado", "==", true));
-  
+
   return onSnapshot(q, (snapshot) => {
     let productos = snapshot.docs.map(doc => {
       const data = doc.data();
       const producto = { id: doc.id, ...data };
-      
+
       // Normalizar createdAt
       if (!producto.createdAt) {
         if (data.fechaCreacion && typeof data.fechaCreacion.toMillis === 'function') {
@@ -343,10 +346,13 @@ export function onProductosDestacadosChange(
           producto.createdAt = 0;
         }
       }
-      
+
       return producto;
     });
-    
+
+    // Ordenar por createdAt descendente (más recientes primero)
+    productos.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
     callback(filtrarProductosConStock(productos, opts));
   });
 }

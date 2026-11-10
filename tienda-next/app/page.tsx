@@ -31,23 +31,13 @@ export default function Home() {
         ]);
 
         const highlighted = (products || []).filter((p: any) => Boolean(p?.destacado));
-        const highlightedById = new Map(
-          highlighted
-            .filter((p: any) => p?.id)
-            .map((p: any) => [String(p.id), p])
-        );
 
-        const orderedIds = (data?.featuredProducts || []).map((id: any) => String(id));
-        const ordered = orderedIds
-          .map((id: string) => highlightedById.get(id))
-          .filter(Boolean);
-
-        const orderedSet = new Set(ordered.map((p: any) => String(p.id)));
-        const missing = highlighted.filter((p: any) => !orderedSet.has(String(p.id)));
+        // Ordenar por createdAt descendente (más recientes primero)
+        highlighted.sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0));
 
         if (mounted) {
           setLanding(data);
-          setFeaturedProductsResolved([...ordered, ...missing]);
+          setFeaturedProductsResolved(highlighted);
         }
       } catch (error) {
         console.error("Error cargando landing publicada:", error);

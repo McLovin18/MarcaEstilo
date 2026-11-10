@@ -21,6 +21,15 @@ export default function CheckoutSuccessPage() {
         setPedido(p);
         if (status === "success") {
           clearCarrito();
+
+          // Redirigir a WhatsApp después de 3 segundos
+          const whatsappPhone = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || "5930999369105";
+          const message = `Orden realizada con número ${pedidoId}`;
+          const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
+
+          setTimeout(() => {
+            window.open(whatsappUrl, "_blank");
+          }, 3000);
         }
       })
       .finally(() => setCargando(false));

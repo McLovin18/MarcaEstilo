@@ -274,28 +274,14 @@ export default function LandingEditor() {
         setProductos(prods ?? []);
         setAllProductos(prods ?? []);
 
-        // Resolver productos destacados desde inventario + orden guardado en landing.
-        // 1) Solo productos con destacado=true
-        // 2) Respetar el orden guardado en landing
-        // 3) Agregar al final los nuevos destacados aún no ordenados
+        // Resolver productos destacados desde inventario ordenados por fecha de creación (más recientes primero).
         const allProds = prods ?? [];
         const highlighted = allProds.filter((p: any) => Boolean(p?.destacado));
-        const highlightedById = new Map(
-          highlighted
-            .filter((p: any) => p?.id)
-            .map((p: any) => [String(p.id), p])
-        );
 
-        const savedFeaturedIds: string[] = landingData?.featuredProducts || [];
-        const orderedFromSaved: any[] = savedFeaturedIds
-          .map((id) => highlightedById.get(String(id)))
-          .filter(Boolean);
+        // Ordenar por createdAt descendente (más recientes primero)
+        highlighted.sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0));
 
-        const missingHighlighted = highlighted.filter(
-          (p: any) => !savedFeaturedIds.includes(String(p.id))
-        );
-
-        setFeaturedProducts([...orderedFromSaved, ...missingHighlighted]);
+        setFeaturedProducts(highlighted);
 
         // Migramos secciones antiguas (no JSON) al nuevo formato en memoria
         const rawSections: any[] = landingData?.sections ?? [];
